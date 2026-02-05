@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'url' => env('GEMINI_BACKEND_URL'),
+        'token' => env('GEMINI_BACKEND_TOKEN'),
+        // Optional fine-tuning without code changes
+        'path' => env('GEMINI_BACKEND_PATH', '/generate-design'), // e.g. /gen
+        // bearer | x-api-key | x-goog-api-key | none | both
+        'auth_header' => env('GEMINI_BACKEND_AUTH_HEADER', 'bearer'),
+        // If set (e.g. 'key'), appends ?key=<token> to the request
+        'auth_query_key' => env('GEMINI_BACKEND_AUTH_QUERY_KEY'),
+        // HTTP method for the request (POST by default)
+        'method' => env('GEMINI_BACKEND_METHOD', 'POST'),
+    ],
+
 ];

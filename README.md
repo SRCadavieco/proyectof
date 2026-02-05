@@ -21,6 +21,33 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Gemini Node Backend Integration
+
+This project includes a first test integration between Laravel and a Node.js service (Cloud Run) for AI-driven design generation.
+
+### Env vars
+
+Add the following to your `.env`:
+
+```
+GEMINI_BACKEND_URL=https://<your-cloud-run-url>
+GEMINI_BACKEND_TOKEN=<your-shared-bearer-token>
+```
+
+### Endpoints
+
+- POST [designs/generate](routes/web.php#L8): Protected by `auth`. Body: `{ "prompt": "..." }`.
+- GET [designs](routes/web.php#L7): Simple test UI at `/designs`.
+
+### Test flow
+
+1. Ensure you can authenticate (e.g., install Breeze or remove `auth` middleware temporarily for testing).
+2. Open `/designs`, enter a prompt and click “Generar”.
+3. Laravel calls the Node backend using the configured URL and token.
+4. The UI shows a loader and then renders the returned image if available, plus the raw JSON.
+
+Note: The UI tries to display either `imageUrl`/`image_url` or a Base64 image in `imageBase64`/`image_base64`.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
