@@ -3,17 +3,24 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DesignController;
 
-Route::get('/', function () {
-    return view('app');
-});
-
 if (app()->environment('local')) {
-    // En local, expone sin auth para facilitar la prueba manual
+    // Home lleva directamente al formulario de diseños (sin auth en local)
+    Route::get('/', [DesignController::class, 'form'])->name('home');
+    // Alias amigable
+    Route::get('/design', [DesignController::class, 'form']);
+
+    // Rutas de generación
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
 } else {
     // En producción, proteger con Basic Auth vía middleware 'private'
     Route::middleware('private')->group(function () {
+        // Home apunta al formulario de diseños
+        Route::get('/', [DesignController::class, 'form'])->name('home');
+        // Alias amigable
+        Route::get('/design', [DesignController::class, 'form']);
+
+        // Rutas de generación
         Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
         Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
     });
