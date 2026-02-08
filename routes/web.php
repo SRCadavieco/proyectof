@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DesignController;
+// use App\Http\Controllers\PrintifyController; // removed
 
 if (app()->environment('local')) {
     // Home lleva directamente al formulario de diseños (sin auth en local)
@@ -118,3 +119,10 @@ if (app()->environment('local')) {
         ]);
     });
 }
+
+// Printify upload endpoint removed
+
+// Testing page with background tools (Blade: resources/views/app.blade.php)
+Route::get('/app', function () {
+    return view('app');
+});

@@ -23,7 +23,7 @@ class GeminiService
      * 4) Envía el payload `{ prompt }` por GET o POST.
      * 5) Devuelve el JSON del backend o un objeto de error consistente.
      */
-    public function generateDesign(string $prompt)
+    public function generateDesign(string $prompt, ?string $backgroundColor = null)
     {
         // Configuración desde config/services.php o variables de entorno.
         $baseUrl = (string) config('services.gemini.url');           // URL del backend
@@ -94,8 +94,27 @@ class GeminiService
                 ]);
             }
 
-            // Payload con el prompt que describe el diseño deseado.
-            $payload = [ 'prompt' => $prompt ];
+            // Si el backend no soporta el campo backgroundColor, añadimos una
+            // instrucción explícita al prompt para forzar el color de fondo.
+            $finalPrompt = $prompt;
+            if (!empty($backgroundColor)) {
+                $hex = strtolower(trim($backgroundColor));
+                // Mapear a nombre simple por si el modelo prefiere texto.
+                $colorName = match ($hex) {
+                    '#2b7be4' => 'azul',
+                    '#ff00ff' => 'fucsia',
+                    '#ff0000' => 'rojo',
+                    '#00ff00' => 'verde',
+                    default => $hex,
+                };
+                $finalPrompt .= "\nFondo sólido y uniforme de color {$colorName} ({$hex}). Sin transparencia.";
+            }
+
+            // Payload con el prompt y parámetros opcionales.
+            $payload = [ 'prompt' => $finalPrompt ];
+            if (!empty($backgroundColor)) {
+                $payload['backgroundColor'] = $backgroundColor; // hex string e.g. #ff0000
+            }
 
             // Envía la solicitud al backend.
             $response = $method === 'GET'

@@ -37,10 +37,11 @@ class DesignController extends Controller
         // Validación del input: el prompt es obligatorio y debe ser texto.
         $validated = $request->validate([
             'prompt' => ['required', 'string'],
+            'backgroundColor' => ['nullable', 'string'], // hex color like #ff0000
         ]);
 
         // Llamada al servicio: aquí se pasa el prompt a la IA/Backend.
-        $result = $gemini->generateDesign($validated['prompt']);
+        $result = $gemini->generateDesign($validated['prompt'], $validated['backgroundColor'] ?? null);
 
         // Por defecto 200. Si el servicio indica error, usamos su 'status'.
         $status = 200;

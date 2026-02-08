@@ -22,6 +22,7 @@
         .error { color: #fca5a5; margin-top: 8px; }
         img.preview { max-width: 100%; border-radius: 8px; border: 1px solid #374151; background: #0b1220; }
         pre { background: #0b1220; border: 1px solid #1f2937; border-radius: 8px; padding: 12px; color: #9ca3af; overflow: auto; }
+        select { background: #0b1220; color: #e5e7eb; border: 1px solid #374151; border-radius: 6px; padding: 6px 8px; }
     </style>
 </head>
 <body>
@@ -35,6 +36,15 @@
         <form id="design-form">
             <label for="prompt">Prompt</label>
             <textarea id="prompt" name="prompt" placeholder="Describe el diseño que quieres generar..."></textarea>
+            <div class="row" style="margin-top:8px;">
+                <label for="bgColorSelect">Color de fondo</label>
+                <select id="bgColorSelect">
+                    <option value="#2b7be4">Azul</option>
+                    <option value="#ff00ff">Fucsia</option>
+                    <option value="#ff0000">Rojo</option>
+                    <option value="#00ff00">Verde</option>
+                </select>
+            </div>
             <div class="actions">
                 <button id="submit-btn" type="submit">Generar</button>
                 <div id="loader" class="loader">
@@ -67,6 +77,7 @@
         const jsonEl = document.getElementById('json');
         const loader = document.getElementById('loader');
         const submitBtn = document.getElementById('submit-btn');
+        const bgColorSelect = document.getElementById('bgColorSelect');
 
         // Muestra/oculta loader y deshabilita el botón para evitar dobles envíos.
         function setLoading(loading) {
@@ -105,6 +116,7 @@
             }
         }
 
+
         // Evento de envío: valida prompt, envía POST JSON a la ruta Laravel y procesa la respuesta.
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -132,7 +144,10 @@
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({
+                        prompt,
+                        backgroundColor: bgColorSelect.value
+                    })
                 });
 
                 const data = await res.json().catch(() => ({ success: false, error: 'Respuesta no válida del servidor' }));
@@ -149,6 +164,8 @@
                 setLoading(false);
             }
         });
+
+        // Sin botones ni tolerancia: el color se aplica durante la generación en backend.
     </script>
 </body>
 </html>
