@@ -34,6 +34,10 @@ RUN printf "%s\n" "<Directory ${APACHE_DOCUMENT_ROOT}>" \
 RUN composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader \
     && chown -R www-data:www-data storage bootstrap/cache
 
+# Crear directorios de cache/sesiones/vistas y logs para Laravel
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+    && chown -R www-data:www-data storage
+
 # Script de arranque que ajusta el puerto y cachea configuración
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
