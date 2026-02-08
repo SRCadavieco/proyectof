@@ -12,8 +12,14 @@ sed -ri "s#<VirtualHost \\*:[0-9]+>#<VirtualHost *:${PORT}>#g" /etc/apache2/site
 echo "ServerName localhost" > /etc/apache2/conf-enabled/servername.conf
 
 # Cachear configuración y rutas si es posible (no fallar si falta APP_KEY)
-php artisan config:cache || true
-php artisan route:cache || true
+if [ -z "${APP_KEY}" ]; then
+	# Si no hay APP_KEY, evitar cachear para que Laravel no falle
+	php artisan config:clear || true
+	php artisan route:clear || true
+else
+	php artisan config:cache || true
+	php artisan route:cache || true
+fi
 
 # Ejecutar Apache en foreground (requerido por Cloud Run)
 apache2-foreground
