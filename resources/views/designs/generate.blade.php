@@ -25,6 +25,11 @@
     </style>
 </head>
 <body>
+    <!--
+        Vista de prueba para generar diseños con IA.
+        Contiene un formulario con textarea para el prompt, un botón para enviar
+        y una sección de resultados que muestra imagen (si existe) y el JSON crudo.
+    -->
     <div class="card">
         <h1>Generar Diseño (test)</h1>
         <form id="design-form">
@@ -53,6 +58,7 @@
     </div>
 
     <script>
+        // --- Referencias a elementos de interfaz ---
         const form = document.getElementById('design-form');
         const errorEl = document.getElementById('error');
         const resultEl = document.getElementById('result');
@@ -62,11 +68,13 @@
         const loader = document.getElementById('loader');
         const submitBtn = document.getElementById('submit-btn');
 
+        // Muestra/oculta loader y deshabilita el botón para evitar dobles envíos.
         function setLoading(loading) {
             loader.style.display = loading ? 'flex' : 'none';
             submitBtn.disabled = loading;
         }
 
+        // Muestra un mensaje de error en la UI.
         function setError(msg) {
             if (msg) {
                 errorEl.textContent = msg;
@@ -77,6 +85,7 @@
             }
         }
 
+        // Renderiza el resultado del backend: imagen si viene URL/Base64 y JSON crudo.
         function showResult(data) {
             resultEl.style.display = 'block';
             jsonEl.textContent = JSON.stringify(data, null, 2);
@@ -96,6 +105,7 @@
             }
         }
 
+        // Evento de envío: valida prompt, envía POST JSON a la ruta Laravel y procesa la respuesta.
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             setError('');
@@ -103,6 +113,7 @@
             imageWrapper.style.display = 'none';
             resultEl.style.display = 'none';
 
+            // CSRF para proteger la petición POST.
             const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
@@ -112,6 +123,7 @@
             }
 
             try {
+                // Envío del prompt al backend propio: DesignController->generate()
                 const res = await fetch('{{ route('designs.generate') }}', {
                     method: 'POST',
                     headers: {
@@ -128,6 +140,7 @@
                     throw new Error(data?.message || data?.error || `Error ${res.status}`);
                 }
 
+                // Si todo bien, mostramos imagen (si hay) y el JSON crudo para depurar.
                 showResult(data);
             } catch (err) {
                 setError(err.message || 'Error inesperado');

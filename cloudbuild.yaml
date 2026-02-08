@@ -1,0 +1,31 @@
+substitutions:
+  _REGION: europe-west1
+  _SERVICE: proyectof
+  _IMAGE: gcr.io/$PROJECT_ID/proyectof
+  _APP_KEY: base64:REEMPLAZA
+  _APP_GATE_USER: team
+  _APP_GATE_PASSWORD: strong-password
+
+steps:
+  # Construir imagen Docker
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "$_IMAGE", "."]
+
+  # Subir imagen al registro
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "$_IMAGE"]
+
+  # Desplegar a Cloud Run
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      [
+        "run", "deploy", "$_SERVICE",
+        "--image", "$_IMAGE",
+        "--region", "$_REGION",
+        "--allow-unauthenticated",
+        "--set-env-vars",
+        "APP_ENV=production,APP_DEBUG=false,APP_KEY=$_APP_KEY,APP_GATE_USER=$_APP_GATE_USER,APP_GATE_PASSWORD=$_APP_GATE_PASSWORD"
+      ]
+
+images:
+  - "$_IMAGE"

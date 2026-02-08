@@ -1,0 +1,49 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Write .env from secret (optional)
+        if: ${{ secrets.ENV_FILE != '' }}
+        run: |
+          printf "%s" "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Build & push image
+        run: |
+          IMAGE=gcr.io/${{ secrets.GCP_PROJECT_ID }}/proyectof
+          gcloud builds submit --tag "$IMAGE"
+
+      - name: Deploy to Cloud Run
+        run: |
+          set -e
+          IMAGE=gcr.io/${{ secrets.GCP_PROJECT_ID }}/proyectof
+          if [ -f .env ]; then
+            # Convierte .env en lista "KEY=VAL,KEY2=VAL2" ignorando comentarios y líneas vacías
+            ENV_ARGS=$(awk -F= '/^[[:space:]]*[^#][^=]*=/{gsub(/\r$/,"");printf "%s=%s,", $1,$2}' .env | sed 's/,$//')
+          else
+            # Fallback a secretos definidos individuales
+            ENV_ARGS="APP_ENV=production,APP_DEBUG=false,APP_KEY=${{ secrets.APP_KEY }},APP_GATE_USER=${{ secrets.APP_GATE_USER }},APP_GATE_PASSWORD=${{ secrets.APP_GATE_PASSWORD }}"
+          fi
+          gcloud run deploy proyectof \
+            --image "$IMAGE" \
+            --region ${{ secrets.GCP_REGION }} \
+            --allow-unauthenticated \
+            --set-env-vars "$ENV_ARGS"
