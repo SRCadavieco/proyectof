@@ -23,6 +23,7 @@
         img.preview { max-width: 100%; border-radius: 8px; border: 1px solid #374151; background: #0b1220; }
         pre { background: #0b1220; border: 1px solid #1f2937; border-radius: 8px; padding: 12px; color: #9ca3af; overflow: auto; }
         select { background: #0b1220; color: #e5e7eb; border: 1px solid #374151; border-radius: 6px; padding: 6px 8px; }
+        .checkerboard { background: conic-gradient(#ddd 0 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0/20px 20px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -36,15 +37,6 @@
         <form id="design-form">
             <label for="prompt">Prompt</label>
             <textarea id="prompt" name="prompt" placeholder="Describe el diseño que quieres generar..."></textarea>
-            <div class="row" style="margin-top:8px;">
-                <label for="bgColorSelect">Color de fondo</label>
-                <select id="bgColorSelect">
-                    <option value="#2b7be4">Azul</option>
-                    <option value="#ff00ff">Fucsia</option>
-                    <option value="#ff0000">Rojo</option>
-                    <option value="#00ff00">Verde</option>
-                </select>
-            </div>
             <div class="actions">
                 <button id="submit-btn" type="submit">Generar</button>
                 <div id="loader" class="loader">
@@ -59,6 +51,22 @@
             <h2>Resultado</h2>
             <div id="image-wrapper" style="display:none; margin-bottom:12px">
                 <img id="image" class="preview" alt="Diseño generado" />
+            </div>
+            <div id="detected-bg" style="display:none; margin-top:8px">
+                <strong>Fondo detectado:</strong>
+                <span id="detected-swatch" style="display:inline-block;width:16px;height:16px;border:1px solid #374151;border-radius:4px;vertical-align:middle;margin:0 6px;"></span>
+                <span id="detected-hex"></span>
+                <!-- Procesado automático: sin botones -->
+            </div>
+            <div id="processed-wrapper" style="display:none; margin-top:12px">
+                <h3>Procesado local</h3>
+                <div class="checkerboard" style="padding:6px">
+                    <img id="processed-image" class="preview" alt="Imagen procesada" />
+                </div>
+                <div style="margin-top:8px">
+                    <a id="download-link" href="#" download="procesado.png" style="color:#93c5fd">Descargar PNG</a>
+                </div>
+                <div id="process-error" class="error" style="display:none"></div>
             </div>
             <details>
                 <summary>Ver JSON devuelto</summary>
@@ -77,7 +85,14 @@
         const jsonEl = document.getElementById('json');
         const loader = document.getElementById('loader');
         const submitBtn = document.getElementById('submit-btn');
-        const bgColorSelect = document.getElementById('bgColorSelect');
+        const detectedBgEl   = document.getElementById('detected-bg');
+        const detectedSwatch = document.getElementById('detected-swatch');
+        const detectedHexEl  = document.getElementById('detected-hex');
+        // Procesado automático: sin controles manuales
+        const processedWrapper = document.getElementById('processed-wrapper');
+        const processedImage   = document.getElementById('processed-image');
+        const downloadLink     = document.getElementById('download-link');
+        const processError     = document.getElementById('process-error');
 
         // Muestra/oculta loader y deshabilita el botón para evitar dobles envíos.
         function setLoading(loading) {
@@ -105,7 +120,10 @@
             const url = data.imageUrl || data.image_url || data.url;
             const base64 = data.imageBase64 || data.image_base64 || data.base64;
 
+            detectedBgEl.style.display = 'none';
+
             if (url) {
+                imageEl.crossOrigin = 'anonymous';
                 imageEl.src = url;
                 imageWrapper.style.display = 'block';
             } else if (base64) {
@@ -113,6 +131,29 @@
                 imageWrapper.style.display = 'block';
             } else {
                 imageWrapper.style.display = 'none';
+            }
+
+            // Intentar detectar color del borde y procesar automáticamente para quitar el fondo
+            if (imageWrapper.style.display === 'block') {
+                setTimeout(() => {
+                    detectEdgeColorFromSrc(imageEl.src)
+                        .then((hex) => {
+                            detectedSwatch.style.background = hex;
+                            detectedHexEl.textContent = hex;
+                            detectedBgEl.style.display = 'block';
+                            // Procesado automático: quitar fondo con el color detectado
+                            processBackground('transparent', hex)
+                                .then(() => {
+                                    imageWrapper.style.display = 'none';
+                                })
+                                .catch(() => {
+                                    // si falla (p.ej. CORS), mantenemos la original
+                                });
+                        })
+                        .catch(() => {
+                            detectedBgEl.style.display = 'none';
+                        });
+                }, 0);
             }
         }
 
@@ -144,10 +185,7 @@
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        prompt,
-                        backgroundColor: bgColorSelect.value
-                    })
+                    body: JSON.stringify({ prompt })
                 });
 
                 const data = await res.json().catch(() => ({ success: false, error: 'Respuesta no válida del servidor' }));
@@ -165,7 +203,188 @@
             }
         });
 
-        // Sin botones ni tolerancia: el color se aplica durante la generación en backend.
+        // Utilidades para detección y procesamiento local del fondo
+        function rgbToHex(r, g, b) {
+            const toHex = (n) => n.toString(16).padStart(2, '0');
+            return '#' + toHex(r) + toHex(g) + toHex(b);
+        }
+
+        function hexToRgb(hex) {
+            const m = hex.replace('#','').match(/.{1,2}/g);
+            return { r: parseInt(m[0],16), g: parseInt(m[1],16), b: parseInt(m[2],16) };
+        }
+
+        // Detecta un color tomando 1 pixel aleatorio cerca de un borde
+        async function detectEdgeColorFromSrc(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const margin = Math.max(5, Math.floor(Math.min(canvas.width, canvas.height) * 0.02));
+                    const side = Math.floor(Math.random() * 4);
+                    let x, y;
+                    if (side === 0) { // top
+                        x = Math.floor(Math.random() * canvas.width);
+                        y = Math.floor(Math.random() * margin);
+                    } else if (side === 1) { // right
+                        x = canvas.width - 1 - Math.floor(Math.random() * margin);
+                        y = Math.floor(Math.random() * canvas.height);
+                    } else if (side === 2) { // bottom
+                        x = Math.floor(Math.random() * canvas.width);
+                        y = canvas.height - 1 - Math.floor(Math.random() * margin);
+                    } else { // left
+                        x = Math.floor(Math.random() * margin);
+                        y = Math.floor(Math.random() * canvas.height);
+                    }
+
+                    try {
+                        const pixel = ctx.getImageData(x, y, 1, 1).data;
+                        resolve(rgbToHex(pixel[0], pixel[1], pixel[2]));
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        // Sin regeneración adicional: procesado automático local
+
+        // Procesa la imagen actual localmente: quita fondo (transparent) o lo reemplaza (replace)
+        async function processBackground(mode, detectedHex, targetHex = null) {
+            processError.style.display = 'none';
+            processedWrapper.style.display = 'none';
+            try {
+                const src = imageEl.src;
+                const img = await loadImage(src);
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // Leer pixel data
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                const { r: br, g: bg, b: bb } = hexToRgb(detectedHex);
+                const tol = 40; // tolerancia fija
+                const target = targetHex ? hexToRgb(targetHex) : null;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    const dist = Math.sqrt((r-br)**2 + (g-bg)**2 + (b-bb)**2);
+                    if (dist <= tol) {
+                        if (mode === 'transparent') {
+                            data[i+3] = 0;
+                        } else if (mode === 'replace' && target) {
+                            data[i] = target.r;
+                            data[i+1] = target.g;
+                            data[i+2] = target.b;
+                            data[i+3] = 255;
+                        }
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                const out = canvas.toDataURL('image/png');
+                processedImage.src = out;
+                downloadLink.href = out;
+                processedWrapper.style.display = 'block';
+            } catch (err) {
+                processError.textContent = 'No se pudo procesar localmente (posible CORS o formato): ' + (err?.message || err);
+                processError.style.display = 'block';
+            }
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+    </script>
+    <script>
+        // Override: mostrar imagen solo cuando el fondo esté quitado
+        function showResult(data) {
+            resultEl.style.display = 'block';
+            jsonEl.textContent = JSON.stringify(data, null, 2);
+
+            const url = data.imageUrl || data.image_url || data.url;
+            const base64 = data.imageBase64 || data.image_base64 || data.base64;
+
+            detectedBgEl.style.display = 'none';
+            processError.style.display = 'none';
+            processedWrapper.style.display = 'none';
+            imageWrapper.style.display = 'none';
+
+            if (url) {
+                imageEl.crossOrigin = 'anonymous';
+                imageEl.src = url;
+            } else if (base64) {
+                imageEl.src = base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64;
+            } else {
+                processError.textContent = 'No hubo imagen en la respuesta.';
+                processError.style.display = 'block';
+                return;
+            }
+
+            setTimeout(() => {
+                detectEdgeColorFromSrc(imageEl.src)
+                    .then((hex) => {
+                        detectedSwatch.style.background = hex;
+                        detectedHexEl.textContent = hex;
+                        detectedBgEl.style.display = 'block';
+                        processBackground('transparent', hex)
+                            .then(() => {
+                                processedWrapper.style.display = 'block';
+                            })
+                            .catch(() => {
+                                processError.textContent = 'No se pudo procesar localmente (posible CORS o formato).';
+                                processError.style.display = 'block';
+                            });
+                    })
+                    .catch(() => {
+                        detectedBgEl.style.display = 'none';
+                    });
+            }, 0);
+        }
+    </script>
+    <script>
+        // Production: show server-processed image directly (no local processing)
+        function showResult(data) {
+            resultEl.style.display = 'block';
+            jsonEl.textContent = JSON.stringify(data, null, 2);
+
+            const url = data.imageUrl || data.image_url || data.url;
+            const base64 = data.imageBase64 || data.image_base64 || data.base64;
+
+            // Hide local processing UI if present
+            const detectedBgEl = document.getElementById('detected-bg');
+            const processedWrapper = document.getElementById('processed-wrapper');
+            if (detectedBgEl) detectedBgEl.style.display = 'none';
+            if (processedWrapper) processedWrapper.style.display = 'none';
+
+            if (url) {
+                imageEl.src = url;
+                imageWrapper.style.display = 'block';
+            } else if (base64) {
+                imageEl.src = base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64;
+                imageWrapper.style.display = 'block';
+            } else {
+                imageWrapper.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

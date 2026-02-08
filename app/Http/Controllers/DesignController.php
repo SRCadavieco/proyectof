@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\GeminiService;
+use App\Services\BackgroundRemovalService;
 use Illuminate\Http\Request;
 
 /**
@@ -32,7 +33,7 @@ class DesignController extends Controller
      * - Llama a GeminiService para generar el diseño en el backend.
      * - Mapea el status HTTP según el resultado devuelto.
      */
-    public function generate(Request $request, GeminiService $gemini)
+    public function generate(Request $request, GeminiService $gemini, BackgroundRemovalService $backgrounds)
     {
         // Validación del input: el prompt es obligatorio y debe ser texto.
         $validated = $request->validate([
@@ -42,6 +43,18 @@ class DesignController extends Controller
 
         // Llamada al servicio: aquí se pasa el prompt a la IA/Backend.
         $result = $gemini->generateDesign($validated['prompt'], $validated['backgroundColor'] ?? null);
+
+        // If we have base64 image in result, process it server-side to remove background
+        if (is_array($result)) {
+            $base64 = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null;
+            if (is_string($base64) && $base64 !== '') {
+                $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
+                if (is_string($processed) && $processed !== '') {
+                    $result['imageBase64'] = $processed;
+                    unset($result['image_url'], $result['url']);
+                }
+            }
+        }
 
         // Por defecto 200. Si el servicio indica error, usamos su 'status'.
         $status = 200;
