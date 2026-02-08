@@ -23,6 +23,13 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!Directory /var/www/!Directory ${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
+# Permitir .htaccess en public/ y establecer DirectoryIndex
+RUN printf "%s\n" "<Directory ${APACHE_DOCUMENT_ROOT}>" \
+    "    AllowOverride All" \
+    "    Require all granted" \
+    "</Directory>" > /etc/apache2/conf-enabled/laravel.conf \
+    && echo "DirectoryIndex index.php index.html" > /etc/apache2/conf-enabled/dirindex.conf
+
 # Instalar dependencias PHP (sin dev) y preparar permisos
 RUN composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader \
     && chown -R www-data:www-data storage bootstrap/cache
