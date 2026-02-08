@@ -12,7 +12,8 @@ if (app()->environment('local')) {
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
 } else {
-    Route::middleware('auth')->group(function () {
+    // En producción, proteger con Basic Auth vía middleware 'private'
+    Route::middleware('private')->group(function () {
         Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
         Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
     });

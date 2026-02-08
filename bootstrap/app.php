@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Alias para el gate básico
+        $middleware->alias([
+            'private' => \App\Http\Middleware\PrivateAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
