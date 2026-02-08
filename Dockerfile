@@ -1,5 +1,5 @@
 # Imagen sencilla para Laravel en Cloud Run usando Apache + PHP (mod_php)
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 # Dependencias del sistema y extensiones PHP necesarias
 RUN apt-get update && apt-get install -y \
