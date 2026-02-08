@@ -124,7 +124,8 @@
 
             try {
                 // Envío del prompt al backend propio: DesignController->generate()
-                const res = await fetch('{{ route('designs.generate') }}', {
+                // Usa ruta relativa para evitar problemas si APP_URL no coincide con el host actual
+                const res = await fetch('{{ route('designs.generate', [], false) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
