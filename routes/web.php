@@ -22,8 +22,11 @@ if (app()->environment('local')) {
 
         // Rutas de generación
         Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
-        Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
     });
+
+    // Para evitar problemas con fetch y el reto Basic Auth en POST,
+    // exponemos la ruta de generación sin el middleware 'private'.
+    Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
 }
 
 // Debug local-only endpoint to inspect Gemini config
