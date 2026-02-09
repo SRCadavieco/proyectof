@@ -74,7 +74,7 @@
                 <div id="process-error" class="error" style="display:none"></div>
             </div>
             <details>
-                <summary>Ver JSON devuelto</summary>
+                <summary>Ver JSON</summary>
                 <pre id="json"></pre>
             </details>
         </div>
