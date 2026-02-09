@@ -6,7 +6,11 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
- && docker-php-ext-install zip pdo pdo_mysql \
+    libpng-dev \
+    libjpeg-dev \
+    libwebp-dev \
+ && docker-php-ext-configure gd --with-jpeg --with-webp \
+ && docker-php-ext-install zip pdo pdo_mysql gd \
  && a2enmod rewrite \
  && rm -rf /var/lib/apt/lists/*
 
