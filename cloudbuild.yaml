@@ -1,7 +1,6 @@
 substitutions:
   _REGION: europe-west1
   _SERVICE: proyectof
-  _PROJECT_ID: gen-lang-client-0352261941
   _IMAGE: gcr.io/gen-lang-client-0352261941/proyectof
   _APP_KEY: base64:4ZO8qcHIzKh1hJ4GaostSEMwI/P2XqphnZ49yXcFPB0=
   _GEMINI_BACKEND_URL: https://fabricai-278322460825.europe-west1.run.app/
