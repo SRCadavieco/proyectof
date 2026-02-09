@@ -3,6 +3,9 @@ substitutions:
   _SERVICE: proyectof
   _PROJECT_ID: gen-lang-client-0352261941
   _IMAGE: gcr.io/gen-lang-client-0352261941/proyectof
+  _APP_KEY: base64:4ZO8qcHIzKh1hJ4GaostSEMwI/P2XqphnZ49yXcFPB0=
+  _GEMINI_BACKEND_URL: https://fabricai-278322460825.europe-west1.run.app/
+  _GEMINI_BACKEND_TOKEN: ""
 
 steps:
   # Construir imagen Docker
@@ -22,21 +25,7 @@ steps:
       - --image=$_IMAGE
       - --region=$_REGION
       - --allow-unauthenticated
-      - --set-env-vars=APP_ENV=production,APP_DEBUG=false,SESSION_DRIVER=cookie,CACHE_STORE=array,APP_KEY=$$APP_KEY,GEMINI_BACKEND_URL=$$GEMINI_BACKEND_URL,GEMINI_BACKEND_TOKEN=$$GEMINI_BACKEND_TOKEN,GEMINI_BACKEND_PATH=/generate,GEMINI_BACKEND_AUTH_HEADER=none,GEMINI_BACKEND_METHOD=POST
-    secretEnv:
-      - APP_KEY
-      - GEMINI_BACKEND_URL
-      - GEMINI_BACKEND_TOKEN
-
-# Configuración de secrets desde Secret Manager
-availableSecrets:
-  secretManager:
-    - versionName: projects/gen-lang-client-0352261941/secrets/APP_KEY/versions/latest
-      env: APP_KEY
-    - versionName: projects/gen-lang-client-0352261941/secrets/GEMINI_BACKEND_URL/versions/latest
-      env: GEMINI_BACKEND_URL
-    - versionName: projects/gen-lang-client-0352261941/secrets/GEMINI_BACKEND_TOKEN/versions/latest
-      env: GEMINI_BACKEND_TOKEN
+      - --set-env-vars=APP_ENV=production,APP_DEBUG=false,SESSION_DRIVER=cookie,CACHE_STORE=array,APP_KEY=$_APP_KEY,GEMINI_BACKEND_URL=$_GEMINI_BACKEND_URL,GEMINI_BACKEND_TOKEN=$_GEMINI_BACKEND_TOKEN,GEMINI_BACKEND_PATH=/generate,GEMINI_BACKEND_AUTH_HEADER=none,GEMINI_BACKEND_METHOD=POST
 
 images:
   - $_IMAGE
