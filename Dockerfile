@@ -31,6 +31,10 @@ COPY . .
 # Instalar dependencias de Node.js y compilar assets (Tailwind/Vite)
 RUN npm install && npm run build
 
+# Verificar que los assets se compilaron correctamente
+RUN ls -la public/build/ && \
+    test -f public/build/manifest.json || (echo "ERROR: manifest.json no generado" && exit 1)
+
 # Configurar DocumentRoot a public/
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
