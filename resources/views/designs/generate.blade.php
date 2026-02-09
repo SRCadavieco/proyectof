@@ -8,6 +8,7 @@
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 24px; background: #0f172a; color: #e2e8f0; }
         .card { max-width: 800px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; }
+        .brand { text-align: center; font-size: 32px; font-weight: 700; margin: 0 0 24px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         h1 { font-size: 20px; margin: 0 0 12px; }
         label { display: block; font-weight: 600; margin-bottom: 8px; }
         textarea { width: 100%; min-height: 120px; border-radius: 8px; border: 1px solid #374151; background: #0b1220; color: #e5e7eb; padding: 10px; resize: vertical; }
@@ -24,6 +25,8 @@
         pre { background: #0b1220; border: 1px solid #1f2937; border-radius: 8px; padding: 12px; color: #9ca3af; overflow: auto; }
         select { background: #0b1220; color: #e5e7eb; border: 1px solid #374151; border-radius: 6px; padding: 6px 8px; }
         .checkerboard { background: conic-gradient(#ddd 0 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0/20px 20px; border-radius: 8px; }
+        .download-btn { background: #10b981; color: white; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block; margin-top: 8px; }
+        .download-btn:hover { background: #059669; }
     </style>
 </head>
 <body>
@@ -33,6 +36,7 @@
         y una sección de resultados que muestra imagen (si existe) y el JSON crudo.
     -->
     <div class="card">
+        <h1 class="brand">FabricAI</h1>
         <h1>Generar Diseño (test)</h1>
         <form id="design-form">
             <label for="prompt">Prompt</label>
@@ -51,6 +55,7 @@
             <h2>Resultado</h2>
             <div id="image-wrapper" style="display:none; margin-bottom:12px">
                 <img id="image" class="preview" alt="Diseño generado" />
+                <a id="download-original" class="download-btn" style="display:none" download="diseno.png">⬇️ Descargar Imagen</a>
             </div>
             <div id="detected-bg" style="display:none; margin-top:8px">
                 <strong>Fondo detectado:</strong>
@@ -88,6 +93,7 @@
         const detectedBgEl   = document.getElementById('detected-bg');
         const detectedSwatch = document.getElementById('detected-swatch');
         const detectedHexEl  = document.getElementById('detected-hex');
+        const downloadOriginal = document.getElementById('download-original');
         // Procesado automático: sin controles manuales
         const processedWrapper = document.getElementById('processed-wrapper');
         const processedImage   = document.getElementById('processed-image');
@@ -126,11 +132,16 @@
                 imageEl.crossOrigin = 'anonymous';
                 imageEl.src = url;
                 imageWrapper.style.display = 'block';
+                downloadOriginal.href = url;
+                downloadOriginal.style.display = 'inline-block';
             } else if (base64) {
                 imageEl.src = base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64;
                 imageWrapper.style.display = 'block';
+                downloadOriginal.href = imageEl.src;
+                downloadOriginal.style.display = 'inline-block';
             } else {
                 imageWrapper.style.display = 'none';
+                downloadOriginal.style.display = 'none';
             }
 
             // Intentar detectar color del borde y procesar automáticamente para quitar el fondo
