@@ -5,12 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>FabricAI - Generador de Diseños</title>
-    @if (file_exists(public_path('build/manifest.json')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @else
-        <!-- Fallback CSS -->
-        <link rel="stylesheet" href="https://cdn.tailwindcss.com">
-    @endif
+    <!-- Tailwind CSS desde CDN para garantizar que funcione -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes spin {
             to { transform: rotate(360deg); }
