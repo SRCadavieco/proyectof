@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>FabricAI - Generador de Diseños</title>
-    <!-- Tailwind CSS desde CDN para garantizar que funcione -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -134,11 +133,32 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = 'mb-5 flex flex-col items-start';
             
+            const uniqueId = 'bg-' + Date.now();
+            
             messageDiv.innerHTML = `
                 <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-semibold mb-2">AI</div>
                 <div class="bg-gray-50 px-4 py-3.5 rounded-xl text-sm leading-relaxed text-gray-700 max-w-2xl">
                     <div class="mt-3">
-                        <img src="${imageUrl}" alt="Diseño generado" class="max-w-full rounded-xl shadow-md block" crossorigin="anonymous">
+                        <!-- Contenedor con fondo ajustable -->
+                        <div id="${uniqueId}" class="p-4 rounded-xl transition-colors" style="background-color: #ffffff;">
+                            <img src="${imageUrl}" alt="Diseño generado" class="max-w-full rounded-xl shadow-md block" crossorigin="anonymous">
+                        </div>
+                        
+                        <!-- Controles de fondo -->
+                        <div class="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                            <div class="text-xs font-medium text-gray-600 mb-2">Color de fondo (previsualización):</div>
+                            <div class="flex gap-2 items-center flex-wrap">
+                                <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-white hover:border-gray-400 transition-colors" title="Blanco"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-black hover:border-gray-400 transition-colors" title="Negro"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#ef4444')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-red-500 hover:border-gray-400 transition-colors" title="Rojo"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#3b82f6')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-blue-500 hover:border-gray-400 transition-colors" title="Azul"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#10b981')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-emerald-500 hover:border-gray-400 transition-colors" title="Verde"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#f59e0b')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-amber-500 hover:border-gray-400 transition-colors" title="Ámbar"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#8b5cf6')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-violet-500 hover:border-gray-400 transition-colors" title="Violeta"></button>
+                                <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-8 h-8 rounded-md border-2 border-gray-300 cursor-pointer" title="Personalizado">
+                            </div>
+                        </div>
+                        
                         <div class="flex gap-2 mt-3">
                             <a href="${imageUrl}" download="diseño.png" class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors no-underline inline-block">Descargar</a>
                         </div>
@@ -149,6 +169,14 @@
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
         }
+        
+        // Función global para cambiar el fondo
+        window.changeBg = function(bgId, color) {
+            const bgElement = document.getElementById(bgId);
+            if (bgElement) {
+                bgElement.style.backgroundColor = color;
+            }
+        };
         
         // Scroll al final del chat
         function scrollToBottom() {
