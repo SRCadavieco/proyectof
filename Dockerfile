@@ -9,10 +9,16 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libwebp-dev \
+    curl \
  && docker-php-ext-configure gd --with-jpeg --with-webp \
  && docker-php-ext-install zip pdo pdo_mysql gd \
  && a2enmod rewrite \
  && rm -rf /var/lib/apt/lists/*
+
+# Instalar Node.js 20.x
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 # Instalar Composer desde imagen oficial
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -21,6 +27,9 @@ WORKDIR /var/www/html
 
 # Copiar archivos del proyecto
 COPY . .
+
+# Instalar dependencias de Node.js y compilar assets (Tailwind/Vite)
+RUN npm install && npm run build
 
 # Configurar DocumentRoot a public/
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
