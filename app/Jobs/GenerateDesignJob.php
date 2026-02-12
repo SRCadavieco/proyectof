@@ -38,36 +38,33 @@ class GenerateDesignJob implements ShouldQueue
     public function handle()
     {
         try {
-            // Llamar a la API de NanoBanana con timeout aumentado
-            $response = Http::timeout(120)->post('https://api.nanobanana.com/generate', [
-                'prompt' => $this->prompt
-            ]);
-
-            if ($response->failed()) {
-                // Guardar error en la base de datos
-                \App\Models\DesignGeneration::create([
-                    'prompt' => $this->prompt,
-                    'image_url' => null,
-                    'task_id' => $this->taskId,
-                    'error' => 'NanoBanana timeout…'
-                ]);
-                // Emitir evento de error
-                event(new DesignGenerated($this->taskId, null, 'NanoBanana timeout…'));
-                throw new \Exception('Error al generar el diseño');
-            }
+            // Polling a Pixazo para obtener el estado de la imagen
+            $response = Http::withHeaders([
+                'Ocp-Apim-Subscription-Key' => config('services.pixazo.key'),
+                'Content-Type' => 'application/json',
+            ])->post(
+                'https://gateway.pixazo.ai/nano-banana-polling/nano-banana/getStatus',
+                [
+                    'requestId' => $this->taskId
+                ]
+            );
 
             $data = $response->json();
 
-            // Guardar diseño generado en la base de datos
-            \App\Models\DesignGeneration::create([
-                'prompt' => $this->prompt,
-                'image_url' => $data['image_url'] ?? null,
-                'task_id' => $this->taskId,
-                'error' => null
-            ]);
-
-            // Emitir evento cuando la imagen esté lista
-            event(new DesignGenerated($this->taskId, $data['image_url'], null));
+            if (!empty($data['images'][0]['url'])) {
+                // Guardar imagen generada en la base de datos
+                \App\Models\DesignGeneration::create([
+                    'prompt' => $this->prompt,
+                    'image_url' => $data['images'][0]['url'],
+                    'task_id' => $this->taskId,
+                    'error' => null
+                ]);
+                // Emitir evento cuando la imagen esté lista
+                event(new DesignGenerated($this->taskId, $data['images'][0]['url'], null));
+            } else {
+                // Reintentar en 10 segundos si la imagen no está lista
+                $this->release(10);
+            }
         } catch (\Exception $e) {
             Log::error('Error en GenerateDesignJob: ' . $e->getMessage());
             // Guardar error en la base de datos
