@@ -62,8 +62,14 @@ class GenerateDesignJob implements ShouldQueue
                 // Emitir evento cuando la imagen esté lista
                 event(new DesignGenerated($this->taskId, $data['images'][0]['url'], null));
             } else {
-                // Reintentar en 10 segundos si la imagen no está lista
-                $this->release(10);
+                // Guardar error si la imagen no está lista
+                \App\Models\DesignGeneration::create([
+                    'prompt' => $this->prompt,
+                    'image_url' => null,
+                    'task_id' => $this->taskId,
+                    'error' => 'Imagen no disponible en Pixazo'
+                ]);
+                event(new DesignGenerated($this->taskId, null, 'Imagen no disponible en Pixazo'));
             }
         } catch (\Exception $e) {
             Log::error('Error en GenerateDesignJob: ' . $e->getMessage());
