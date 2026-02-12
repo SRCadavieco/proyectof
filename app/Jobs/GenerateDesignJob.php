@@ -38,31 +38,44 @@ class GenerateDesignJob implements ShouldQueue
     public function handle()
     {
         try {
-            // Polling a Pixazo para obtener el estado de la imagen
+            // 1. Pedir requestId a la API Node.js /generate
+            $generateResponse = Http::timeout(60)->post(
+                config('services.nanobanana.url').'/generate',
+                [ 'prompt' => $this->prompt ]
+            );
+            $generateData = $generateResponse->json();
+            $requestId = $generateData['requestId'] ?? null;
+
+            if (!$requestId) {
+                \App\Models\DesignGeneration::create([
+                    'prompt' => $this->prompt,
+                    'image_url' => null,
+                    'task_id' => $this->taskId,
+                    'error' => 'No requestId returned from nanobanana'
+                ]);
+                event(new DesignGenerated($this->taskId, null, 'No requestId returned from nanobanana'));
+                return;
+            }
+
+            // 2. Polling a Pixazo para obtener el estado de la imagen
             $response = Http::withHeaders([
                 'Ocp-Apim-Subscription-Key' => config('services.pixazo.key'),
                 'Content-Type' => 'application/json',
             ])->post(
                 'https://gateway.pixazo.ai/nano-banana-polling/nano-banana/getStatus',
-                [
-                    'requestId' => $this->taskId
-                ]
+                [ 'requestId' => $requestId ]
             );
-
             $data = $response->json();
 
             if (!empty($data['images'][0]['url'])) {
-                // Guardar imagen generada en la base de datos
                 \App\Models\DesignGeneration::create([
                     'prompt' => $this->prompt,
                     'image_url' => $data['images'][0]['url'],
                     'task_id' => $this->taskId,
                     'error' => null
                 ]);
-                // Emitir evento cuando la imagen esté lista
                 event(new DesignGenerated($this->taskId, $data['images'][0]['url'], null));
             } else {
-                // Guardar error si la imagen no está lista
                 \App\Models\DesignGeneration::create([
                     'prompt' => $this->prompt,
                     'image_url' => null,
