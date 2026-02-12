@@ -7,16 +7,6 @@ substitutions:
   _GEMINI_BACKEND_TOKEN: ""
 
 steps:
-    # Ejecutar migraciones automáticamente en el contenedor desplegado
-    - name: gcr.io/cloud-builders/gcloud
-      args:
-        - run
-        - services
-        - execute
-        - $_SERVICE
-        - --region=$_REGION
-        - --command=php artisan migrate --force
-      id: migrate
   # Construir imagen Docker
   - name: gcr.io/cloud-builders/docker
     args: ["build", "-t", "$_IMAGE", "."]
