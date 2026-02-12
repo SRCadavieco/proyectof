@@ -7,6 +7,7 @@
     <title>FabricAI - Generador de Diseños</title>
     <!-- Tailwind CSS desde CDN para garantizar que funcione -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
     <style>
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -193,25 +194,46 @@
             return div.innerHTML;
         }
         
+        // Configurar Pusher para escuchar eventos
+        const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+            encrypted: true
+        });
+
+        // Escuchar el canal privado para diseños
+        const channel = pusher.subscribe('private-designs');
+        channel.bind('App\\Events\\DesignGenerated', function(data) {
+            if (data.taskId === currentTaskId) {
+                if (data.error) {
+                    showError(data.error);
+                    setLoading(false);
+                    return;
+                }
+                addBotResponse(data.imageUrl);
+                setLoading(false);
+            }
+        });
+
         // Enviar formulario
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const prompt = promptInput.value.trim();
             if (!prompt) {
                 showError('Por favor escribe un prompt');
                 return;
             }
-            
+
             // Agregar mensaje del usuario
             addUserMessage(prompt);
             promptInput.value = '';
             promptInput.style.height = 'auto';
-            
+
             // Iniciar carga
             setLoading(true);
-            
+
             try {
+                // Enviar prompt a Laravel
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const res = await fetch('{{ route('designs.generate', [], false) }}', {
                     method: 'POST',
@@ -222,32 +244,15 @@
                     },
                     body: JSON.stringify({ prompt })
                 });
-                
-                const data = await res.json().catch(() => ({ 
-                    success: false, 
-                    error: 'Respuesta inválida del servidor' 
-                }));
-                
-                if (!res.ok) {
-                    throw new Error(data?.message || data?.error || `Error ${res.status}`);
+                const data = await res.json();
+                if (!res.ok || !data.task_id) {
+                    throw new Error(data?.error || 'No se pudo iniciar la generación del diseño');
                 }
-                
-                // Extraer URL de imagen
-                const imageUrl = data.imageUrl || data.image_url || data.url;
-                const base64 = data.imageBase64 || data.image_base64 || data.base64;
-                
-                if (imageUrl) {
-                    addBotResponse(imageUrl);
-                } else if (base64) {
-                    const fullBase64 = base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64;
-                    addBotResponse(fullBase64);
-                } else {
-                    throw new Error('No hay imagen en la respuesta');
-                }
-                
+
+                // Guardar el ID de la tarea actual
+                currentTaskId = data.task_id;
             } catch (err) {
                 showError(err.message || 'Error inesperado');
-            } finally {
                 setLoading(false);
             }
         });
