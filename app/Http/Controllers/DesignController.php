@@ -35,18 +35,36 @@ class DesignController extends Controller
      * - Llama a GeminiService para generar el diseño en el backend.
      * - Mapea el status HTTP según el resultado devuelto.
      */
-    public function generate(Request $request)
+    public function generate(Request $request, GeminiService $gemini, BackgroundRemovalService $backgrounds)
     {
-        $request->validate([
-            'prompt' => 'required|string|max:255',
+        // Validación del input: el prompt es obligatorio y debe ser texto.
+        $validated = $request->validate([
+            'prompt' => ['required', 'string'],
+            'backgroundColor' => ['nullable', 'string'], // hex color like #ff0000
         ]);
 
-        $prompt = $request->input('prompt');
-        $taskId = Str::uuid()->toString();
+        // Llamada al servicio: aquí se pasa el prompt a la IA/Backend.
+        $result = $gemini->generateDesign($validated['prompt'], $validated['backgroundColor'] ?? null);
 
-        // Despachar el trabajo a la cola
-        GenerateDesignJob::dispatch($prompt, $taskId);
+        // If we have base64 image in result, process it server-side to remove background
+        if (is_array($result)) {
+            $base64 = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null;
+            if (is_string($base64) && $base64 !== '') {
+                $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
+                if (is_string($processed) && $processed !== '') {
+                    $result['imageBase64'] = $processed;
+                    unset($result['image_url'], $result['url']);
+                }
+            }
+        }
 
-        return response()->json(['task_id' => $taskId]);
+        // Por defecto 200. Si el servicio indica error, usamos su 'status'.
+        $status = 200;
+        if (is_array($result) && array_key_exists('success', $result) && $result['success'] === false) {
+            $status = isset($result['status']) ? (int) $result['status'] : 500;
+        }
+
+        // Respuesta JSON hacia el frontend (vista Blade).
+        return response()->json($result, $status);
     }
 }
