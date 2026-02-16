@@ -33,7 +33,7 @@
 
         <!-- Logo FabricAI -->
         <div class="flex items-center">
-            <img src="/logo.png" alt="Logo" class="h-16 w-16">
+            <img src="/images/logo.png" alt="Logo" class="h-16 w-16">
         </div>
 
         <div class="hidden md:flex gap-8 text-sm text-gray-300 font-medium">
