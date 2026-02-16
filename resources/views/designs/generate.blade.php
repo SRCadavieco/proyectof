@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>FabricAI - Generador de Diseños</title>
-    <!-- Tailwind CSS desde CDN para garantizar que funcione -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>FabricAI — AI Design Studio</title>
+    @vite(['resources/css/app.css','resources/js/app.js'])
     <style>
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -16,72 +17,87 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <aside class="w-60 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
-            <div class="p-5 border-b border-gray-200">
-                <div class="text-xs text-gray-400 text-center py-10 px-5 leading-relaxed">
-                    Aquí irá el archivo de chats
-                </div>
+<body class="bg-gray-950 text-white h-screen overflow-hidden">
+
+<div class="flex h-screen">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">
+        <div class="p-6 border-b border-gray-800 flex justify-center">
+            <a href="/">
+                <img src="/logo.png" alt="Logo" class="h-20 w-20 mx-auto">
+            </a>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 text-sm text-gray-500">
+            <!-- Future chat history -->
+        </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        <!-- Background glow -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                    w-[900px] h-[900px] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none">
+        </div>
+
+        <!-- HEADER -->
+        <header class="relative z-10 px-8 py-4 border-b border-gray-800
+                       backdrop-blur-md bg-gray-950/80 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500"></div>
+                <span class="font-semibold">AI Design Generator</span>
             </div>
-        </aside>
-        
-        <!-- Contenido principal -->
-        <main class="flex-1 flex flex-col bg-white overflow-hidden">
-            <!-- Header -->
-            <header class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 bg-emerald-500 rounded-md"></div>
-                    <span class="text-base font-bold text-gray-900">FabricAI</span>
-                </div>
-                <div class="flex items-center gap-1.5 text-sm text-gray-500">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                    <span>IA Conectada</span>
-                </div>
-            </header>
-            
-            <!-- Chat area -->
-            <div class="flex-1 overflow-y-auto p-6 flex flex-col" id="chat-container">
-                <div class="max-w-4xl mx-auto w-full">
-                    <!-- Mensaje de bienvenida -->
-                    <div class="mb-5 flex flex-col items-start">
-                        <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-semibold mb-2">
-                            AI
-                        </div>
-                        <div class="bg-gray-50 px-4 py-3.5 rounded-xl text-sm leading-relaxed text-gray-700 max-w-2xl">
-                            <p>Soy FabricAI, tu IA para generar diseños de ropa. Escribe tu prompt y yo te generaré el diseño.</p>
-                        </div>
+            <div class="flex items-center gap-2 text-sm text-gray-400">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                AI Online
+            </div>
+        </header>
+
+        <!-- ================= CHAT AREA ================= -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-8 relative z-10">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <!-- Welcome Message -->
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center font-bold">
+                        AI
                     </div>
-                    
-                    <!-- Aquí se agregarán los mensajes dinámicamente -->
-                    <div id="messages"></div>
-                </div>
-            </div>
-            
-            <!-- Input area -->
-            <div class="border-t border-gray-200 p-5 bg-white">
-                <div id="error" class="hidden text-red-500 text-sm mt-2"></div>
-                <div id="loader" class="hidden items-center gap-2 text-emerald-500 text-sm mb-3">
-                    <div class="spinner w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
-                    <span>Generando diseño...</span>
-                </div>
-                <form id="design-form">
-                    <div class="flex gap-3 items-end">
-                        <textarea 
-                            id="prompt" 
-                            class="flex-1 min-h-[44px] max-h-[120px] px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none outline-none transition-colors focus:border-emerald-500 placeholder-gray-400"
-                            placeholder="Describe la ropa que quieres diseñar... ej: 'Una chaqueta cyberpunk con detalles neón'"
-                            rows="1"
-                        ></textarea>
-                        <button type="submit" id="submit-btn" class="px-6 py-3 bg-emerald-500 text-white rounded-xl text-sm font-semibold cursor-pointer transition-colors hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap">
-                            Generar ✨
-                        </button>
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4 text-gray-300 max-w-2xl">
+                        Welcome to FabricAI.  
+                        Describe the clothing design you want to create and I'll generate it for you.
                     </div>
-                </form>
+                </div>
+                <div id="messages" class="space-y-8"></div>
             </div>
-        </main>
-    </div>
+        </div>
+
+        <!-- ================= INPUT AREA ================= -->
+        <div class="relative z-10 border-t border-gray-800 p-6 bg-gray-950/80 backdrop-blur-md">
+            <div id="error" class="hidden text-red-400 text-sm mb-3"></div>
+            <div id="loader" class="hidden items-center gap-3 text-purple-400 text-sm mb-4">
+                <div class="spinner w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                Generating design...
+            </div>
+            <form id="design-form" class="max-w-4xl mx-auto">
+                <div class="flex gap-4 items-end">
+                    <textarea
+                        id="prompt"
+                        rows="1"
+                        placeholder="Example: Futuristic cyberpunk jacket with neon purple details..."
+                           class="flex-1 bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4 text-sm resize-none
+                               focus:outline-none focus:border-purple-500 transition
+                               placeholder-gray-500 max-h-40 scrollbar-hide"></textarea>
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        class="px-6 py-4 rounded-2xl font-semibold text-sm
+                               bg-gradient-to-r from-purple-500 to-indigo-500
+                               hover:opacity-90 transition disabled:opacity-50">
+                        Generate ✨
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
     
     <!-- Hidden elements para procesar imagen -->
     <img id="temp-image" class="hidden" crossorigin="anonymous" />
@@ -137,31 +153,28 @@
             const uniqueId = 'bg-' + Date.now();
             
             messageDiv.innerHTML = `
-                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-semibold mb-2">AI</div>
-                <div class="bg-gray-50 px-4 py-3.5 rounded-xl text-sm leading-relaxed text-gray-700 max-w-2xl">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center font-bold">AI</div>
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4 max-w-2xl text-gray-300">
                     <div class="mt-3">
-                        <!-- Contenedor con fondo ajustable -->
-                        <div id="${uniqueId}" class="p-4 rounded-xl transition-colors" style="background-color: #ffffff;">
-                            <img src="${imageUrl}" alt="Diseño generado" class="max-w-full rounded-xl shadow-md block" crossorigin="anonymous">
+                        <div id="${uniqueId}" class="p-4 rounded-xl transition-colors bg-gray-900">
+                            <img src="${imageUrl}" alt="Generated design" class="rounded-xl shadow-lg max-w-full" crossorigin="anonymous">
                         </div>
-                        
-                        <!-- Controles de fondo -->
-                        <div class="mt-3 p-3 bg-white rounded-lg border border-gray-200">
-                            <div class="text-xs font-medium text-gray-600 mb-2">Color de fondo (previsualización):</div>
+                        <div class="mt-3 p-3 bg-gray-900 rounded-lg border border-gray-800">
+                            <div class="text-xs font-medium text-gray-400 mb-2">Background color (preview):</div>
                             <div class="flex gap-2 items-center flex-wrap">
-                                <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-white hover:border-gray-400 transition-colors" title="Blanco"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-black hover:border-gray-400 transition-colors" title="Negro"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#ef4444')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-red-500 hover:border-gray-400 transition-colors" title="Rojo"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#3b82f6')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-blue-500 hover:border-gray-400 transition-colors" title="Azul"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#10b981')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-emerald-500 hover:border-gray-400 transition-colors" title="Verde"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#f59e0b')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-amber-500 hover:border-gray-400 transition-colors" title="Ámbar"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#8b5cf6')" class="w-8 h-8 rounded-md border-2 border-gray-300 bg-violet-500 hover:border-gray-400 transition-colors" title="Violeta"></button>
-                                <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-8 h-8 rounded-md border-2 border-gray-300 cursor-pointer" title="Personalizado">
+                                <button type="button" onclick="changeBg('${uniqueId}', '#18181b')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-gray-900 hover:border-purple-500 transition-colors" title="Dark"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-white hover:border-purple-500 transition-colors" title="White"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-black hover:border-purple-500 transition-colors" title="Black"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#a78bfa')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-purple-400 hover:border-purple-500 transition-colors" title="Purple"></button>
+                                <button type="button" onclick="changeBg('${uniqueId}', '#6366f1')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-indigo-500 hover:border-purple-500 transition-colors" title="Indigo"></button>
+                                <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-8 h-8 rounded-md border-2 border-gray-700 cursor-pointer" title="Custom">
                             </div>
                         </div>
-                        
-                        <div class="flex gap-2 mt-3">
-                            <a href="${imageUrl}" download="diseño.png" class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors no-underline inline-block">Descargar</a>
+                        <div class="flex gap-3 mt-4">
+                            <a href="${imageUrl}" download="design.png"
+                               class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
+                                Download
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -243,10 +256,11 @@
                     const fullBase64 = base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64;
                     addBotResponse(fullBase64);
                 } else {
-                    throw new Error('No hay imagen en la respuesta');
+                    throw new Error('No image in response');
                 }
             } catch (err) {
-                showError(err.message || 'Error inesperado');
+                showError(err.message || 'Unexpected error');
+            } finally {
                 setLoading(false);
             }
         });
