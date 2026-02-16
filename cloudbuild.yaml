@@ -7,6 +7,16 @@ substitutions:
   _GEMINI_BACKEND_TOKEN: ""
 
 steps:
+  # Limpiar caché de Laravel y mostrar APP_URL
+  - name: 'gcr.io/cloud-builders/php'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        php artisan config:clear
+        php artisan cache:clear
+        php artisan view:clear
+        echo "APP_URL: $(php -r 'echo env(\'APP_URL\');')"
 
   # Limpiar y construir assets frontend
   - name: node:20
