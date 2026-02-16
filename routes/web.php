@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -5,7 +6,10 @@ use App\Http\Controllers\DesignController;
 use App\Http\Controllers\ProfileController;
 // use App\Http\Controllers\PrintifyController; // removed
 
-
+// FAQ page
+Route::get('/faq', function () {
+    return view('faq');
+});
 // Home apunta siempre a la vista welcome
 Route::get('/', function () {
     return view('welcome');
