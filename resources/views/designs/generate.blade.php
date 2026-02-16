@@ -215,7 +215,7 @@
             try {
                 // Enviar prompt a Laravel
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const res = await fetch('{{ route('designs.generate', [], false) }}', {
+                const res = await fetch('/designs/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -228,15 +228,15 @@
                     success: false, 
                     error: 'Respuesta inválida del servidor' 
                 }));
-                
+
                 if (!res.ok) {
                     throw new Error(data?.message || data?.error || `Error ${res.status}`);
                 }
-                
+
                 // Extraer URL de imagen
                 const imageUrl = data.imageUrl || data.image_url || data.url;
                 const base64 = data.imageBase64 || data.image_base64 || data.base64;
-                
+
                 if (imageUrl) {
                     addBotResponse(imageUrl);
                 } else if (base64) {
