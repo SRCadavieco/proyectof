@@ -8,7 +8,7 @@ substitutions:
 
 steps:
   # Limpiar caché de Laravel y mostrar APP_URL
-  - name: 'gcr.io/cloud-builders/php'
+  - name: 'php:8.2-cli'
     entrypoint: 'bash'
     args:
       - -c
@@ -16,7 +16,7 @@ steps:
         php artisan config:clear
         php artisan cache:clear
         php artisan view:clear
-        echo "APP_URL: $(php -r 'echo env(\'APP_URL\');')"
+        echo "APP_URL: $(php -r 'echo env(\"APP_URL\");')"
 
   # Limpiar y construir assets frontend
   - name: node:20
