@@ -69,14 +69,12 @@ class DesignController extends Controller
         if (is_array($result)) {
             $base64 = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null;
             if ($base64) {
-                // Procesar fondo si no es edición
-                if (!$isEdit) {
-                    $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
-                    if (is_string($processed) && $processed !== '') {
-                        $result['imageBase64'] = $processed;
-                        unset($result['image_url'], $result['url']);
-                        $base64 = $processed;
-                    }
+                // Procesar fondo siempre que haya imagen
+                $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
+                if (is_string($processed) && $processed !== '') {
+                    $result['imageBase64'] = $processed;
+                    unset($result['image_url'], $result['url']);
+                    $base64 = $processed;
                 }
                 session(['last_image' => $base64]);
             }
