@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,15 +176,24 @@
                                class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
                                 Download
                             </a>
-                            <button type="button" onclick="insertEditPrompt()"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition">
+                            <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition edit-btn">
                                 Editar imagen
                             </button>
                         </div>
-
-                    </div>
-                </div>
-            `;
+                        
+                        </div>
+                        </div>
+                        `;
+                        // Delegación de eventos para el botón Editar imagen (solo una vez)
+                        document.addEventListener('click', function(e) {
+                            if (e.target && e.target.classList.contains('edit-btn')) {
+                                const promptInput = document.getElementById('prompt');
+                                if (promptInput) {
+                                    promptInput.value = '/edit ';
+                                    promptInput.focus();
+                                }
+                            }
+                        });
             
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
