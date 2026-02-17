@@ -37,24 +37,48 @@ class DesignController extends Controller
      */
     public function generate(Request $request, GeminiService $gemini, BackgroundRemovalService $backgrounds)
     {
-        // Validación del input: el prompt es obligatorio y debe ser texto.
         $validated = $request->validate([
             'prompt' => ['required', 'string'],
-            'backgroundColor' => ['nullable', 'string'], // hex color like #ff0000
+            'backgroundColor' => ['nullable', 'string'],
         ]);
 
-        // Llamada al servicio: aquí se pasa el prompt a la IA/Backend.
-        $result = $gemini->generateDesign($validated['prompt'], $validated['backgroundColor'] ?? null);
+        $prompt = trim($validated['prompt']);
+        $backgroundColor = $validated['backgroundColor'] ?? null;
 
-        // If we have base64 image in result, process it server-side to remove background
+        $isEdit = str_starts_with($prompt, '/edit');
+
+        if ($isEdit) {
+            $lastImage = session('last_image');
+            if (!$lastImage) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No previous design found to edit.'
+                ], 422);
+            }
+            $cleanPrompt = trim(preg_replace('/^\/edit/i', '', $prompt));
+            $result = $gemini->generateFromReference(
+                $cleanPrompt,
+                $lastImage,
+                'image/png'
+            );
+        } else {
+            $result = $gemini->generateDesign($prompt, $backgroundColor);
+        }
+
+        // Si hay imagen base64, la guardamos como última imagen
         if (is_array($result)) {
             $base64 = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null;
-            if (is_string($base64) && $base64 !== '') {
-                $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
-                if (is_string($processed) && $processed !== '') {
-                    $result['imageBase64'] = $processed;
-                    unset($result['image_url'], $result['url']);
+            if ($base64) {
+                // Procesar fondo si no es edición
+                if (!$isEdit) {
+                    $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
+                    if (is_string($processed) && $processed !== '') {
+                        $result['imageBase64'] = $processed;
+                        unset($result['image_url'], $result['url']);
+                        $base64 = $processed;
+                    }
                 }
+                session(['last_image' => $base64]);
             }
         }
 
@@ -64,7 +88,6 @@ class DesignController extends Controller
             $status = isset($result['status']) ? (int) $result['status'] : 500;
         }
 
-        // Respuesta JSON hacia el frontend (vista Blade).
         return response()->json($result, $status);
     }
 }

@@ -23,6 +23,74 @@ class GeminiService
      * 4) Envía el payload `{ prompt }` por GET o POST.
      * 5) Devuelve el JSON del backend o un objeto de error consistente.
      */
+
+    public function generateFromReference(string $prompt, string $imageBase64, string $mimeType = 'image/png')
+    {
+        $baseUrl = (string) config('services.gemini.url');
+        $token = (string) config('services.gemini.token');
+
+        if (empty($baseUrl)) {
+            return [
+                'success' => false,
+                'error' => 'Missing Gemini base URL',
+                'status' => 500,
+            ];
+        }
+
+        $url = rtrim($baseUrl, '/') . '/generate-from-image';
+
+        try {
+            // Eliminar prefijo si existe
+            $base64 = $imageBase64;
+            if (str_starts_with($base64, 'data:image')) {
+                $base64 = preg_replace('/^data:image\/(png|jpeg|jpg);base64,/i', '', $base64);
+            }
+
+            \Log::debug('Gemini generateFromReference request', [
+                'url' => $url,
+                'prompt' => $prompt,
+                'imageBase64_sample' => substr($base64, 0, 30),
+                'mimeType' => $mimeType,
+            ]);
+
+            $response = Http::acceptJson()
+                ->timeout(30)
+                ->withToken($token)
+                ->post($url, [
+                    'prompt' => $prompt,
+                    'imageBase64' => $base64,
+                    'mimeType' => $mimeType
+                ]);
+
+            \Log::debug('Gemini generateFromReference response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            if ($response->failed()) {
+                return [
+                    'success' => false,
+                    'error' => $response->body(),
+                    'status' => $response->status(),
+                ];
+            }
+
+            return $response->json();
+
+        } catch (\Throwable $e) {
+            \Log::error('Gemini generateFromReference exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'status' => 500,
+            ];
+        }
+    }
+
+
     public function generateDesign(string $prompt, ?string $backgroundColor = null)
     {
         // Configuración desde config/services.php o variables de entorno.
