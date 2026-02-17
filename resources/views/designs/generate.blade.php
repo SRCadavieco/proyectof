@@ -24,7 +24,7 @@
     <aside class="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">
         <div class="p-6 border-b border-gray-800 flex justify-center">
             <a href="/">
-                <img src="/logo.png" alt="Logo" class="h-20 w-20 mx-auto">
+                <img src="/images/logo.png" alt="Logo" class="h-20 w-20 mx-auto">
             </a>
         </div>
         <div class="flex-1 overflow-y-auto p-4 text-sm text-gray-500">
@@ -175,7 +175,12 @@
                                class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
                                 Download
                             </a>
+                            <button type="button" onclick="insertEditPrompt()"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition">
+                                Editar imagen
+                            </button>
                         </div>
+
                     </div>
                 </div>
             `;
