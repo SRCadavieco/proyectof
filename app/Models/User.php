@@ -45,4 +45,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    /**
+     * Get the chats for the user.
+     */
+    public function chats()
+    {
+        return $this->hasMany(\App\Models\Chat::class);
+    }
 }

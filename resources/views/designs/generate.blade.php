@@ -30,6 +30,15 @@
         </div>
         <div class="flex-1 overflow-y-auto p-4 text-sm text-gray-500">
             <!-- Future chat history -->
+            <div class="flex-1 overflow-y-auto p-4 text-sm text-gray-400">
+    <button
+        onclick="newChat()"
+        class="w-full mb-4 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition">
+        + New chat
+    </button>
+
+    <div id="chat-list" class="space-y-2"></div>
+</div>
         </div>
     </aside>
 
@@ -106,6 +115,8 @@
 
     <script>
         // Referencias a elementos
+
+        let currentChatId = null;
         const form = document.getElementById('design-form');
         const promptInput = document.getElementById('prompt');
         const submitBtn = document.getElementById('submit-btn');
@@ -220,7 +231,98 @@
             div.textContent = text;
             return div.innerHTML;
         }
-        
+        async function loadChats() {
+    const res = await fetch('/chats');
+    const chats = await res.json();
+
+    const chatList = document.getElementById('chat-list');
+    chatList.innerHTML = '';
+
+    chats.forEach(chat => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-center group';
+
+        const div = document.createElement('div');
+        div.className =
+            'flex-1 px-3 py-2 rounded-lg cursor-pointer truncate ' +
+            (chat.id === currentChatId
+                ? 'bg-gray-800 text-white'
+                : 'hover:bg-gray-800 text-gray-400');
+        div.textContent = chat.title ?? 'New chat';
+        div.onclick = () => loadChat(chat.id);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'ml-2 text-red-400 hover:text-red-600 font-bold text-lg px-2 focus:outline-none';
+        delBtn.title = 'Borrar chat';
+        delBtn.innerHTML = '&times;';
+        delBtn.style.display = 'inline-block';
+        delBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (confirm('¿Seguro que quieres borrar este chat?')) {
+                await deleteChat(chat.id);
+            }
+        };
+
+        wrapper.appendChild(div);
+        wrapper.appendChild(delBtn);
+        chatList.appendChild(wrapper);
+    });
+async function deleteChat(chatId) {
+    const res = await fetch(`/chats/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    });
+    if (res.ok) {
+        // Si el chat borrado era el actual, limpiar mensajes y chatId
+        if (chatId === currentChatId) {
+            currentChatId = null;
+            messagesContainer.innerHTML = '';
+        }
+        await loadChats();
+    } else {
+        const data = await res.json().catch(() => ({}));
+        showError(data.error || 'No se pudo borrar el chat');
+    }
+}
+}
+
+async function newChat() {
+    const res = await fetch('/chats', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    });
+
+    const data = await res.json();
+    if (!res.ok && data.error) {
+        showError(data.error);
+        return;
+    }
+    currentChatId = data.id;
+    messagesContainer.innerHTML = '';
+    await loadChats();
+}
+
+async function loadChat(chatId) {
+    const res = await fetch(`/chats/${chatId}`);
+    const data = await res.json();
+
+    currentChatId = chatId;
+    messagesContainer.innerHTML = '';
+
+    data.messages.forEach(msg => {
+        if (msg.role === 'user') {
+            addUserMessage(msg.content);
+        } else {
+            addBotResponse(msg.image);
+        }
+    });
+
+    await loadChats();
+}
 
         // Enviar formulario
         form.addEventListener('submit', async (e) => {
@@ -250,7 +352,10 @@
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ prompt })
+                  body: JSON.stringify({
+    prompt,
+    chat_id: currentChatId
+})
                 });
                 const data = await res.json().catch(() => ({ 
                     success: false, 
@@ -279,6 +384,17 @@
                 setLoading(false);
             }
         });
+        document.addEventListener('DOMContentLoaded', async () => {
+    await loadChats();
+
+    // Auto-crear chat si no hay ninguno
+    const res = await fetch('/chats');
+    const chats = await res.json();
+
+    if (chats.length === 0) {
+        await newChat();
+    }
+});
     </script>
 </body>
 </html>

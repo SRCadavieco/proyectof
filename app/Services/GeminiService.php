@@ -233,4 +233,25 @@ class GeminiService
             ];
         }
     }
+    public function generateDesignWithContext(
+    string $prompt,
+    array $context = [],
+    ?string $backgroundColor = null
+) {
+    $fullPrompt = '';
+
+    if (!empty($context)) {
+        $fullPrompt .= "Conversation context:\n";
+
+        foreach ($context as $line) {
+            $fullPrompt .= "- {$line}\n";
+        }
+
+        $fullPrompt .= "\nCurrent request:\n";
+    }
+
+    $fullPrompt .= $prompt;
+
+    return $this->generateDesign($fullPrompt, $backgroundColor);
+}
 }

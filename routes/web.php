@@ -4,7 +4,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DesignController;
 use App\Http\Controllers\ProfileController;
-// use App\Http\Controllers\PrintifyController; // removed
+use App\Http\Controllers\ChatController; 
+
 
 // FAQ page
 Route::get('/faq', function () {
@@ -138,6 +139,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/chats', [ChatController::class, 'index']);
+    Route::post('/chats', [ChatController::class, 'store']);
+    Route::get('/chats/{chat}', [ChatController::class, 'show']);
+    Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
 });
 require __DIR__.'/auth.php';
 
