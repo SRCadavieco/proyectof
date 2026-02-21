@@ -239,11 +239,17 @@
 
     const chatList = document.getElementById('chat-list');
     chatList.innerHTML = '';
-
+    // Obtener chats desde backend
+    try {
+        const res = await fetch('/chats');
+        chats = await res.json();
+    } catch (err) {
+        showError('No se pudieron cargar los chats');
+        return;
+    }
     chats.forEach(chat => {
         const wrapper = document.createElement('div');
         wrapper.className = 'flex items-center group';
-
         const div = document.createElement('div');
         div.className =
             'flex-1 px-3 py-2 rounded-lg cursor-pointer truncate ' +
@@ -252,7 +258,6 @@
                 : 'hover:bg-gray-800 text-gray-400');
         div.textContent = chat.title ?? 'New chat';
         div.onclick = () => loadChat(chat.id);
-
         const delBtn = document.createElement('button');
         delBtn.className = 'ml-2 text-red-400 hover:text-red-600 font-bold text-lg px-2 focus:outline-none';
         delBtn.title = 'Borrar chat';
@@ -264,12 +269,11 @@
                 await deleteChat(chat.id);
             }
         };
-
         wrapper.appendChild(div);
         wrapper.appendChild(delBtn);
         chatList.appendChild(wrapper);
-        });
-        }
+    });
+}
 async function deleteChat(chatId) {
     const res = await fetch(`/chats/${chatId}`, {
         method: 'DELETE',
