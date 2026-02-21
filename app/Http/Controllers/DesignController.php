@@ -42,23 +42,34 @@ class DesignController extends Controller
     GeminiService $gemini,
     BackgroundRemovalService $backgrounds
 ) {
-    $validated = $request->validate([
-        'prompt' => ['required', 'string'],
-        'chat_id' => ['required', 'exists:chats,id'],
-        'backgroundColor' => ['nullable', 'string'],
-    ]);
+   try {
+       $validated = $request->validate([
+           'prompt' => ['required', 'string'],
+           'chat_id' => ['required', 'exists:chats,id'],
+           'backgroundColor' => ['nullable', 'string'],
+           'imageBase64' => ['nullable', 'string'],
+           'mimeType' => ['nullable', 'string'],
+       ]);
+   } catch (\Illuminate\Validation\ValidationException $e) {
+       return response()->json([
+           'success' => false,
+           'error' => 'Error de validación',
+           'details' => $e->errors(),
+       ], 422);
+   }
 
     $prompt = trim($validated['prompt']);
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
 
     // Obtener chat (sin auth, entorno pruebas)
-    $chat = \App\Models\Chat::findOrFail($chatId);
+    $chat = Chat::findOrFail($chatId);
 
-    // Guardar mensaje del usuario
+    // Guardar mensaje del usuario (con imagen si se proporciona)
     $chat->messages()->create([
         'role' => 'user',
         'content' => $prompt,
+        'image' => $validated['imageBase64'] ?? null,
     ]);
 
     // Obtener contexto del chat (últimos 6 mensajes del usuario)
@@ -70,34 +81,53 @@ class DesignController extends Controller
         ->reverse()
         ->values()
         ->toArray();
-
+    $imageBase64 = $validated['imageBase64'] ?? null;
+$mimeType = $validated['mimeType'] ?? 'image/png';
     // Detectar edición
     $isEdit = str_starts_with($prompt, '/edit');
 
-    if ($isEdit) {
-        $lastImage = session('last_image');
+if ($isEdit) {
+    $lastImage = session('last_image');
 
-        if (!$lastImage) {
-            return response()->json([
-                'success' => false,
-                'error' => 'No previous design found to edit.'
-            ], 422);
-        }
+    if (!$lastImage) {
+        return response()->json([
+            'success' => false,
+            'error' => 'No previous design found to edit.'
+        ], 422);
+    }
 
-        $cleanPrompt = trim(preg_replace('/^\/edit/i', '', $prompt));
+    $cleanPrompt = trim(preg_replace('/^\/edit/i', '', $prompt));
 
-        $result = $gemini->generateFromReference(
-            $cleanPrompt,
-            $lastImage,
-            'image/png'
-        );
-    } else {
-        $result = $gemini->generateDesignWithContext(
-            $prompt,
-            $context,
-            $backgroundColor
+    $result = $gemini->generateFromReference(
+        $cleanPrompt,
+        $lastImage,
+        'image/png'
+    );
+
+} elseif ($imageBase64) {
+
+    if (str_starts_with($imageBase64, 'data:image')) {
+        $imageBase64 = preg_replace(
+            '/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+            '',
+            $imageBase64
         );
     }
+
+    $result = $gemini->generateFromReference(
+        $prompt,
+        $imageBase64,
+        $mimeType
+    );
+
+} else {
+
+    $result = $gemini->generateDesignWithContext(
+        $prompt,
+        $context,
+        $backgroundColor
+    );
+}
 
     // Procesar imagen
     $imageValue = null;
@@ -140,7 +170,7 @@ class DesignController extends Controller
     // Título automático del chat
     if (!$chat->title) {
         $chat->update([
-            'title' => \Illuminate\Support\Str::limit($prompt, 40),
+            'title' => Str::limit($prompt, 40),
         ]);
     }
 

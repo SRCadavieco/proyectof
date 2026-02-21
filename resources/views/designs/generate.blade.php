@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -87,23 +86,31 @@
                 Generating design...
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
-                <div class="flex gap-4 items-end">
-                    <textarea
-                        id="prompt"
-                        rows="1"
-                        placeholder="Example: Futuristic cyberpunk jacket with neon purple details..."
-                           class="flex-1 bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4 text-sm resize-none
-                               focus:outline-none focus:border-purple-500 transition
-                               placeholder-gray-500 max-h-40 scrollbar-hide"></textarea>
-                    <button
-                        type="submit"
-                        id="submit-btn"
-                        class="px-6 py-4 rounded-2xl font-semibold text-sm
-                               bg-gradient-to-r from-purple-500 to-indigo-500
-                               hover:opacity-90 transition disabled:opacity-50">
-                        Generate ✨
-                    </button>
-                </div>
+                <div class="flex gap-3 items-end">
+    <!-- Upload image -->
+    <label class="cursor-pointer px-4 py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 transition">
+        📎
+        <input type="file" id="image-upload" accept="image/*" class="hidden">
+    </label>
+    <div id="image-preview" class="ml-2"></div>
+
+    <textarea
+        id="prompt"
+        rows="1"
+        placeholder="Describe the design or upload an image to edit..."
+        class="flex-1 bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4 text-sm resize-none
+               focus:outline-none focus:border-purple-500 transition
+               placeholder-gray-500 max-h-40 scrollbar-hide"></textarea>
+
+    <button
+        type="submit"
+        id="submit-btn"
+        class="px-6 py-4 rounded-2xl font-semibold text-sm
+               bg-gradient-to-r from-purple-500 to-indigo-500
+               hover:opacity-90 transition disabled:opacity-50">
+        Generate ✨
+    </button>
+</div>
             </form>
         </div>
     </main>
@@ -115,8 +122,11 @@
 
     <script>
         // Referencias a elementos
-
+        let uploadedImageBase64 = null;
+        let uploadedImageMime = null;
         let currentChatId = null;
+        let chats = [];
+        const imageInput = document.getElementById('image-upload');
         const form = document.getElementById('design-form');
         const promptInput = document.getElementById('prompt');
         const submitBtn = document.getElementById('submit-btn');
@@ -191,20 +201,13 @@
                                 Editar imagen
                             </button>
                         </div>
+                    </div>
+                </div>
                         
-                        </div>
-                        </div>
+                      
                         `;
                         // Delegación de eventos para el botón Editar imagen (solo una vez)
-                        document.addEventListener('click', function(e) {
-                            if (e.target && e.target.classList.contains('edit-btn')) {
-                                const promptInput = document.getElementById('prompt');
-                                if (promptInput) {
-                                    promptInput.value = '/edit ';
-                                    promptInput.focus();
-                                }
-                            }
-                        });
+                       
             
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
@@ -232,8 +235,7 @@
             return div.innerHTML;
         }
         async function loadChats() {
-    const res = await fetch('/chats');
-    const chats = await res.json();
+    
 
     const chatList = document.getElementById('chat-list');
     chatList.innerHTML = '';
@@ -266,7 +268,8 @@
         wrapper.appendChild(div);
         wrapper.appendChild(delBtn);
         chatList.appendChild(wrapper);
-    });
+        });
+        }
 async function deleteChat(chatId) {
     const res = await fetch(`/chats/${chatId}`, {
         method: 'DELETE',
@@ -286,7 +289,7 @@ async function deleteChat(chatId) {
         showError(data.error || 'No se pudo borrar el chat');
     }
 }
-}
+
 
 async function newChat() {
     const res = await fetch('/chats', {
@@ -295,7 +298,6 @@ async function newChat() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         }
     });
-
     const data = await res.json();
     if (!res.ok && data.error) {
         showError(data.error);
@@ -304,15 +306,14 @@ async function newChat() {
     currentChatId = data.id;
     messagesContainer.innerHTML = '';
     await loadChats();
+    return data.id;
 }
 
 async function loadChat(chatId) {
     const res = await fetch(`/chats/${chatId}`);
     const data = await res.json();
-
     currentChatId = chatId;
     messagesContainer.innerHTML = '';
-
     data.messages.forEach(msg => {
         if (msg.role === 'user') {
             addUserMessage(msg.content);
@@ -320,7 +321,6 @@ async function loadChat(chatId) {
             addBotResponse(msg.image);
         }
     });
-
     await loadChats();
 }
 
@@ -334,17 +334,26 @@ async function loadChat(chatId) {
                 return;
             }
 
+            // Si no hay chat actual, crear uno antes de enviar
+            if (!currentChatId) {
+                currentChatId = await newChat();
+            }
+
             // Agregar mensaje del usuario
             addUserMessage(prompt);
             promptInput.value = '';
             promptInput.style.height = 'auto';
 
-            // Iniciar carga
             setLoading(true);
 
             try {
-                // Enviar prompt a Laravel
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                console.log('Enviando datos:', {
+                    prompt,
+                    chat_id: currentChatId,
+                    imageBase64: uploadedImageBase64,
+                    mimeType: uploadedImageMime
+                });
                 const res = await fetch('/designs/generate', {
                     method: 'POST',
                     headers: {
@@ -352,21 +361,22 @@ async function loadChat(chatId) {
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
                     },
-                  body: JSON.stringify({
-    prompt,
-    chat_id: currentChatId
-})
+                    body: JSON.stringify({
+                        prompt,
+                        chat_id: currentChatId,
+                        imageBase64: uploadedImageBase64,
+                        mimeType: uploadedImageMime
+                    })
                 });
-                const data = await res.json().catch(() => ({ 
-                    success: false, 
-                    error: 'Respuesta inválida del servidor' 
+                const data = await res.json().catch(() => ({
+                    success: false,
+                    error: 'Respuesta inválida del servidor'
                 }));
 
                 if (!res.ok) {
                     throw new Error(data?.message || data?.error || `Error ${res.status}`);
                 }
 
-                // Extraer URL de imagen
                 const imageUrl = data.imageUrl || data.image_url || data.url;
                 const base64 = data.imageBase64 || data.image_base64 || data.base64;
 
@@ -380,8 +390,13 @@ async function loadChat(chatId) {
                 }
             } catch (err) {
                 showError(err.message || 'Unexpected error');
+                console.error('Error en submit:', err);
             } finally {
                 setLoading(false);
+                uploadedImageBase64 = null;
+                uploadedImageMime = null;
+                imageInput.value = '';
+                document.getElementById('image-preview').innerHTML = '';
             }
         });
         document.addEventListener('DOMContentLoaded', async () => {
@@ -393,6 +408,41 @@ async function loadChat(chatId) {
 
     if (chats.length === 0) {
         await newChat();
+    }
+});
+
+
+imageInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    const preview = document.getElementById('image-preview');
+    preview.innerHTML = '';
+    if (!file) {
+        uploadedImageBase64 = null;
+        uploadedImageMime = null;
+        return;
+    }
+    uploadedImageMime = file.type;
+    const reader = new FileReader();
+    reader.onload = () => {
+        uploadedImageBase64 = reader.result;
+        // Mostrar miniatura
+        const img = document.createElement('img');
+        img.src = reader.result;
+        img.className = 'rounded-lg border border-gray-700 max-h-20 max-w-20 mt-2';
+        img.alt = 'Preview';
+        preview.appendChild(img);
+        // Log para depuración
+        console.log('Imagen subida:', uploadedImageBase64);
+    };
+    reader.readAsDataURL(file);
+});
+ document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('edit-btn')) {
+        const promptInput = document.getElementById('prompt');
+        if (promptInput) {
+            promptInput.value = '/edit ';
+            promptInput.focus();
+        }
     }
 });
     </script>

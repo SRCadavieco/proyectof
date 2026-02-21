@@ -141,11 +141,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/chats', [ChatController::class, 'index']);
-    Route::post('/chats', [ChatController::class, 'store']);
-    Route::get('/chats/{chat}', [ChatController::class, 'show']);
-    Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
-});
+// Para pruebas, se permite el uso de chats sin autenticación.
+// Cuando se implemente login, descomentar el middleware 'auth'.
+// Route::middleware('auth')->group(function () {
+Route::get('/chats', [ChatController::class, 'index']);
+Route::post('/chats', [ChatController::class, 'store']);
+Route::get('/chats/{chat}', [ChatController::class, 'show']);
+Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
+// });
 require __DIR__.'/auth.php';
 
