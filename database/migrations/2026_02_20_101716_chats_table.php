@@ -13,9 +13,7 @@ return new class extends Migration
     {
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
-            // Para pruebas sin login, user_id puede ser null
-            // Cuando se implemente login, restaurar user_id obligatorio
-            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title')->nullable();
             $table->timestamps();
         });
