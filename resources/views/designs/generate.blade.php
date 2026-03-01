@@ -86,6 +86,12 @@
                 Generating design...
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
+                <div class="mb-3 flex justify-end">
+                    <select id="ai-model" class="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500 transition">
+                        <option value="fabric_light">Fabric Light</option>
+                        <option value="fabric_pro">Fabric Pro</option>
+                    </select>
+                </div>
                 <div class="flex gap-3 items-end">
     <!-- Upload image -->
     <label class="cursor-pointer px-4 py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 transition">
@@ -126,6 +132,7 @@
         let uploadedImageMime = null;
         let currentChatId = null;
         let chats = [];
+        const aiModelSelect = document.getElementById('ai-model');
         const imageInput = document.getElementById('image-upload');
         const form = document.getElementById('design-form');
         const promptInput = document.getElementById('prompt');
@@ -351,12 +358,14 @@ async function loadChat(chatId) {
             setLoading(true);
 
             try {
+                const aiModel = aiModelSelect.value;
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 console.log('Enviando datos:', {
                     prompt,
                     chat_id: currentChatId,
                     imageBase64: uploadedImageBase64,
-                    mimeType: uploadedImageMime
+                    mimeType: uploadedImageMime,
+                    model: aiModel
                 });
                 const res = await fetch('/designs/generate', {
                     method: 'POST',
@@ -369,7 +378,8 @@ async function loadChat(chatId) {
                         prompt,
                         chat_id: currentChatId,
                         imageBase64: uploadedImageBase64,
-                        mimeType: uploadedImageMime
+                        mimeType: uploadedImageMime,
+                        model: aiModel
                     })
                 });
                 const data = await res.json().catch(() => ({

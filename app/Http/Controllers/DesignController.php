@@ -49,6 +49,7 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro'],
        ]);
    } catch (\Illuminate\Validation\ValidationException $e) {
        return response()->json([
@@ -82,7 +83,9 @@ class DesignController extends Controller
         ->values()
         ->toArray();
     $imageBase64 = $validated['imageBase64'] ?? null;
-$mimeType = $validated['mimeType'] ?? 'image/png';
+    $mimeType = $validated['mimeType'] ?? 'image/png';
+    $model = $validated['model'] ?? 'fabric_light';
+    
     // Detectar edición
     $isEdit = str_starts_with($prompt, '/edit');
 
@@ -101,7 +104,8 @@ if ($isEdit) {
     $result = $gemini->generateFromReference(
         $cleanPrompt,
         $lastImage,
-        'image/png'
+        'image/png',
+        $model
     );
 
 } elseif ($imageBase64) {
@@ -117,7 +121,8 @@ if ($isEdit) {
     $result = $gemini->generateFromReference(
         $prompt,
         $imageBase64,
-        $mimeType
+        $mimeType,
+        $model
     );
 
 } else {
@@ -125,7 +130,8 @@ if ($isEdit) {
     $result = $gemini->generateDesignWithContext(
         $prompt,
         $context,
-        $backgroundColor
+        $backgroundColor,
+        $model
     );
 }
 

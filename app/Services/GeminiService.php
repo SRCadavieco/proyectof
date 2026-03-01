@@ -24,7 +24,7 @@ class GeminiService
      * 5) Devuelve el JSON del backend o un objeto de error consistente.
      */
 
-    public function generateFromReference(string $prompt, string $imageBase64, string $mimeType = 'image/png')
+    public function generateFromReference(string $prompt, string $imageBase64, string $mimeType = 'image/png', string $model = 'fabric_light')
     {
         $baseUrl = (string) config('services.gemini.url');
         $token = (string) config('services.gemini.token');
@@ -59,7 +59,8 @@ class GeminiService
                 ->post($url, [
                     'prompt' => $prompt,
                     'imageBase64' => $base64,
-                    'mimeType' => $mimeType
+                    'mimeType' => $mimeType,
+                    'model' => $model
                 ]);
 
             \Log::debug('Gemini generateFromReference response', [
@@ -91,7 +92,7 @@ class GeminiService
     }
 
 
-    public function generateDesign(string $prompt, ?string $backgroundColor = null)
+    public function generateDesign(string $prompt, ?string $backgroundColor = null, string $model = 'fabric_light')
     {
         // Configuración desde config/services.php o variables de entorno.
         $baseUrl = (string) config('services.gemini.url');           // URL del backend
@@ -179,7 +180,10 @@ class GeminiService
             }
 
             // Payload con el prompt y parámetros opcionales.
-            $payload = [ 'prompt' => $finalPrompt ];
+            $payload = [
+                'prompt' => $finalPrompt,
+                'model' => $model
+            ];
             if (!empty($backgroundColor)) {
                 $payload['backgroundColor'] = $backgroundColor; // hex string e.g. #ff0000
             }
@@ -236,7 +240,8 @@ class GeminiService
     public function generateDesignWithContext(
     string $prompt,
     array $context = [],
-    ?string $backgroundColor = null
+    ?string $backgroundColor = null,
+    string $model = 'fabric_light'
 ) {
     $fullPrompt = '';
 
@@ -252,6 +257,6 @@ class GeminiService
 
     $fullPrompt .= $prompt;
 
-    return $this->generateDesign($fullPrompt, $backgroundColor);
+    return $this->generateDesign($fullPrompt, $backgroundColor, $model);
 }
 }
