@@ -50,6 +50,7 @@ class DesignController extends Controller
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
            'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro'],
+           'is_edit' => ['nullable', 'boolean'],
        ]);
    } catch (\Illuminate\Validation\ValidationException $e) {
        return response()->json([
@@ -87,7 +88,7 @@ class DesignController extends Controller
     $model = $validated['model'] ?? 'fabric_light';
     
     // Detectar edición
-    $isEdit = str_starts_with($prompt, '/edit');
+    $isEdit = !empty($validated['is_edit']);
 
 if ($isEdit) {
     $lastImage = session('last_image');
@@ -99,7 +100,7 @@ if ($isEdit) {
         ], 422);
     }
 
-    $cleanPrompt = trim(preg_replace('/^\/edit/i', '', $prompt));
+    $cleanPrompt = $prompt;
 
     $result = $gemini->generateFromReference(
         $cleanPrompt,

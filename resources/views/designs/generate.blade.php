@@ -92,6 +92,11 @@
                         <option value="fabric_pro">Fabric Pro</option>
                     </select>
                 </div>
+                <!-- Banner modo edición -->
+                <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/40 text-orange-400 text-sm font-medium">
+                    <span>✏️ Ahora estás editando la foto anterior</span>
+                    <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-300 hover:text-white transition text-xs underline">Cancelar</button>
+                </div>
                 <div class="flex gap-3 items-end">
     <!-- Upload image -->
     <label class="cursor-pointer px-4 py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 transition">
@@ -379,7 +384,8 @@ async function loadChat(chatId) {
                         chat_id: currentChatId,
                         imageBase64: uploadedImageBase64,
                         mimeType: uploadedImageMime,
-                        model: aiModel
+                        model: aiModel,
+                        is_edit: isEditMode
                     })
                 });
                 const data = await res.json().catch(() => ({
@@ -407,6 +413,7 @@ async function loadChat(chatId) {
                 console.error('Error en submit:', err);
             } finally {
                 setLoading(false);
+                exitEditMode();
                 uploadedImageBase64 = null;
                 uploadedImageMime = null;
                 imageInput.value = '';
@@ -450,15 +457,34 @@ imageInput.addEventListener('change', async (e) => {
     };
     reader.readAsDataURL(file);
 });
- document.addEventListener('click', function(e) {
-    if (e.target && e.target.classList.contains('edit-btn')) {
-        const promptInput = document.getElementById('prompt');
-        if (promptInput) {
-            promptInput.value = '/edit ';
+        function enterEditMode() {
+            isEditMode = true;
+            const banner = document.getElementById('edit-banner');
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+            promptInput.classList.remove('border-gray-800', 'focus:border-purple-500');
+            promptInput.classList.add('border-orange-500', 'focus:border-orange-400', 'bg-orange-950/30');
+            promptInput.placeholder = 'Describe cómo quieres editar la imagen anterior...';
             promptInput.focus();
         }
-    }
-});
+
+        function exitEditMode() {
+            isEditMode = false;
+            const banner = document.getElementById('edit-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+            promptInput.classList.add('border-gray-800', 'focus:border-purple-500');
+            promptInput.classList.remove('border-orange-500', 'focus:border-orange-400', 'bg-orange-950/30');
+            promptInput.placeholder = 'Describe the design or upload an image to edit...';
+        }
+
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => exitEditMode());
+
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-btn')) {
+                enterEditMode();
+            }
+        });
     </script>
 </body>
 </html>
