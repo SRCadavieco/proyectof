@@ -94,7 +94,7 @@
                 </div>
                 <!-- Banner modo edición -->
                 <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/40 text-orange-400 text-sm font-medium">
-                    <span>✏️ Ahora estás editando la foto anterior</span>
+                    <span>✏️ You are now editing the previous photo</span>
                     <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-300 hover:text-white transition text-xs underline">Cancelar</button>
                 </div>
                 <div class="flex gap-3 items-end">
@@ -464,7 +464,7 @@ imageInput.addEventListener('change', async (e) => {
             banner.classList.add('flex');
             promptInput.classList.remove('border-gray-800', 'focus:border-purple-500');
             promptInput.classList.add('border-orange-500', 'focus:border-orange-400', 'bg-orange-950/30');
-            promptInput.placeholder = 'Describe cómo quieres editar la imagen anterior...';
+            promptInput.placeholder = 'Describe how you want to edit the previous image....';
             promptInput.focus();
         }
 

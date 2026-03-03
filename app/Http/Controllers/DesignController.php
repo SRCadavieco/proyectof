@@ -91,20 +91,31 @@ class DesignController extends Controller
     $isEdit = !empty($validated['is_edit']);
 
 if ($isEdit) {
-    $lastImage = session('last_image');
+    // Buscar la última imagen del chat en BD; fallback a sesión
+    $lastImageMsg = $chat->messages()
+        ->where('role', 'assistant')
+        ->whereNotNull('image')
+        ->orderBy('created_at', 'desc')
+        ->first();
+
+    $lastImage = $lastImageMsg?->image ?? session('last_image');
 
     if (!$lastImage) {
         return response()->json([
             'success' => false,
-            'error' => 'No previous design found to edit.'
+            'error' => 'No se encontró ninguna imagen anterior en este chat para editar.'
         ], 422);
     }
 
-    $cleanPrompt = $prompt;
+    // Limpiar prefijo data URI si lo tiene
+    $cleanBase64 = $lastImage;
+    if (str_starts_with($cleanBase64, 'data:image')) {
+        $cleanBase64 = preg_replace('/^data:image\/(png|jpeg|jpg|webp);base64,/i', '', $cleanBase64);
+    }
 
     $result = $gemini->generateFromReference(
-        $cleanPrompt,
-        $lastImage,
+        $prompt,
+        $cleanBase64,
         'image/png',
         $model
     );
