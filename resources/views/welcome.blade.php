@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FabricAI — AI Clothing Design Platform</title>
 
-    @vite(['resources/css/app.css','resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         html {
@@ -34,55 +34,25 @@
 
     <!-- Overlay -->
     <div class="absolute inset-0 bg-gradient-to-b from-black/50 to-black/80"></div>
+    <!-- Bottom fade into page background -->
+    <div class="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-gray-950 to-transparent pointer-events-none"></div>
 
     <!-- Hero content -->
     <div 
         x-data="{
             show:false,
-            words: ['Tee-Shirts', 'Hoodies', 'Sweatshirts', 'Jackets', 'Tank Tops', 'Sportswear', 'Outwear'],
-            wordIndex: 0,
-            word: '',
             promptExamples: [
-                'A t-shirt with a pixel art robot eating a donut',
-                'A hoodie inspired by Japanese streetwear and neon lights',
-                'A jacket with a geometric AI-generated pattern',
-                'A tank top featuring a surreal landscape with floating churros',
-                'A sportswear set with a futuristic cyberpunk vibe',
-                'A sweatshirt with a minimalistic logo of a smiling algorithm',
-                'An outwear piece with abstract shapes and pastel gradients',
+                'A playful pixel art robot eating a pink frosted donut with colorful sprinkles',
+                'Japanese streetwear inspired aesthetic with bright neon lights and vibrant Tokyo nightlife energy',
+                'Intricate geometric pattern made of repeating AI-generated shapes and sharp symmetrical lines',
+                'Surreal dreamlike landscape with floating churros drifting',
+                'Dark futuristic cyberpunk aesthetic with neon lights and dystopian cityscape',
+                'Minimalistic logo of a smiling algorithm made from simple geometric digital lines',
+                'Abstract flowing shapes blended with soft pastel gradients and smooth color transitions',
             ],
             promptIndex: 0,
             prompt: '',
-            wordTimeout: null,
             promptTimeout: null,
-            typeWord() {
-                clearTimeout(this.wordTimeout);
-                const word = this.words[this.wordIndex];
-                let i = 0;
-                const type = () => {
-                    if (i <= word.length) {
-                        this.word = word.slice(0, i++);
-                        this.wordTimeout = setTimeout(type, 160);
-                    } else {
-                        this.wordTimeout = setTimeout(() => this.eraseWord(), 2000);
-                    }
-                };
-                type();
-            },
-            eraseWord() {
-                clearTimeout(this.wordTimeout);
-                let i = this.word.length;
-                const erase = () => {
-                    if (i >= 0) {
-                        this.word = this.word.slice(0, i--);
-                        this.wordTimeout = setTimeout(erase, 80);
-                    } else {
-                        this.wordIndex = (this.wordIndex + 1) % this.words.length;
-                        this.typeWord();
-                    }
-                };
-                erase();
-            },
             typePrompt() {
                 clearTimeout(this.promptTimeout);
                 const prompt = this.promptExamples[this.promptIndex];
@@ -113,7 +83,6 @@
             },
             init() {
                 setTimeout(()=>this.show=true,300);
-                this.typeWord();
                 this.typePrompt();
             }
         }"
@@ -122,7 +91,7 @@
         class="relative z-10 px-6 transition-all duration-1000"
     >
         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            Innovative <span class="text-purple-400 inline-block"><span x-text="word"></span><span class="border-r-2 border-purple-400 animate-pulse ml-1"></span></span>
+            Innovative <span class="text-purple-400">designs</span>
         </h1>
 
         <p class="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
@@ -138,8 +107,9 @@
         </a>
 
         <div class="max-w-xl mx-auto mt-8">
-            <label class="block text-left text-gray-400 mb-2 text-sm">Prompt example:</label>
-            <textarea readonly rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-gray-200 font-mono text-base resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 transition" x-text="prompt"></textarea>
+            <div class="w-full h-20 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-gray-200 font-mono text-base opacity-70 text-left leading-relaxed overflow-hidden">
+                <span x-text="prompt"></span><span class="inline-block w-0.5 h-5 bg-purple-400 animate-pulse align-middle ml-0.5"></span>
+            </div>
         </div>
 
         <script>
@@ -213,7 +183,7 @@
 </section>
 
 <!-- ================= HOW IT WORKS ================= -->
-<section id="how-it-works" class="relative py-32 bg-gray-950 overflow-hidden">
+<section id="how-it-works" class="relative py-32 bg-gray-950">
 
     <!-- Background glow -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 
@@ -229,24 +199,24 @@
         </h2>
 
         @php
-            $steps = [
-                [
-                    'title' => 'Describe your idea',
-                    'desc'  => 'Write a detailed description of the clothing design you imagine.'
-                ],
-                [
-                    'title' => 'AI generates the design ',
-                    'desc'  => 'Our AI model transforms your prompt into a unique visual concept.'
-                ],
-                [
-                    'title' => 'Refine & iterate',
-                    'desc'  => 'Improve the result with additional prompts and creative direction.'
-                ],
-                [
-                    'title' => 'Download & use',
-                    'desc'  => 'Export your final design in high quality, ready for production.'
-                ],
-            ];
+$steps = [
+    [
+        'title' => 'Describe your idea',
+        'desc' => 'Write a detailed description of the clothing design you imagine.'
+    ],
+    [
+        'title' => 'AI generates the design ',
+        'desc' => 'Our AI model turns your prompt into a unique visual concept.'
+    ],
+    [
+        'title' => 'Refine & iterate',
+        'desc' => 'Improve the result with additional prompts and creative direction.'
+    ],
+    [
+        'title' => 'Download & use',
+        'desc' => 'Export your final design in high quality, ready for production.'
+    ],
+];
         @endphp
 
         <div class="space-y-32">
