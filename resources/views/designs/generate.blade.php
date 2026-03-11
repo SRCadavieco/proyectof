@@ -362,10 +362,6 @@ async function newChat() {
         if (newChatBtn) newChatBtn.disabled = false;
     }
 }
-        const newChatBtn = document.querySelector('button[onclick="newChat()"]');
-        if (newChatBtn) newChatBtn.disabled = false;
-    }
-}
 
 async function loadChat(chatId) {
     const res = await fetch(`/chats/${chatId}`);
