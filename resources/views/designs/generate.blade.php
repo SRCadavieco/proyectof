@@ -141,6 +141,8 @@
         let uploadedImageMime = null;
         let currentChatId = null;
         let isEditMode = false;
+        let isSubmitting = false;
+        let isCreatingChat = false;
         let chats = [];
         const aiModelSelect = document.getElementById('ai-model');
         const imageInput = document.getElementById('image-upload');
@@ -335,21 +337,34 @@ async function deleteChat(chatId) {
 
 
 async function newChat() {
-    const res = await fetch('/chats', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+    if (isCreatingChat) return;
+    isCreatingChat = true;
+    const newChatBtn = document.querySelector('button[onclick="newChat()"]');
+    if (newChatBtn) newChatBtn.disabled = true;
+    try {
+        const res = await fetch('/chats', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+        const data = await res.json();
+        if (!res.ok && data.error) {
+            showError(data.error);
+            return;
         }
-    });
-    const data = await res.json();
-    if (!res.ok && data.error) {
-        showError(data.error);
-        return;
+        currentChatId = data.id;
+        messagesContainer.innerHTML = '';
+        await loadChats();
+        return data.id;
+    } finally {
+        isCreatingChat = false;
+        if (newChatBtn) newChatBtn.disabled = false;
     }
-    currentChatId = data.id;
-    messagesContainer.innerHTML = '';
-    await loadChats();
-    return data.id;
+}
+        const newChatBtn = document.querySelector('button[onclick="newChat()"]');
+        if (newChatBtn) newChatBtn.disabled = false;
+    }
 }
 
 async function loadChat(chatId) {
@@ -373,11 +388,15 @@ async function loadChat(chatId) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            if (isSubmitting) return;
+
             const prompt = promptInput.value.trim();
             if (!prompt) {
                 showError('Por favor escribe un prompt');
                 return;
             }
+
+            isSubmitting = true;
 
             // Si no hay chat actual, crear uno antes de enviar
             if (!currentChatId) {
@@ -442,6 +461,7 @@ async function loadChat(chatId) {
                 addBotError(errMsg);
                 console.error('Error en submit:', err);
             } finally {
+                isSubmitting = false;
                 setLoading(false);
                 exitEditMode();
                 uploadedImageBase64 = null;
