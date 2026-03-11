@@ -91,7 +91,7 @@
         class="relative z-10 px-6 transition-all duration-1000"
     >
         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            Innovative <span class="text-purple-400">designs</span>
+            Start designing <span class="text-purple-400">today</span>
         </h1>
 
         <p class="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
