@@ -136,6 +136,7 @@
         let uploadedImageBase64 = null;
         let uploadedImageMime = null;
         let currentChatId = null;
+        let isEditMode = false;
         let chats = [];
         const aiModelSelect = document.getElementById('ai-model');
         const imageInput = document.getElementById('image-upload');
@@ -233,6 +234,20 @@
             }
         };
         
+        // Mensaje de error del bot
+        function addBotError(msg) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-5 flex flex-col items-start';
+            messageDiv.innerHTML = `
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center font-bold">AI</div>
+                <div class="bg-red-950/60 border border-red-800 rounded-2xl px-6 py-4 max-w-2xl text-red-300 text-sm leading-relaxed mt-2">
+                    ⚠️ ${escapeHtml(msg)}
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
         // Scroll al final del chat
         function scrollToBottom() {
             setTimeout(() => {
@@ -333,8 +348,10 @@ async function loadChat(chatId) {
     data.messages.forEach(msg => {
         if (msg.role === 'user') {
             addUserMessage(msg.content);
-        } else {
+        } else if (msg.image) {
             addBotResponse(msg.image);
+        } else if (msg.content) {
+            addBotError(msg.content);
         }
     });
     await loadChats();
@@ -409,7 +426,8 @@ async function loadChat(chatId) {
                     throw new Error('No image in response');
                 }
             } catch (err) {
-                showError(err.message || 'Unexpected error');
+                const errMsg = err.message || 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.';
+                addBotError(errMsg);
                 console.error('Error en submit:', err);
             } finally {
                 setLoading(false);

@@ -179,17 +179,36 @@ if ($isEdit) {
         }
     }
 
-    // Guardar respuesta IA
-    $chat->messages()->create([
-        'role' => 'assistant',
-        'image' => $imageValue,
-    ]);
-
-    // Título automático del chat
-    if (!$chat->title) {
-        $chat->update([
-            'title' => Str::limit($prompt, 40),
+    // Solo guardar respuesta IA si se generó una imagen
+    if ($imageValue) {
+        $chat->messages()->create([
+            'role' => 'assistant',
+            'image' => $imageValue,
         ]);
+
+        // Título automático del chat
+        if (!$chat->title) {
+            $chat->update([
+                'title' => Str::limit($prompt, 40),
+            ]);
+        }
+    }
+
+    // Si no hay imagen, guardar el error como mensaje assistant y devolver error claro
+    if (!$imageValue) {
+        $errorMsg = 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.';
+        $chat->messages()->create([
+            'role' => 'assistant',
+            'content' => $errorMsg,
+            'image' => null,
+        ]);
+        if (!$chat->title) {
+            $chat->update(['title' => Str::limit($prompt, 40)]);
+        }
+        return response()->json([
+            'success' => false,
+            'error' => $errorMsg,
+        ], 422);
     }
 
     // Status HTTP
