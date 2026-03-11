@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>FabricAI — AI Design Studio</title>
     @vite(['resources/css/app.css','resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
             .scrollbar-hide::-webkit-scrollbar { display: none; }
             .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -87,10 +88,13 @@
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
                 <div class="mb-3 flex justify-end">
-                    <select id="ai-model" class="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500 transition">
-                        <option value="fabric_light">Fabric Light</option>
-                        <option value="fabric_pro">Fabric Pro</option>
-                    </select>
+                    <div class="relative">
+                        <select id="ai-model" style="background-image:none" class="appearance-none bg-gray-900 border border-gray-800 rounded-xl pl-4 pr-9 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500 transition cursor-pointer">
+                            <option value="fabric_light">Fabric Light</option>
+                            <option value="fabric_pro">Fabric Pro</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
                 </div>
                 <!-- Banner modo edición -->
                 <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/40 text-orange-400 text-sm font-medium">
@@ -100,7 +104,7 @@
                 <div class="flex gap-3 items-end">
     <!-- Upload image -->
     <label class="cursor-pointer px-4 py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 transition">
-        📎
+        <i class="fas fa-paperclip"></i>
         <input type="file" id="image-upload" accept="image/*" class="hidden">
     </label>
     <div id="image-preview" class="ml-2"></div>
@@ -152,6 +156,14 @@
         promptInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Enter = submit, Shift+Enter = nueva línea
+        promptInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
         });
         
         // Estado de carga
