@@ -46,6 +46,13 @@ class ChatController extends Controller
             'messages' => $chat->messages()->orderBy('created_at')->get()
         ]);
     }
+    public function rename(Chat $chat, \Illuminate\Http\Request $request)
+    {
+        $request->validate(['title' => 'required|string|max:100']);
+        $chat->update(['title' => trim($request->title)]);
+        return response()->json(['success' => true, 'title' => $chat->title]);
+    }
+
         public function destroy(Chat $chat)
     {
         // Para pruebas sin login, permitir borrar cualquier chat

@@ -147,6 +147,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/chats', [ChatController::class, 'index']);
 Route::post('/chats', [ChatController::class, 'store']);
 Route::get('/chats/{chat}', [ChatController::class, 'show']);
+Route::patch('/chats/{chat}', [ChatController::class, 'rename']);
 Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
 // });
 require __DIR__.'/auth.php';

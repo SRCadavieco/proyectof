@@ -291,6 +291,8 @@
     chats.forEach(chat => {
         const wrapper = document.createElement('div');
         wrapper.className = 'flex items-center group';
+
+        // Nombre del chat (texto normal)
         const div = document.createElement('div');
         div.className =
             'flex-1 px-3 py-2 rounded-lg cursor-pointer truncate ' +
@@ -299,18 +301,73 @@
                 : 'hover:bg-gray-800 text-gray-400');
         div.textContent = chat.title ?? 'New chat';
         div.onclick = () => loadChat(chat.id);
+
+        // Input inline para renombrar (oculto por defecto)
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = chat.title ?? 'New chat';
+        input.className = 'hidden flex-1 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-sm border border-purple-500 focus:outline-none';
+
+        let renameSaved = false;
+        const saveRename = async () => {
+            if (renameSaved) return;
+            renameSaved = true;
+            const newTitle = input.value.trim();
+            if (!newTitle) return cancelRename();
+            await fetch(`/chats/${chat.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ title: newTitle })
+            });
+            await loadChats();
+        };
+
+        const cancelRename = () => {
+            input.classList.add('hidden');
+            div.classList.remove('hidden');
+            renameBtn.classList.remove('hidden');
+            delBtn.classList.remove('hidden');
+        };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveRename(); }
+            if (e.key === 'Escape') cancelRename();
+        });
+        input.addEventListener('blur', saveRename);
+
+        // Botón renombrar (lápiz)
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'ml-1 text-gray-500 hover:text-purple-400 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
+        renameBtn.title = 'Renombrar chat';
+        renameBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+        renameBtn.onclick = (e) => {
+            e.stopPropagation();
+            div.classList.add('hidden');
+            renameBtn.classList.add('hidden');
+            delBtn.classList.add('hidden');
+            input.classList.remove('hidden');
+            input.focus();
+            input.select();
+        };
+
+        // Botón borrar
         const delBtn = document.createElement('button');
-        delBtn.className = 'ml-2 text-red-400 hover:text-red-600 font-bold text-lg px-2 focus:outline-none';
+        delBtn.className = 'ml-1 text-gray-500 hover:text-red-400 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
         delBtn.title = 'Borrar chat';
-        delBtn.innerHTML = '&times;';
-        delBtn.style.display = 'inline-block';
+        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
         delBtn.onclick = async (e) => {
             e.stopPropagation();
             if (confirm('¿Seguro que quieres borrar este chat?')) {
                 await deleteChat(chat.id);
             }
         };
+
         wrapper.appendChild(div);
+        wrapper.appendChild(input);
+        wrapper.appendChild(renameBtn);
         wrapper.appendChild(delBtn);
         chatList.appendChild(wrapper);
     });
