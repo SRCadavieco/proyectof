@@ -14,26 +14,7 @@
 </head>
 
 <body class="bg-gray-950 text-white overflow-x-hidden">
-
-<!-- ================= NAVBAR ================= -->
-<nav class="fixed w-full z-50 bg-gray-950/90 backdrop-blur-md border-b border-gray-800">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
-        <a href="/" class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">
-            FABRICAI
-        </a>
-
-        <div class="flex gap-8 text-sm text-gray-300 font-medium">
-            <a href="/#how-it-works" class="hover:text-purple-400 transition">How it works</a>
-            <a href="/pricing" class="hover:text-purple-400 transition">Pricing</a>
-            <a href="/faq" class="text-purple-400">FAQ</a>
-        </div>
-
-        <a href="{{ url('/designs/generate') }}"
-           class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold hover:opacity-90 transition">
-            Start Designing
-        </a>
-    </div>
-</nav>
+@include('layouts.navigation')
 
 <!-- ================= HERO ================= -->
 <section class="pt-32 pb-20 text-center relative">

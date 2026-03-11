@@ -19,41 +19,7 @@
 </head>
 
 <body class="bg-gray-950 text-white overflow-x-hidden">
-<!-- ================= NAVBAR ================= -->
-<nav 
-    x-data="{ scrolled:false }"
-    @scroll.window="scrolled = window.scrollY > 50"
-    :class="scrolled 
-        ? 'bg-gray-950/90 backdrop-blur-md border-b border-gray-800' 
-        : 'bg-transparent'"
-    class="fixed w-full z-50 transition-all duration-500"
->
-
-    <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
-
-        <!-- Logo FabricAI -->
-        <div class="flex items-center">
-            <img src="/images/logo.png" alt="Logo" class="h-16 w-16">
-        </div>
-
-        <div class="hidden md:flex gap-8 text-sm text-gray-300 font-medium">
-            <a href="#how-it-works" class="hover:text-purple-400 transition">
-                How it works
-            </a>
-            <a href="/pricing" class="hover:text-purple-400 transition">
-                Pricing
-            </a>
-            <a href="/faq" class="hover:text-purple-400 transition">
-                FAQ
-            </a>
-        </div>
-
-        <a href="{{ route('login') }}" class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold hover:opacity-90 transition">
-            Sign in / Register
-        </a>
-
-    </div>
-</nav>
+@include('layouts.navigation')
 
 <!-- ================= HERO ================= -->
 <section class="relative h-screen flex items-center justify-center text-center overflow-hidden">
@@ -265,19 +231,19 @@
         @php
             $steps = [
                 [
-                    'title' => 'Describe Your Idea',
+                    'title' => 'Describe your idea',
                     'desc'  => 'Write a detailed description of the clothing design you imagine.'
                 ],
                 [
-                    'title' => 'AI Generates the Design',
+                    'title' => 'AI generates the design ',
                     'desc'  => 'Our AI model transforms your prompt into a unique visual concept.'
                 ],
                 [
-                    'title' => 'Refine & Iterate',
+                    'title' => 'Refine & iterate',
                     'desc'  => 'Improve the result with additional prompts and creative direction.'
                 ],
                 [
-                    'title' => 'Download & Use',
+                    'title' => 'Download & use',
                     'desc'  => 'Export your final design in high quality, ready for production.'
                 ],
             ];
