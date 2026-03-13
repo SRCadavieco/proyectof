@@ -16,6 +16,15 @@
         .spinner {
             animation: spin 0.8s linear infinite;
         }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+        * { scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
     </style>
 </head>
 <body class="bg-gray-950 text-white h-screen overflow-hidden">
@@ -51,16 +60,13 @@
 
         <!-- HEADER -->
         <header class="relative z-10 px-8 py-4 border-b border-gray-800
-                       backdrop-blur-md bg-gray-950/80 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500"></div>
-                <span class="font-semibold">AI Design Generator</span>
-            </div>
-            <div class="flex items-center gap-2 text-sm text-gray-400">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                AI Online
-            </div>
-            <div class="flex items-center gap-3">
+                       backdrop-blur-md bg-gray-950/80 flex items-center">
+            <!-- Left spacer -->
+            <div class="flex-1"></div>
+            <!-- Centered chat title -->
+            <h1 id="chat-title" class="font-semibold text-white text-sm truncate max-w-xs text-center">New chat</h1>
+            <!-- Right: user + logout -->
+            <div class="flex-1 flex justify-end items-center gap-3">
                 <span class="text-sm text-gray-400">{{ Auth::user()->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -76,9 +82,9 @@
         <div id="chat-container" class="flex-1 overflow-y-auto p-8 relative z-10">
             <div class="max-w-4xl mx-auto space-y-8">
                 <!-- Welcome Message -->
-                <div class="flex gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center font-bold">
-                        AI
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                        <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                     </div>
                     <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4 text-gray-300 max-w-2xl">
                         Welcome to FabricAI.  
@@ -146,6 +152,10 @@
     <div id="debug-info" class="hidden"></div>
 
     <script>
+        // User identity (ready for profile photos)
+        const userInitial = '{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}';
+        const userAvatarUrl = null; // set to profile photo URL when available
+
         // Referencias a elementos
         let uploadedImageBase64 = null;
         let uploadedImageMime = null;
@@ -194,11 +204,14 @@
         
         // Agregar mensaje del usuario
         function addUserMessage(text) {
+            const avatarHtml = userAvatarUrl
+                ? `<img src="${userAvatarUrl}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">`
+                : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">${userInitial}</div>`;
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-5 flex flex-col items-end';
+            messageDiv.className = 'mb-5 flex flex-row-reverse items-start gap-3';
             messageDiv.innerHTML = `
-                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold mb-2 ml-auto">U</div>
-                <div class="bg-blue-50 px-4 py-3.5 rounded-xl text-sm leading-relaxed text-gray-700 max-w-2xl">${escapeHtml(text)}</div>
+                ${avatarHtml}
+                <div class="bg-white text-gray-900 px-4 py-3.5 rounded-xl text-sm leading-relaxed max-w-2xl">${escapeHtml(text)}</div>
             `;
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
@@ -207,41 +220,37 @@
         // Agregar respuesta del bot con imagen
         function addBotResponse(imageUrl) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-5 flex flex-col items-start';
+            messageDiv.className = 'mb-5 flex items-start gap-4';
             
             const uniqueId = 'bg-' + Date.now();
             
             messageDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center font-bold">AI</div>
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4 max-w-2xl text-gray-300">
-                    <div class="mt-3">
-                        <div id="${uniqueId}" class="p-4 rounded-xl transition-colors bg-gray-900">
-                            <img src="${imageUrl}" alt="Generated design" class="rounded-xl shadow-lg max-w-full" crossorigin="anonymous">
-                        </div>
-                        <div class="mt-3 p-3 bg-gray-900 rounded-lg border border-gray-800">
-                            <div class="text-xs font-medium text-gray-400 mb-2">Background color (preview):</div>
-                            <div class="flex gap-2 items-center flex-wrap">
-                                <button type="button" onclick="changeBg('${uniqueId}', '#18181b')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-gray-900 hover:border-purple-500 transition-colors" title="Dark"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-white hover:border-purple-500 transition-colors" title="White"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-black hover:border-purple-500 transition-colors" title="Black"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#a78bfa')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-purple-400 hover:border-purple-500 transition-colors" title="Purple"></button>
-                                <button type="button" onclick="changeBg('${uniqueId}', '#6366f1')" class="w-8 h-8 rounded-md border-2 border-gray-700 bg-indigo-500 hover:border-purple-500 transition-colors" title="Indigo"></button>
-                                <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-8 h-8 rounded-md border-2 border-gray-700 cursor-pointer" title="Custom">
-                            </div>
-                        </div>
-                        <div class="flex gap-3 mt-4">
-                            <a href="${imageUrl}" download="design.png"
-                               class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
-                                Download
-                            </a>
-                            <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition edit-btn">
-                                Editar imagen
-                            </button>
-                        </div>
+                <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 self-start overflow-hidden p-1">
+                    <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
+                </div>
+                <div class="flex flex-col gap-3 max-w-2xl">
+                    <div id="${uniqueId}" class="rounded-2xl overflow-hidden bg-gray-900 p-2 transition-colors">
+                        <img src="${imageUrl}" alt="Generated design" class="rounded-xl shadow-lg w-full block" crossorigin="anonymous">
+                    </div>
+                    <div class="flex gap-2 items-center flex-wrap px-1">
+                        <span class="text-xs text-gray-500 mr-1">Background:</span>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#18181b')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-gray-900 hover:border-purple-500 transition-colors" title="Dark"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-white hover:border-purple-500 transition-colors" title="White"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-black hover:border-purple-500 transition-colors" title="Black"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#a78bfa')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-purple-400 hover:border-purple-500 transition-colors" title="Purple"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#6366f1')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-indigo-500 hover:border-purple-500 transition-colors" title="Indigo"></button>
+                        <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-7 h-7 rounded-md border-2 border-gray-700 cursor-pointer" title="Custom">
+                    </div>
+                    <div class="flex gap-3 px-1">
+                        <a href="${imageUrl}" download="design.png"
+                           class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
+                            Download
+                        </a>
+                        <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition edit-btn">
+                            Editar imagen
+                        </button>
                     </div>
                 </div>
-                        
-                      
                         `;
                         // Delegación de eventos para el botón Editar imagen (solo una vez)
                        
@@ -261,10 +270,12 @@
         // Mensaje de error del bot
         function addBotError(msg) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-5 flex flex-col items-start';
+            messageDiv.className = 'mb-5 flex items-start gap-4';
             messageDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center font-bold">AI</div>
-                <div class="bg-red-950/60 border border-red-800 rounded-2xl px-6 py-4 max-w-2xl text-red-300 text-sm leading-relaxed mt-2">
+                <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                    <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
+                </div>
+                <div class="bg-red-950/60 border border-red-800 rounded-2xl px-6 py-4 max-w-2xl text-red-300 text-sm leading-relaxed">
                     ⚠️ ${escapeHtml(msg)}
                 </div>
             `;
@@ -332,6 +343,9 @@
                 },
                 body: JSON.stringify({ title: newTitle })
             });
+            if (chat.id === currentChatId) {
+                document.getElementById('chat-title').textContent = newTitle;
+            }
             await loadChats();
         };
 
@@ -422,6 +436,7 @@ async function newChat() {
         }
         currentChatId = data.id;
         messagesContainer.innerHTML = '';
+        document.getElementById('chat-title').textContent = 'New chat';
         await loadChats();
         return data.id;
     } finally {
@@ -435,6 +450,7 @@ async function loadChat(chatId) {
     const data = await res.json();
     currentChatId = chatId;
     messagesContainer.innerHTML = '';
+    document.getElementById('chat-title').textContent = data.chat?.title ?? 'New chat';
     data.messages.forEach(msg => {
         if (msg.role === 'user') {
             addUserMessage(msg.content);
