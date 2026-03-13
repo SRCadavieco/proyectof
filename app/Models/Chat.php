@@ -6,9 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Chat extends Model
 {
-        // Para pruebas sin login, user_id puede ser null
-        // Cuando se implemente login, restaurar user_id obligatorio
-        protected $fillable = ['title'];
+        protected $fillable = ['title', 'user_id'];
 
     public function messages()
     {

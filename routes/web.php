@@ -16,27 +16,11 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-if (app()->environment('local')) {
-    // Alias amigable
+Route::middleware('auth')->group(function () {
     Route::get('/design', [DesignController::class, 'form']);
-
-    // Rutas de generación
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
-} else {
-    // En producción, proteger con Basic Auth vía middleware 'private'
-    Route::middleware('private')->group(function () {
-        // Alias amigable
-        Route::get('/design', [DesignController::class, 'form']);
-
-        // Rutas de generación
-        Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
-    });
-
-    // Para evitar problemas con fetch y el reto Basic Auth en POST,
-    // exponemos la ruta de generación sin el middleware 'private'.
-    Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
-}
+});
 
 // Debug local-only endpoint to inspect Gemini config
 if (app()->environment('local')) {
@@ -141,14 +125,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Para pruebas, se permite el uso de chats sin autenticación.
-// Cuando se implemente login, descomentar el middleware 'auth'.
-// Route::middleware('auth')->group(function () {
-Route::get('/chats', [ChatController::class, 'index']);
-Route::post('/chats', [ChatController::class, 'store']);
-Route::get('/chats/{chat}', [ChatController::class, 'show']);
-Route::patch('/chats/{chat}', [ChatController::class, 'rename']);
-Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
-// });
+Route::middleware('auth')->group(function () {
+    Route::get('/chats', [ChatController::class, 'index']);
+    Route::post('/chats', [ChatController::class, 'store']);
+    Route::get('/chats/{chat}', [ChatController::class, 'show']);
+    Route::patch('/chats/{chat}', [ChatController::class, 'rename']);
+    Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
+});
 require __DIR__.'/auth.php';
 

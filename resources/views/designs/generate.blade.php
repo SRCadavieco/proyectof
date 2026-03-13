@@ -60,6 +60,16 @@
                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 AI Online
             </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-400">{{ Auth::user()->name }}</span>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                            class="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-400 hover:text-white hover:border-gray-500 transition">
+                        Log out
+                    </button>
+                </form>
+            </div>
         </header>
 
         <!-- ================= CHAT AREA ================= -->

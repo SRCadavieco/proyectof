@@ -64,8 +64,11 @@ class DesignController extends Controller
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
 
-    // Obtener chat (sin auth, entorno pruebas)
+    // Obtener chat y verificar que pertenece al usuario autenticado
     $chat = Chat::findOrFail($chatId);
+    if ($chat->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+        return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+    }
 
     // Guardar mensaje del usuario (con imagen si se proporciona)
     $chat->messages()->create([

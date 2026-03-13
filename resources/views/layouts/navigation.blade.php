@@ -33,10 +33,26 @@
         </div>
 
         <!-- CTA -->
-        <a href="{{ route('login') }}"
-           class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold text-white hover:opacity-90 transition">
-            Sign in / Register
-        </a>
+        @auth
+            <div class="flex items-center gap-3">
+                <a href="{{ route('designs.form') }}"
+                   class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold text-white hover:opacity-90 transition">
+                    My Studio
+                </a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg border border-gray-700 text-sm text-gray-300 hover:text-white hover:border-gray-500 transition">
+                        Log out
+                    </button>
+                </form>
+            </div>
+        @else
+            <a href="{{ route('login') }}"
+               class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold text-white hover:opacity-90 transition">
+                Sign in / Register
+            </a>
+        @endauth
 
     </div>
 </nav>
