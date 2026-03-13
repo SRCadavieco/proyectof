@@ -49,6 +49,28 @@
     <div id="chat-list" class="space-y-2"></div>
 </div>
         </div>
+
+        <!-- Token counter -->
+        <div class="p-4 border-t border-gray-800">
+            <div class="rounded-xl bg-gray-800/60 border border-gray-700 px-4 py-3 flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-gray-400">Tokens</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="token-icon" class="text-base">&#9889;</span>
+                        <span id="token-count" class="text-sm font-bold text-white">10</span>
+                        <span class="text-xs text-gray-500">/ 10</span>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-1.5">
+                    <div id="token-bar" class="h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-purple-500 to-indigo-500" style="width:100%"></div>
+                </div>
+                <button id="refill-btn"
+                        onclick="TokenManager.refill()"
+                        class="hidden w-full mt-1 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:opacity-90 transition">
+                    Want more tokens? &#10024;
+                </button>
+            </div>
+        </div>
     </aside>
 
     <!-- ================= MAIN ================= -->
@@ -115,7 +137,7 @@
                 <!-- Banner modo edición -->
                 <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/40 text-orange-400 text-sm font-medium">
                     <span>✏️ You are now editing the previous photo</span>
-                    <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-300 hover:text-white transition text-xs underline">Cancelar</button>
+                    <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-300 hover:text-white transition text-xs underline">Cancel</button>
                 </div>
                 <div class="flex gap-3 items-end">
     <!-- Upload image -->
@@ -155,6 +177,64 @@
         // User identity (ready for profile photos)
         const userInitial = '{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}';
         const userAvatarUrl = null; // set to profile photo URL when available
+
+        // ─── Token Manager ────────────────────────────────────────────────
+        // TODO (payment integration): replace localStorage calls with:
+        //   GET  /api/tokens         -> { remaining: int, total: int }
+        //   POST /api/tokens/deduct  -> { remaining: int }
+        //   POST /api/tokens/refill  -> { checkout_url: string }  (redirect to Stripe/etc)
+        const TokenManager = {
+            MAX: 10,
+            STORAGE_KEY: 'fabricai_tokens_{{ Auth::id() }}',
+
+            get() {
+                const v = localStorage.getItem(this.STORAGE_KEY);
+                return v !== null ? parseInt(v, 10) : this.MAX;
+            },
+
+            set(n) {
+                localStorage.setItem(this.STORAGE_KEY, Math.max(0, n));
+                this._render(Math.max(0, n));
+            },
+
+            deduct() {
+                const cur = this.get();
+                if (cur <= 0) return false;
+                this.set(cur - 1);
+                return true;
+            },
+
+            // TODO: replace with redirect to checkout_url from POST /api/tokens/refill
+            refill() {
+                this.set(this.MAX);
+            },
+
+            _render(n) {
+                const countEl = document.getElementById('token-count');
+                const barEl   = document.getElementById('token-bar');
+                const btnEl   = document.getElementById('refill-btn');
+                const iconEl  = document.getElementById('token-icon');
+                if (!countEl) return;
+                countEl.textContent = n;
+                barEl.style.width = ((n / this.MAX) * 100) + '%';
+                if (n === 0) {
+                    barEl.className = 'h-1.5 rounded-full transition-all duration-500 bg-red-500';
+                    iconEl.textContent = String.fromCodePoint(0x1FABA); // low battery
+                    btnEl.classList.remove('hidden');
+                    if (submitBtn) submitBtn.disabled = true;
+                } else {
+                    barEl.className = n <= 3
+                        ? 'h-1.5 rounded-full transition-all duration-500 bg-orange-400'
+                        : 'h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-purple-500 to-indigo-500';
+                    iconEl.textContent = '\u26A1';
+                    btnEl.classList.add('hidden');
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            },
+
+            init() { this._render(this.get()); }
+        };
+        // ─────────────────────────────────────────────────────────────────
 
         // Referencias a elementos
         let uploadedImageBase64 = null;
@@ -203,10 +283,23 @@
         }
         
         // Agregar mensaje del usuario
-        function addUserMessage(text) {
+        function addUserMessage(text, imageBase64 = null) {
             const avatarHtml = userAvatarUrl
                 ? `<img src="${userAvatarUrl}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">`
                 : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">${userInitial}</div>`;
+
+            // Image as a separate bubble above the text
+            if (imageBase64) {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'mb-2 flex flex-row-reverse items-end gap-3';
+                imgDiv.innerHTML = `
+                    <div class="w-8 h-8 flex-shrink-0"></div>
+                    <img src="${imageBase64}" alt="Attached image"
+                         class="rounded-2xl max-w-xs max-h-56 object-cover shadow-md">
+                `;
+                messagesContainer.appendChild(imgDiv);
+            }
+
             const messageDiv = document.createElement('div');
             messageDiv.className = 'mb-5 flex flex-row-reverse items-start gap-3';
             messageDiv.innerHTML = `
@@ -247,12 +340,12 @@
                             Download
                         </a>
                         <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition edit-btn">
-                            Editar imagen
+                            Edit image
                         </button>
                     </div>
                 </div>
                         `;
-                        // Delegación de eventos para el botón Editar imagen (solo una vez)
+                        // Edit image button delegation
                        
             
             messagesContainer.appendChild(messageDiv);
@@ -306,7 +399,7 @@
         const res = await fetch('/chats');
         chats = await res.json();
     } catch (err) {
-        showError('No se pudieron cargar los chats');
+        showError('Could not load chats');
         return;
     }
     chats.forEach(chat => {
@@ -365,7 +458,7 @@
         // Botón renombrar (lápiz)
         const renameBtn = document.createElement('button');
         renameBtn.className = 'ml-1 text-gray-500 hover:text-purple-400 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
-        renameBtn.title = 'Renombrar chat';
+        renameBtn.title = 'Rename chat';
         renameBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
         renameBtn.onclick = (e) => {
             e.stopPropagation();
@@ -380,11 +473,11 @@
         // Botón borrar
         const delBtn = document.createElement('button');
         delBtn.className = 'ml-1 text-gray-500 hover:text-red-400 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
-        delBtn.title = 'Borrar chat';
+        delBtn.title = 'Delete chat';
         delBtn.innerHTML = '<i class="fas fa-trash"></i>';
         delBtn.onclick = async (e) => {
             e.stopPropagation();
-            if (confirm('¿Seguro que quieres borrar este chat?')) {
+            if (confirm('Are you sure you want to delete this chat?')) {
                 await deleteChat(chat.id);
             }
         };
@@ -412,7 +505,7 @@ async function deleteChat(chatId) {
         await loadChats();
     } else {
         const data = await res.json().catch(() => ({}));
-        showError(data.error || 'No se pudo borrar el chat');
+        showError(data.error || 'Could not delete the chat');
     }
 }
 
@@ -471,7 +564,12 @@ async function loadChat(chatId) {
 
             const prompt = promptInput.value.trim();
             if (!prompt) {
-                showError('Por favor escribe un prompt');
+                showError('Please enter a prompt');
+                return;
+            }
+
+            if (TokenManager.get() <= 0) {
+                showError('You have no tokens left. Get more to keep designing!');
                 return;
             }
 
@@ -483,9 +581,19 @@ async function loadChat(chatId) {
             }
 
             // Agregar mensaje del usuario
-            addUserMessage(prompt);
+            addUserMessage(prompt, uploadedImageBase64);
             promptInput.value = '';
             promptInput.style.height = 'auto';
+
+            // Snapshot image values before clearing the UI
+            const snapshotImage = uploadedImageBase64;
+            const snapshotMime  = uploadedImageMime;
+
+            // Clear image input immediately after sending
+            imageInput.value = '';
+            document.getElementById('image-preview').innerHTML = '';
+            uploadedImageBase64 = null;
+            uploadedImageMime = null;
 
             setLoading(true);
 
@@ -495,8 +603,8 @@ async function loadChat(chatId) {
                 console.log('Enviando datos:', {
                     prompt,
                     chat_id: currentChatId,
-                    imageBase64: uploadedImageBase64,
-                    mimeType: uploadedImageMime,
+                    imageBase64: snapshotImage,
+                    mimeType: snapshotMime,
                     model: aiModel
                 });
                 const res = await fetch('/designs/generate', {
@@ -509,8 +617,8 @@ async function loadChat(chatId) {
                     body: JSON.stringify({
                         prompt,
                         chat_id: currentChatId,
-                        imageBase64: uploadedImageBase64,
-                        mimeType: uploadedImageMime,
+                        imageBase64: snapshotImage,
+                        mimeType: snapshotMime,
                         model: aiModel,
                         is_edit: isEditMode
                     })
@@ -529,14 +637,16 @@ async function loadChat(chatId) {
 
                 if (imageUrl) {
                     addBotResponse(imageUrl);
+                    TokenManager.deduct();
                 } else if (base64) {
                     const fullBase64 = base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64;
                     addBotResponse(fullBase64);
+                    TokenManager.deduct();
                 } else {
                     throw new Error('No image in response');
                 }
             } catch (err) {
-                const errMsg = err.message || 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.';
+                const errMsg = err.message || 'Could not generate the image. Please check your prompt and try again.';
                 addBotError(errMsg);
                 console.error('Error en submit:', err);
             } finally {
@@ -550,6 +660,7 @@ async function loadChat(chatId) {
             }
         });
         document.addEventListener('DOMContentLoaded', async () => {
+    TokenManager.init();
     await loadChats();
 
     // Auto-crear chat si no hay ninguno
