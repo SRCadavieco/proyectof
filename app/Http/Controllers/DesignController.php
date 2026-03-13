@@ -164,7 +164,7 @@ if ($isEdit) {
             ?? null;
 
         if ($base64) {
-            $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 40);
+            $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 30);
 
             if (is_string($processed) && $processed !== '') {
                 $result['imageBase64'] = $processed;
