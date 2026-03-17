@@ -11,6 +11,11 @@ use App\Http\Controllers\ChatController;
 Route::get('/faq', function () {
     return view('faq');
 });
+
+// Pricing page
+Route::get('/pricing', function () {
+    return view('pricing');
+});
 // Home apunta siempre a la vista welcome
 Route::get('/', function () {
     return view('welcome');
