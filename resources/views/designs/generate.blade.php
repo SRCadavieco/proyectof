@@ -253,6 +253,7 @@
         const errorEl = document.getElementById('error');
         const messagesContainer = document.getElementById('messages');
         const chatContainer = document.getElementById('chat-container');
+        const previewImageStore = [];
         
         // Auto-resize textarea
         promptInput.addEventListener('input', function() {
@@ -316,6 +317,8 @@
             messageDiv.className = 'mb-5 flex items-start gap-4';
             
             const uniqueId = 'bg-' + Date.now();
+            const previewIdx = previewImageStore.length;
+            previewImageStore.push(imageUrl);
             
             messageDiv.innerHTML = `
                 <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 self-start overflow-hidden p-1">
@@ -341,6 +344,9 @@
                         </a>
                         <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition edit-btn">
                             Edit image
+                        </button>
+                        <button type="button" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium transition preview-btn" data-preview-idx="${previewIdx}">
+                            👕 Preview
                         </button>
                     </div>
                 </div>
@@ -724,7 +730,317 @@ imageInput.addEventListener('change', async (e) => {
             if (e.target && e.target.classList.contains('edit-btn')) {
                 enterEditMode();
             }
+            const prevBtn = e.target.closest ? e.target.closest('.preview-btn') : null;
+            if (e.target.classList.contains('preview-btn') || prevBtn) {
+                const btn = prevBtn || e.target;
+                const idx = parseInt(btn.getAttribute('data-preview-idx'));
+                if (!isNaN(idx) && previewImageStore[idx]) openPreviewModal(previewImageStore[idx]);
+            }
+            if (e.target.id === 'preview-modal') closePreviewModal();
         });
+
+        // ─── Garment Preview System ──────────────────────────────────────
+        let previewDesignSrc = null;
+
+        function shadeColor(hex, pct) {
+            let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+            r = Math.min(255, Math.max(0, Math.round(r*(100+pct)/100)));
+            g = Math.min(255, Math.max(0, Math.round(g*(100+pct)/100)));
+            b = Math.min(255, Math.max(0, Math.round(b*(100+pct)/100)));
+            return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+        }
+
+        // ─── Printify real print areas ─────────────────────────────────
+        // Canvas = 500 × 550.  Garment proportions mapped from real inches.
+        // Sources: Printify product editor → "Download design template" per SKU.
+        //
+        //  Product (SKU)                Print area (px @300dpi)   Inches      Canvas rect
+        //  ─────────────────────────────────────────────────────────────────────────────────
+        //  Gildan 5000  T-Shirt         3951 × 4919              13.17 × 16.40
+        //  Gildan 18500 Hoodie          3543 × 4724              11.81 × 15.75
+        //  Bella+Canvas 3480 Tank Top   3000 × 4200              10.00 × 14.00
+        //  Gildan 5400  Long Sleeve     3951 × 4919              13.17 × 16.40
+        //  Gildan 18000 Sweatshirt      3543 × 4724              11.81 × 15.75
+        // ──────────────────────────────────────────────────────────────────
+
+        const GARMENTS = {
+            tshirt: {
+                name: 'T-Shirt',
+                ref: 'Gildan 5000',
+                printPx: '3951 × 4919',
+                printInches: '13.17" × 16.40"',
+                dpi: 300,
+                // Body on canvas: x 150-350 (w200), y 165-495 (h330)
+                // Ratios: 13.17/20=0.659 → 132px  |  16.40/28=0.586 → 193px
+                printArea: { x: 184, y: 178, w: 132, h: 193 },
+                draw(ctx, color) {
+                    const dk = shadeColor(color, -20);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(195, 148);
+                    ctx.lineTo(108, 170); ctx.lineTo(62, 218);
+                    ctx.lineTo(82, 262); ctx.lineTo(150, 228);
+                    ctx.lineTo(150, 495); ctx.lineTo(350, 495);
+                    ctx.lineTo(350, 228); ctx.lineTo(418, 262);
+                    ctx.lineTo(438, 218); ctx.lineTo(392, 170);
+                    ctx.lineTo(305, 148);
+                    ctx.quadraticCurveTo(250, 122, 195, 148);
+                    ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = dk; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(200, 148);
+                    ctx.quadraticCurveTo(250, 128, 300, 148);
+                    ctx.lineWidth = 4; ctx.strokeStyle = dk; ctx.stroke();
+                }
+            },
+            hoodie: {
+                name: 'Hoodie',
+                ref: 'Gildan 18500',
+                printPx: '3543 × 4724',
+                printInches: '11.81" × 15.75"',
+                dpi: 300,
+                // Body on canvas: x 140-360 (w220), y 155-498 (h343)
+                // Ratios: 11.81/22=0.537 → 118px  |  15.75/29=0.543 → 186px
+                // Print area stops above kangaroo pocket (~y360)
+                printArea: { x: 191, y: 175, w: 118, h: 186 },
+                draw(ctx, color) {
+                    const dk = shadeColor(color, -20);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(175, 155);
+                    ctx.quadraticCurveTo(155, 65, 250, 55);
+                    ctx.quadraticCurveTo(345, 65, 325, 155);
+                    ctx.quadraticCurveTo(250, 130, 175, 155);
+                    ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = dk; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(195, 155); ctx.lineTo(100, 178);
+                    ctx.lineTo(48, 340); ctx.lineTo(88, 350);
+                    ctx.lineTo(140, 230); ctx.lineTo(140, 498);
+                    ctx.lineTo(360, 498); ctx.lineTo(360, 230);
+                    ctx.lineTo(412, 350); ctx.lineTo(452, 340);
+                    ctx.lineTo(400, 178); ctx.lineTo(305, 155);
+                    ctx.quadraticCurveTo(250, 138, 195, 155);
+                    ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = dk; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(188, 370);
+                    ctx.quadraticCurveTo(250, 395, 312, 370);
+                    ctx.lineTo(312, 420);
+                    ctx.quadraticCurveTo(250, 430, 188, 420);
+                    ctx.closePath(); ctx.strokeStyle = dk; ctx.lineWidth = 1.5; ctx.stroke();
+                    ctx.setLineDash([5,5]);
+                    ctx.beginPath(); ctx.moveTo(250, 155); ctx.lineTo(250, 495);
+                    ctx.strokeStyle = dk; ctx.lineWidth = 1; ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.beginPath(); ctx.moveTo(235, 155); ctx.lineTo(228, 220);
+                    ctx.strokeStyle = dk; ctx.lineWidth = 1.5; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(265, 155); ctx.lineTo(272, 220);
+                    ctx.strokeStyle = dk; ctx.lineWidth = 1.5; ctx.stroke();
+                }
+            },
+            tanktop: {
+                name: 'Tank Top',
+                ref: 'Bella+Canvas 3480',
+                printPx: '3000 × 4200',
+                printInches: '10.00" × 14.00"',
+                dpi: 300,
+                // Body on canvas: x 148-352 (w204), y 140-498 (h358)
+                // Ratios: 10/17=0.588 → 120px  |  14/26=0.538 → 193px
+                printArea: { x: 190, y: 162, w: 120, h: 193 },
+                draw(ctx, color) {
+                    const dk = shadeColor(color, -20);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(210, 130); ctx.lineTo(180, 130);
+                    ctx.lineTo(148, 195);
+                    ctx.quadraticCurveTo(135, 250, 148, 270);
+                    ctx.lineTo(148, 498); ctx.lineTo(352, 498);
+                    ctx.lineTo(352, 270);
+                    ctx.quadraticCurveTo(365, 250, 352, 195);
+                    ctx.lineTo(320, 130); ctx.lineTo(290, 130);
+                    ctx.quadraticCurveTo(250, 155, 210, 130);
+                    ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = dk; ctx.lineWidth = 2; ctx.stroke();
+                }
+            },
+            longsleeve: {
+                name: 'Long Sleeve',
+                ref: 'Gildan 5400',
+                printPx: '3951 × 4919',
+                printInches: '13.17" × 16.40"',
+                dpi: 300,
+                // Same body proportions as T-Shirt
+                printArea: { x: 184, y: 178, w: 132, h: 193 },
+                draw(ctx, color) {
+                    const dk = shadeColor(color, -20);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(195, 148); ctx.lineTo(108, 170);
+                    ctx.lineTo(42, 380); ctx.lineTo(78, 390);
+                    ctx.lineTo(148, 230); ctx.lineTo(148, 495);
+                    ctx.lineTo(352, 495); ctx.lineTo(352, 230);
+                    ctx.lineTo(422, 390); ctx.lineTo(458, 380);
+                    ctx.lineTo(392, 170); ctx.lineTo(305, 148);
+                    ctx.quadraticCurveTo(250, 122, 195, 148);
+                    ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = dk; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(200, 148);
+                    ctx.quadraticCurveTo(250, 128, 300, 148);
+                    ctx.lineWidth = 4; ctx.strokeStyle = dk; ctx.stroke();
+                    ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.moveTo(42, 378); ctx.lineTo(78, 388); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(422, 388); ctx.lineTo(458, 378); ctx.stroke();
+                }
+            },
+            sweatshirt: {
+                name: 'Sweatshirt',
+                ref: 'Gildan 18000',
+                printPx: '3543 × 4724',
+                printInches: '11.81" × 15.75"',
+                dpi: 300,
+                // Body on canvas: x 145-355 (w210), y 155-498 (h343)
+                // Ratios: 11.81/22=0.537 → 113px  |  15.75/29=0.543 → 186px
+                printArea: { x: 194, y: 178, w: 113, h: 186 },
+                draw(ctx, color) {
+                    const dk = shadeColor(color, -20);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(190, 155); ctx.lineTo(105, 175);
+                    ctx.lineTo(48, 345); ctx.lineTo(85, 355);
+                    ctx.lineTo(145, 232); ctx.lineTo(145, 498);
+                    ctx.lineTo(355, 498); ctx.lineTo(355, 232);
+                    ctx.lineTo(415, 355); ctx.lineTo(452, 345);
+                    ctx.lineTo(395, 175); ctx.lineTo(310, 155);
+                    ctx.quadraticCurveTo(250, 128, 190, 155);
+                    ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = dk; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(195, 155);
+                    ctx.quadraticCurveTo(250, 135, 305, 155);
+                    ctx.lineWidth = 6; ctx.strokeStyle = dk; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(145, 490); ctx.lineTo(355, 490);
+                    ctx.lineWidth = 6; ctx.strokeStyle = dk; ctx.stroke();
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(48, 343); ctx.lineTo(85, 353); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(415, 353); ctx.lineTo(452, 343); ctx.stroke();
+                }
+            }
+        };
+
+        function openPreviewModal(imageSrc) {
+            previewDesignSrc = imageSrc;
+            document.getElementById('preview-modal').classList.remove('hidden');
+            document.getElementById('preview-modal').classList.add('flex');
+            renderPreview();
+        }
+
+        function closePreviewModal() {
+            document.getElementById('preview-modal').classList.add('hidden');
+            document.getElementById('preview-modal').classList.remove('flex');
+            previewDesignSrc = null;
+        }
+
+        function renderPreview() {
+            if (!previewDesignSrc) return;
+            const canvas = document.getElementById('preview-canvas');
+            const ctx = canvas.getContext('2d');
+            const garmentType = document.getElementById('garment-select').value;
+            const garmentColor = document.getElementById('garment-color').value;
+            const garment = GARMENTS[garmentType];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const sz = 15;
+            for (let y = 0; y < canvas.height; y += sz) {
+                for (let x = 0; x < canvas.width; x += sz) {
+                    ctx.fillStyle = ((x/sz + y/sz) % 2 === 0) ? '#1e1e2e' : '#252538';
+                    ctx.fillRect(x, y, sz, sz);
+                }
+            }
+
+            garment.draw(ctx, garmentColor);
+
+            // Draw print area boundary (Printify safe zone)
+            const pa = garment.printArea;
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(pa.x, pa.y, pa.w, pa.h);
+            ctx.setLineDash([]);
+            ctx.font = '9px sans-serif';
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.55)';
+            ctx.fillText('Print area', pa.x + 2, pa.y - 3);
+
+            // Update spec info below canvas
+            const specEl = document.getElementById('printify-spec');
+            if (specEl) {
+                specEl.innerHTML = `<span class="text-purple-400 font-medium">${garment.ref}</span> &mdash; ${garment.printPx} px &middot; ${garment.printInches} &middot; ${garment.dpi} DPI`;
+            }
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const ir = img.width / img.height;
+                const pr = pa.w / pa.h;
+                let dw, dh;
+                if (ir > pr) { dw = pa.w; dh = pa.w / ir; }
+                else { dh = pa.h; dw = pa.h * ir; }
+                const dx = pa.x + (pa.w - dw) / 2;
+                const dy = pa.y + (pa.h - dh) / 2;
+                ctx.drawImage(img, dx, dy, dw, dh);
+            };
+            img.src = previewDesignSrc;
+        }
+
+        function downloadPreview() {
+            const canvas = document.getElementById('preview-canvas');
+            const link = document.createElement('a');
+            link.download = 'garment-preview.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        // ─────────────────────────────────────────────────────────────────
     </script>
+
+    <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
+    <div id="preview-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+                <h2 class="text-lg font-semibold text-white">Preview on Garment</h2>
+                <button onclick="closePreviewModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex gap-4 mb-4 flex-wrap items-end">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs text-gray-400">Garment</label>
+                        <select id="garment-select" onchange="renderPreview()" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500">
+                            <option value="tshirt">Gildan 5000 — T-Shirt</option>
+                            <option value="hoodie">Gildan 18500 — Hoodie</option>
+                            <option value="tanktop">Bella+Canvas 3480 — Tank Top</option>
+                            <option value="longsleeve">Gildan 5400 — Long Sleeve</option>
+                            <option value="sweatshirt">Gildan 18000 — Sweatshirt</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs text-gray-400">Color</label>
+                        <input type="color" id="garment-color" value="#ffffff" onchange="renderPreview()" class="w-10 h-10 rounded-lg border border-gray-700 cursor-pointer bg-transparent">
+                    </div>
+                </div>
+                <div class="flex justify-center bg-gray-800/50 rounded-xl p-4">
+                    <canvas id="preview-canvas" width="500" height="550" class="max-w-full h-auto rounded-lg" style="max-height: 450px;"></canvas>
+                </div>
+                <div id="printify-spec" class="mt-2 text-xs text-gray-500 text-center"></div>
+                <div class="flex justify-end mt-3">
+                    <button onclick="downloadPreview()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
+                        Download Preview
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
