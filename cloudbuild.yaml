@@ -5,7 +5,7 @@ substitutions:
   _APP_KEY: base64:4ZO8qcHIzKh1hJ4GaostSEMwI/P2XqphnZ49yXcFPB0=
   _GEMINI_BACKEND_URL: https://fabricai-278322460825.europe-west1.run.app/
   _GEMINI_BACKEND_TOKEN: ""
-
+  _APP_URL: http://fabricai.net
 steps:
   # Limpiar caché de Laravel y mostrar APP_URL
   - name: 'php:8.2-cli'
