@@ -4,7 +4,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DesignController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ChatController; 
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\AdminController;
 
 
 // FAQ page
@@ -25,6 +26,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/design', [DesignController::class, 'form']);
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
+
+    // Token API
+    Route::get('/api/tokens', function () {
+        $user = auth()->user();
+        return response()->json(['remaining' => $user->tokens, 'total' => 10]);
+    })->name('api.tokens');
+});
+
+// Admin panel
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::put('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::post('/users/{user}/tokens', [AdminController::class, 'addTokens'])->name('users.tokens');
+    Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
+    Route::get('/stats', [AdminController::class, 'stats'])->name('stats');
 });
 
 // Debug local-only endpoint to inspect Gemini config

@@ -57,16 +57,16 @@
                     <span class="text-xs font-medium text-gray-400">Tokens</span>
                     <div class="flex items-center gap-1.5">
                         <span id="token-icon" class="text-base">&#9889;</span>
-                        <span id="token-count" class="text-sm font-bold text-white">10</span>
+                        <span id="token-count" class="text-sm font-bold text-white">{{ Auth::user()->tokens ?? 0 }}</span>
                         <span class="text-xs text-gray-500">/ 10</span>
                     </div>
                 </div>
                 <div class="w-full bg-gray-700 rounded-full h-1.5">
-                    <div id="token-bar" class="h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-purple-500 to-indigo-500" style="width:100%"></div>
+                    <div id="token-bar" class="h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-purple-500 to-indigo-500" style="width:{{ ((Auth::user()->tokens ?? 0) / 10) * 100 }}%"></div>
                 </div>
                 <button id="refill-btn"
                         onclick="TokenManager.refill()"
-                        class="hidden w-full mt-1 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:opacity-90 transition">
+                        class="{{ (Auth::user()->tokens ?? 0) > 0 ? 'hidden' : '' }} w-full mt-1 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:opacity-90 transition">
                     Want more tokens? &#10024;
                 </button>
             </div>
@@ -178,23 +178,18 @@
         const userInitial = '{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}';
         const userAvatarUrl = null; // set to profile photo URL when available
 
-        // ─── Token Manager ────────────────────────────────────────────────
-        // TODO (payment integration): replace localStorage calls with:
-        //   GET  /api/tokens         -> { remaining: int, total: int }
-        //   POST /api/tokens/deduct  -> { remaining: int }
-        //   POST /api/tokens/refill  -> { checkout_url: string }  (redirect to Stripe/etc)
+        // ─── Token Manager (server-backed) ─────────────────────────────
         const TokenManager = {
             MAX: 10,
-            STORAGE_KEY: 'fabricai_tokens_{{ Auth::id() }}',
+            _cache: {{ Auth::user()->tokens ?? 10 }},
 
             get() {
-                const v = localStorage.getItem(this.STORAGE_KEY);
-                return v !== null ? parseInt(v, 10) : this.MAX;
+                return this._cache;
             },
 
             set(n) {
-                localStorage.setItem(this.STORAGE_KEY, Math.max(0, n));
-                this._render(Math.max(0, n));
+                this._cache = Math.max(0, n);
+                this._render(this._cache);
             },
 
             deduct() {
@@ -204,9 +199,21 @@
                 return true;
             },
 
-            // TODO: replace with redirect to checkout_url from POST /api/tokens/refill
             refill() {
-                this.set(this.MAX);
+                window.location.href = '/pricing';
+            },
+
+            async sync() {
+                try {
+                    const res = await fetch('/api/tokens', {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        this._cache = data.remaining;
+                        this._render(data.remaining);
+                    }
+                } catch (e) { /* silent */ }
             },
 
             _render(n) {
@@ -219,7 +226,7 @@
                 barEl.style.width = ((n / this.MAX) * 100) + '%';
                 if (n === 0) {
                     barEl.className = 'h-1.5 rounded-full transition-all duration-500 bg-red-500';
-                    iconEl.textContent = String.fromCodePoint(0x1FABA); // low battery
+                    iconEl.textContent = String.fromCodePoint(0x1FABA);
                     btnEl.classList.remove('hidden');
                     if (submitBtn) submitBtn.disabled = true;
                 } else {

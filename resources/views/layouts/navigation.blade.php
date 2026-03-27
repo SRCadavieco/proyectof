@@ -61,6 +61,12 @@
                              <p class="text-xs text-gray-400 truncate">{{ Auth::user()->name }}</p>
                              <p class="text-xs text-gray-600 truncate">{{ Auth::user()->email }}</p>
                             </div>
+                            @if(Auth::user()->is_admin)
+                                <a href="{{ route('admin.dashboard') }}"
+                                   class="block px-4 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-gray-800 transition">
+                                    <i class="fas fa-shield-halved mr-2"></i>Admin Panel
+                                </a>
+                            @endif
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"

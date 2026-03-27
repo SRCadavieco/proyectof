@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias para el gate básico
         $middleware->alias([
             'private' => \App\Http\Middleware\PrivateAccess::class,
+            'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

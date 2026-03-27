@@ -70,6 +70,16 @@ class DesignController extends Controller
         return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
     }
 
+    // Verificar y descontar token del usuario
+    $user = $request->user();
+    if ($user->tokens <= 0) {
+        return response()->json([
+            'success' => false,
+            'error' => 'No tienes tokens disponibles. Consigue más para seguir diseñando.',
+        ], 403);
+    }
+    $user->decrement('tokens');
+
     // Guardar mensaje del usuario (con imagen si se proporciona)
     $chat->messages()->create([
         'role' => 'user',
