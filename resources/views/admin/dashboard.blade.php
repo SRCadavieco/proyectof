@@ -113,16 +113,18 @@
             {{-- Hourly Activity --}}
             <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
                 <h3 class="text-sm font-semibold text-gray-300 mb-4">
-                    <i class="fas fa-clock text-purple-400 mr-2"></i>Actividad por hora (últimos 7 días)
+                    <i class="fas fa-clock text-purple-400 mr-2"></i>Usuarios conectados por hora (últimos 7 días)
                 </h3>
+                <p class="text-xs text-gray-500 -mt-2 mb-3">Usuarios únicos activos en cada franja horaria</p>
                 <canvas id="hourlyChart" height="200"></canvas>
             </div>
 
             {{-- Daily Registrations --}}
             <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
                 <h3 class="text-sm font-semibold text-gray-300 mb-4">
-                    <i class="fas fa-user-plus text-green-400 mr-2"></i>Registros diarios (últimos 30 días)
+                    <i class="fas fa-user-plus text-green-400 mr-2"></i>Nuevos registros (últimos 30 días)
                 </h3>
+                <p class="text-xs text-gray-500 -mt-2 mb-3">Cuentas creadas por día</p>
                 <canvas id="registrationsChart" height="200"></canvas>
             </div>
         </div>
@@ -177,13 +179,13 @@
     Chart.defaults.color = chartDefaults.color;
     Chart.defaults.borderColor = chartDefaults.borderColor;
 
-    // Hourly Activity Chart
+    // Hourly Activity Chart — usuarios únicos concurrentes
     new Chart(document.getElementById('hourlyChart'), {
         type: 'bar',
         data: {
             labels: {!! json_encode(array_map(fn($h) => str_pad($h, 2, '0', STR_PAD_LEFT) . ':00', array_keys($hourlyData))) !!},
             datasets: [{
-                label: 'Sesiones',
+                label: 'Usuarios',
                 data: {!! json_encode(array_values($hourlyData)) !!},
                 backgroundColor: 'rgba(139, 92, 246, 0.5)',
                 borderColor: 'rgb(139, 92, 246)',
@@ -193,35 +195,72 @@
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.parsed.y + (ctx.parsed.y === 1 ? ' usuario' : ' usuarios')
+                    }
+                }
+            },
             scales: {
-                y: { beginAtZero: true, grid: { color: '#1f2937' } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#1f2937' },
+                    ticks: {
+                        stepSize: 1,
+                        callback: v => Number.isInteger(v) ? v : ''
+                    }
+                },
                 x: { grid: { display: false } }
             }
         }
     });
 
     // Daily Registrations Chart
+    const regLabels = {!! json_encode(array_keys($dailyRegistrations)) !!};
+    // Mostrar solo día/mes en el eje X
+    const regLabelsShort = regLabels.map(d => {
+        const parts = d.split('-');
+        return parts[2] + '/' + parts[1];
+    });
     new Chart(document.getElementById('registrationsChart'), {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: {!! json_encode(array_keys($dailyRegistrations)) !!},
+            labels: regLabelsShort,
             datasets: [{
                 label: 'Registros',
                 data: {!! json_encode(array_values($dailyRegistrations)) !!},
+                backgroundColor: 'rgba(34, 197, 94, 0.5)',
                 borderColor: 'rgb(34, 197, 94)',
-                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 2,
+                borderWidth: 1,
+                borderRadius: 4,
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: ctx => regLabels[ctx[0].dataIndex],
+                        label: ctx => ctx.parsed.y + (ctx.parsed.y === 1 ? ' registro' : ' registros')
+                    }
+                }
+            },
             scales: {
-                y: { beginAtZero: true, grid: { color: '#1f2937' } },
-                x: { grid: { display: false }, ticks: { maxTicksToShow: 10 } }
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#1f2937' },
+                    ticks: {
+                        stepSize: 1,
+                        callback: v => Number.isInteger(v) ? v : ''
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 15 }
+                }
             }
         }
     });

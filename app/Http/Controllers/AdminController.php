@@ -32,7 +32,7 @@ class AdminController extends Controller
             ->select(DB::raw("COUNT(*) as total"))
             ->first();
 
-        // Hourly activity (last 7 days) - based on sessions last_activity
+        // Usuarios únicos conectados por franja horaria (últimos 7 días)
         $driver = DB::getDriverName();
         $hourRaw = $driver === 'sqlite'
             ? "CAST(strftime('%H', datetime(last_activity, 'unixepoch')) AS INTEGER) as hour"
@@ -41,7 +41,7 @@ class AdminController extends Controller
         $hourlyActivity = DB::table('sessions')
             ->whereNotNull('user_id')
             ->where('last_activity', '>=', now()->subDays(7)->timestamp)
-            ->select(DB::raw($hourRaw), DB::raw("COUNT(*) as total"))
+            ->select(DB::raw($hourRaw), DB::raw("COUNT(DISTINCT user_id) as total"))
             ->groupBy('hour')
             ->orderBy('hour')
             ->pluck('total', 'hour')
@@ -53,17 +53,24 @@ class AdminController extends Controller
             $hourlyData[$i] = $hourlyActivity[$i] ?? 0;
         }
 
-        // Recent registrations (last 30 days)
+        // Registros diarios (últimos 30 días, rellenando días sin registros)
         $dateRaw = $driver === 'sqlite'
             ? "strftime('%Y-%m-%d', created_at) as date"
             : "DATE(created_at) as date";
 
-        $dailyRegistrations = User::where('created_at', '>=', now()->subDays(30))
+        $rawRegistrations = User::where('created_at', '>=', now()->subDays(29)->startOfDay())
             ->select(DB::raw($dateRaw), DB::raw("COUNT(*) as total"))
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('total', 'date')
             ->toArray();
+
+        // Rellenar todos los días del rango
+        $dailyRegistrations = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $day = now()->subDays($i)->format('Y-m-d');
+            $dailyRegistrations[$day] = $rawRegistrations[$day] ?? 0;
+        }
 
         return view('admin.dashboard', compact(
             'totalUsers',
