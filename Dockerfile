@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     libwebp-dev \
     curl \
  && docker-php-ext-configure gd --with-jpeg --with-webp \
- && docker-php-ext-install zip pdo pdo_mysql gd \
+ && docker-php-ext-install zip pdo pdo_mysql gd bcmath \
  && a2enmod rewrite \
  && rm -rf /var/lib/apt/lists/*
 
