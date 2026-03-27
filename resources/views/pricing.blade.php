@@ -92,10 +92,22 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('login') }}"
-                       class="block text-center py-3 rounded-xl border border-gray-700 text-sm font-semibold text-gray-300 hover:border-purple-500 hover:text-white transition-all duration-300">
-                        Get started free
-                    </a>
+                    @auth
+                        @if(auth()->user()->plan === 'free')
+                            <span class="block text-center py-3 rounded-xl border border-green-500/50 text-sm font-semibold text-green-400 cursor-default">
+                                Current plan
+                            </span>
+                        @else
+                            <span class="block text-center py-3 rounded-xl border border-gray-700 text-sm font-semibold text-gray-500 cursor-default">
+                                Free tier
+                            </span>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}"
+                           class="block text-center py-3 rounded-xl border border-gray-700 text-sm font-semibold text-gray-300 hover:border-purple-500 hover:text-white transition-all duration-300">
+                            Get started free
+                        </a>
+                    @endauth
                 </div>
 
                 <!-- PRO (highlighted) -->
@@ -146,13 +158,35 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('login') }}"
-                       class="block text-center py-3 rounded-xl font-semibold text-sm text-white
-                              bg-gradient-to-r from-purple-500 to-indigo-500
-                              shadow-lg shadow-purple-500/30
-                              hover:opacity-90 hover:scale-105 transition-all duration-300">
-                        Start with Pro
-                    </a>
+                    @auth
+                        @if(auth()->user()->plan === 'pro')
+                            <span class="block text-center py-3 rounded-xl font-semibold text-sm text-white
+                                  bg-gradient-to-r from-green-500 to-emerald-500 cursor-default">
+                                Current plan
+                            </span>
+                        @else
+                            <form method="POST" action="{{ route('subscription.checkout') }}">
+                                @csrf
+                                <input type="hidden" name="plan" value="pro">
+                                <input type="hidden" name="billing" :value="yearly ? 'yearly' : 'monthly'">
+                                <button type="submit"
+                                   class="w-full block text-center py-3 rounded-xl font-semibold text-sm text-white
+                                          bg-gradient-to-r from-purple-500 to-indigo-500
+                                          shadow-lg shadow-purple-500/30
+                                          hover:opacity-90 hover:scale-105 transition-all duration-300 cursor-pointer">
+                                    Start with Pro
+                                </button>
+                            </form>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}"
+                           class="block text-center py-3 rounded-xl font-semibold text-sm text-white
+                                  bg-gradient-to-r from-purple-500 to-indigo-500
+                                  shadow-lg shadow-purple-500/30
+                                  hover:opacity-90 hover:scale-105 transition-all duration-300">
+                            Start with Pro
+                        </a>
+                    @endauth
                 </div>
 
                 <!-- STUDIO -->
@@ -192,10 +226,29 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('login') }}"
-                       class="block text-center py-3 rounded-xl border border-gray-700 text-sm font-semibold text-gray-300 hover:border-purple-500 hover:text-white transition-all duration-300">
-                        Start with Studio
-                    </a>
+                    @auth
+                        @if(auth()->user()->plan === 'studio')
+                            <span class="block text-center py-3 rounded-xl border border-green-500/50 text-sm font-semibold text-green-400 cursor-default">
+                                Current plan
+                            </span>
+                        @else
+                            <form method="POST" action="{{ route('subscription.checkout') }}">
+                                @csrf
+                                <input type="hidden" name="plan" value="studio">
+                                <input type="hidden" name="billing" :value="yearly ? 'yearly' : 'monthly'">
+                                <button type="submit"
+                                   class="w-full block text-center py-3 rounded-xl border border-gray-700 text-sm font-semibold text-gray-300
+                                          hover:border-purple-500 hover:text-white transition-all duration-300 cursor-pointer">
+                                    Start with Studio
+                                </button>
+                            </form>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}"
+                           class="block text-center py-3 rounded-xl border border-gray-700 text-sm font-semibold text-gray-300 hover:border-purple-500 hover:text-white transition-all duration-300">
+                            Start with Studio
+                        </a>
+                    @endauth
                 </div>
 
             </div>

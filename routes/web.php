@@ -6,6 +6,8 @@ use App\Http\Controllers\DesignController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\StripeWebhookController;
 
 
 // FAQ page
@@ -32,7 +34,16 @@ Route::middleware('auth')->group(function () {
         $user = auth()->user();
         return response()->json(['remaining' => $user->tokens, 'total' => 10]);
     })->name('api.tokens');
+
+    // Subscription / Billing
+    Route::post('/subscribe', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
+    Route::get('/subscription/success', [SubscriptionController::class, 'success'])->name('subscription.success');
+    Route::get('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
+    Route::get('/billing', [SubscriptionController::class, 'portal'])->name('billing');
 });
+
+// Stripe webhooks (no CSRF)
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 // Admin panel
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

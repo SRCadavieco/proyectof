@@ -53,4 +53,14 @@ return [
         'key' => env('PIXAZO_API_KEY'),
     ],
 
+    'stripe' => [
+        'prices' => [
+            'pro_monthly' => env('STRIPE_PRO_MONTHLY_PRICE'),
+            'pro_yearly' => env('STRIPE_PRO_YEARLY_PRICE'),
+            'studio_monthly' => env('STRIPE_STUDIO_MONTHLY_PRICE'),
+            'studio_yearly' => env('STRIPE_STUDIO_YEARLY_PRICE'),
+        ],
+        'portal_configuration' => env('STRIPE_PORTAL_CONFIGURATION'),
+    ],
+
 ];
