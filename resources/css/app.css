@@ -1,3 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+    [x-cloak] {
+        display: none !important;
+    }
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply inline-block px-8 py-3.5 bg-ink text-white text-sm font-medium tracking-wide uppercase
+               hover:bg-ink-light transition-colors duration-300;
+    }
+    .btn-outline {
+        @apply inline-block px-8 py-3.5 border border-ink text-ink text-sm font-medium tracking-wide uppercase
+               hover:bg-ink hover:text-white transition-colors duration-300;
+    }
+    .heading-editorial {
+        @apply font-serif text-ink;
+    }
+    .section-padding {
+        @apply py-24 md:py-32;
+    }
+}

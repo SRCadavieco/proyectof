@@ -1,48 +1,48 @@
 <!-- ================= NAVBAR ================= -->
 <nav
-    x-data="{ scrolled: false }"
+    x-data="{ scrolled: false, mobileOpen: false }"
     @scroll.window="scrolled = window.scrollY > 50"
     :class="scrolled
-        ? 'bg-gray-950/90 backdrop-blur-md border-b border-gray-800'
+        ? 'bg-cream-50/95 backdrop-blur-md border-b border-cream-300'
         : 'bg-transparent'"
     class="fixed w-full z-50 transition-all duration-500"
 >
-    <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
 
         <!-- Logo -->
         <div class="flex items-center">
-            <a href="/">
-                <img src="/images/logo.png" alt="FabricAI" class="h-16 w-16">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/images/logo.png" alt="FabricAI" class="h-12 w-12">
+                <span class="font-serif text-xl text-ink hidden sm:block">FabricAI</span>
             </a>
         </div>
 
         <!-- Desktop links -->
-        <div class="hidden md:flex gap-8 text-sm text-gray-300 font-medium">
+        <div class="hidden md:flex gap-10 text-sm text-ink-muted font-medium tracking-wide uppercase">
             <a href="/#how-it-works"
-               class="hover:text-purple-400 transition {{ request()->is('/#how-it-works')}}">
+               class="hover:text-ink transition-colors duration-300">
                 How it works
             </a>
             <a href="/pricing"
-               class="hover:text-purple-400 transition {{ request()->is('pricing')}}">
+               class="hover:text-ink transition-colors duration-300">
                 Pricing
             </a>
             <a href="/faq"
-               class="hover:text-purple-400 transition {{ request()->is('faq')}}">
+               class="hover:text-ink transition-colors duration-300">
                 FAQ
             </a>
         </div>
 
         <!-- CTA -->
         @auth
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 
                 <!-- Avatar dropdown -->
                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                     <button @click="open = !open"
-                    class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500
+                    class="w-9 h-9 rounded-full bg-ink
                     flex items-center justify-center text-white text-sm font-bold
-                    hover:opacity-90 transition select-none focus:outline-none
-                    ring-2 ring-transparent hover:ring-purple-500/50">
+                    hover:bg-ink-light transition-colors select-none focus:outline-none">
                     {{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
                 </button>
                 
@@ -54,37 +54,37 @@
                          x-transition:leave="transition ease-in duration-100"
                          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                          x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                         class="absolute right-0 mt-2 w-44 rounded-xl bg-gray-900 border border-gray-800
-                         shadow-xl shadow-black/40 py-1 z-50"
+                         class="absolute right-0 mt-2 w-48 bg-white border border-cream-300
+                         rounded-lg shadow-lg shadow-black/5 py-1 z-50"
                          style="display:none;">
-                         <div class="px-4 py-2 border-b border-gray-800">
-                             <p class="text-xs text-gray-400 truncate">{{ Auth::user()->name }}</p>
-                             <p class="text-xs text-gray-600 truncate">{{ Auth::user()->email }}</p>
+                         <div class="px-4 py-3 border-b border-cream-200">
+                             <p class="text-sm font-medium text-ink truncate">{{ Auth::user()->name }}</p>
+                             <p class="text-xs text-ink-muted truncate">{{ Auth::user()->email }}</p>
                             </div>
                             @if(Auth::user()->is_admin)
                                 <a href="{{ route('admin.dashboard') }}"
-                                   class="block px-4 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-gray-800 transition">
+                                   class="block px-4 py-2.5 text-sm text-ink-light hover:text-ink hover:bg-cream-100 transition-colors">
                                     <i class="fas fa-shield-halved mr-2"></i>Admin Panel
                                 </a>
                             @endif
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"
-                                class="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition">
+                                class="w-full text-left px-4 py-2.5 text-sm text-ink-muted hover:text-ink hover:bg-cream-100 transition-colors">
                                 Log out
                             </button>
                         </form>
                     </div>
                 </div>
                 <a href="{{ route('designs.form') }}"
-                   class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold text-white hover:opacity-90 transition">
+                   class="btn-primary text-xs px-6 py-2.5">
                     My Studio
                 </a>
             </div>
             @else
             <a href="{{ route('login') }}"
-               class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-sm font-semibold text-white hover:opacity-90 transition">
-                Sign in / Register
+               class="btn-primary text-xs px-6 py-2.5">
+                Sign in
             </a>
         @endauth
 

@@ -6,35 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     @vite(['resources/css/app.css','resources/js/app.js'])
-
-    <style>
-        html { scroll-behavior: smooth; }
-        [x-cloak] { display: none !important; }
-    </style>
 </head>
 
-<body class="bg-gray-950 text-white overflow-x-hidden">
+<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden">
 @include('layouts.navigation')
 
 <!-- ================= HERO ================= -->
-<section class="pt-32 pb-20 text-center relative">
-    <!-- Glow -->
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                w-[800px] h-[800px] bg-purple-600/10 blur-[140px] rounded-full">
-    </div>
-    <div class="relative z-10 max-w-3xl mx-auto px-6">
-        <h1 class="text-5xl font-bold mb-6">
+<section class="pt-36 pb-16 text-center">
+    <div class="max-w-3xl mx-auto px-6">
+        <p class="text-sm font-medium tracking-widest uppercase text-ink-muted mb-4">Support</p>
+        <h1 class="font-serif text-5xl mb-6">
             Frequently Asked Questions
         </h1>
-        <p class="text-gray-400 text-lg">
+        <p class="text-ink-muted text-lg">
             Everything you need to know about FabricAI and how it works.
         </p>
     </div>
 </section>
 
 <!-- ================= FAQ SECTION ================= -->
-<section class="pb-32 relative">
-    <div class="max-w-4xl mx-auto px-6 space-y-6">
+<section class="pb-32">
+    <div class="max-w-3xl mx-auto px-6 space-y-px bg-cream-300">
         @php
             $faqs = [
                 [
@@ -61,36 +53,32 @@
         @endphp
 
         @foreach($faqs as $index => $faq)
-        <div 
-            x-data="{ open:false }"
-            x-intersect.once="$el.classList.remove('opacity-0','translate-y-8')"
-            class="opacity-0 translate-y-8 transition-all duration-700
-                   bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden"
+        <div
+            x-data="{ open: false }"
+            x-intersect.once="$el.classList.remove('opacity-0','translate-y-4')"
+            class="opacity-0 translate-y-4 transition-all duration-500
+                   bg-white"
         >
             <!-- Question -->
-            <button 
+            <button
                 @click="open = !open"
-                class="w-full flex justify-between items-center px-6 py-5 text-left"
+                class="w-full flex justify-between items-center px-8 py-6 text-left group"
             >
-                <span class="font-semibold text-lg">
+                <span class="font-medium text-ink text-base pr-4">
                     {{ $faq['q'] }}
                 </span>
-                <svg 
-                    :class="open ? 'rotate-180 text-purple-400' : 'text-gray-400'"
-                    class="w-5 h-5 transition-transform duration-300"
-                    fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24"
-                >
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M19 9l-7 7-7-7"/>
-                </svg>
+                <span
+                    :class="open ? 'rotate-45' : ''"
+                    class="text-ink-muted text-xl transition-transform duration-300 shrink-0">
+                    +
+                </span>
             </button>
             <!-- Answer -->
-            <div 
+            <div
                 x-show="open"
                 x-collapse
                 x-cloak
-                class="px-6 pb-6 text-gray-400 leading-relaxed"
+                class="px-8 pb-6 text-ink-muted text-sm leading-relaxed"
             >
                 {{ $faq['a'] }}
             </div>
@@ -100,23 +88,16 @@
 </section>
 
 <!-- ================= CTA ================= -->
-<section class="relative py-28 text-center">
-    <!-- Glow — sin overflow:hidden para que sangre hacia la sección anterior y el footer -->
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div class="w-[900px] h-[700px] bg-purple-600/10 blur-[180px] rounded-full"></div>
-    </div>
-
-    <div class="relative z-10 max-w-2xl mx-auto px-6">
-        <h2 class="text-4xl font-bold mb-4">Still have questions?</h2>
-        <p class="text-gray-400 mb-10 text-lg">
+<section class="bg-ink text-white section-padding">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+        <h2 class="font-serif text-4xl mb-4">Still have questions?</h2>
+        <p class="text-white/60 text-lg mb-10">
             Jump right in and experience FabricAI for yourself — no commitment needed.
         </p>
         <a href="{{ url('/designs') }}"
-           class="inline-block px-10 py-4 rounded-xl font-semibold text-white
-                  bg-gradient-to-r from-purple-500 to-indigo-500
-                  shadow-lg shadow-purple-500/30
-                  hover:scale-105 transition-all duration-300">
-            Try FabricAI Now ✨
+           class="inline-block px-10 py-4 bg-white text-ink text-sm font-medium tracking-wide uppercase
+                  hover:bg-cream-100 transition-colors duration-300">
+            Try FabricAI now
         </a>
     </div>
 </section>

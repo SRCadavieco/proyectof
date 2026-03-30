@@ -20,29 +20,31 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb {
-            background: #3f3f46;
+            background: #d4cdc0;
             border-radius: 99px;
         }
-        ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
-        * { scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
+        ::-webkit-scrollbar-thumb:hover { background: #8a8a8a; }
+        * { scrollbar-width: thin; scrollbar-color: #d4cdc0 transparent; }
     </style>
 </head>
-<body class="bg-gray-950 text-white h-screen overflow-hidden">
+<body class="bg-cream-50 text-ink h-screen overflow-hidden font-sans">
 
 <div class="flex h-screen">
     <!-- ================= SIDEBAR ================= -->
-    <aside class="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">
-        <div class="p-6 border-b border-gray-800 flex justify-center">
-            <a href="/">
-                <img src="/images/logo.png" alt="Logo" class="h-20 w-20 mx-auto">
+    <aside class="w-72 bg-white border-r border-cream-300 flex flex-col">
+        <div class="p-6 border-b border-cream-300 flex justify-center">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/images/logo.png" alt="Logo" class="h-12 w-12">
+                <span class="font-serif text-lg text-ink">FabricAI</span>
             </a>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 text-sm text-gray-500">
+        <div class="flex-1 overflow-y-auto p-4 text-sm text-ink-muted">
             <!-- Future chat history -->
-            <div class="flex-1 overflow-y-auto p-4 text-sm text-gray-400">
+            <div class="flex-1 overflow-y-auto p-4 text-sm text-ink-muted">
     <button
         onclick="newChat()"
-        class="w-full mb-4 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition">
+        class="w-full mb-4 px-4 py-2.5 bg-ink text-white text-xs font-medium tracking-wide uppercase
+               hover:bg-ink-light transition-colors">
         + New chat
     </button>
 
@@ -51,23 +53,23 @@
         </div>
 
         <!-- Token counter -->
-        <div class="p-4 border-t border-gray-800">
-            <div class="rounded-xl bg-gray-800/60 border border-gray-700 px-4 py-3 flex flex-col gap-2">
+        <div class="p-4 border-t border-cream-300">
+            <div class="bg-cream-100 border border-cream-300 px-4 py-3 flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-gray-400">Tokens</span>
+                    <span class="text-xs font-medium text-ink-muted uppercase tracking-wider">Tokens</span>
                     <div class="flex items-center gap-1.5">
                         <span id="token-icon" class="text-base">&#9889;</span>
-                        <span id="token-count" class="text-sm font-bold text-white">{{ Auth::user()->tokens ?? 0 }}</span>
-                        <span class="text-xs text-gray-500">/ 10</span>
+                        <span id="token-count" class="text-sm font-bold text-ink">{{ Auth::user()->tokens ?? 0 }}</span>
+                        <span class="text-xs text-ink-muted">/ 10</span>
                     </div>
                 </div>
-                <div class="w-full bg-gray-700 rounded-full h-1.5">
-                    <div id="token-bar" class="h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-purple-500 to-indigo-500" style="width:{{ ((Auth::user()->tokens ?? 0) / 10) * 100 }}%"></div>
+                <div class="w-full bg-cream-300 rounded-full h-1.5">
+                    <div id="token-bar" class="h-1.5 rounded-full transition-all duration-500 bg-purple-600" style="width:{{ ((Auth::user()->tokens ?? 0) / 10) * 100 }}%"></div>
                 </div>
                 <button id="refill-btn"
                         onclick="TokenManager.refill()"
-                        class="{{ (Auth::user()->tokens ?? 0) > 0 ? 'hidden' : '' }} w-full mt-1 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:opacity-90 transition">
-                    Want more tokens? &#10024;
+                        class="{{ (Auth::user()->tokens ?? 0) > 0 ? 'hidden' : '' }} w-full mt-1 py-2 bg-ink text-white text-xs font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
+                    Want more tokens?
                 </button>
             </div>
         </div>
@@ -75,25 +77,21 @@
 
     <!-- ================= MAIN ================= -->
     <main class="flex-1 flex flex-col relative overflow-hidden">
-        <!-- Background glow -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                    w-[900px] h-[900px] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none">
-        </div>
 
         <!-- HEADER -->
-        <header class="relative z-10 px-8 py-4 border-b border-gray-800
-                       backdrop-blur-md bg-gray-950/80 flex items-center">
+        <header class="relative z-10 px-8 py-4 border-b border-cream-300
+                       bg-white flex items-center">
             <!-- Left spacer -->
             <div class="flex-1"></div>
             <!-- Centered chat title -->
-            <h1 id="chat-title" class="font-semibold text-white text-sm truncate max-w-xs text-center">New chat</h1>
+            <h1 id="chat-title" class="font-medium text-ink text-sm truncate max-w-xs text-center">New chat</h1>
             <!-- Right: user + logout -->
             <div class="flex-1 flex justify-end items-center gap-3">
-                <span class="text-sm text-gray-400">{{ Auth::user()->name }}</span>
+                <span class="text-sm text-ink-muted">{{ Auth::user()->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"
-                            class="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-400 hover:text-white hover:border-gray-500 transition">
+                            class="px-3 py-1.5 border border-cream-300 text-xs text-ink-muted hover:text-ink hover:border-ink transition-colors">
                         Log out
                     </button>
                 </form>
@@ -101,14 +99,14 @@
         </header>
 
         <!-- ================= CHAT AREA ================= -->
-        <div id="chat-container" class="flex-1 overflow-y-auto p-8 relative z-10">
+        <div id="chat-container" class="flex-1 overflow-y-auto p-8 relative z-10 bg-cream-50">
             <div class="max-w-4xl mx-auto space-y-8">
                 <!-- Welcome Message -->
                 <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                    <div class="w-10 h-10 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
                         <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                     </div>
-                    <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4 text-gray-300 max-w-2xl">
+                    <div class="bg-white border border-cream-300 rounded-lg px-6 py-4 text-ink-light max-w-2xl">
                         Welcome to FabricAI.  
                         Describe the clothing design you want to create and I'll generate it for you.
                     </div>
@@ -118,31 +116,31 @@
         </div>
 
         <!-- ================= INPUT AREA ================= -->
-        <div class="relative z-10 border-t border-gray-800 p-6 bg-gray-950/80 backdrop-blur-md">
-            <div id="error" class="hidden text-red-400 text-sm mb-3"></div>
-            <div id="loader" class="hidden items-center gap-3 text-purple-400 text-sm mb-4">
-                <div class="spinner w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+        <div class="relative z-10 border-t border-cream-300 p-6 bg-white">
+            <div id="error" class="hidden text-red-600 text-sm mb-3"></div>
+            <div id="loader" class="hidden items-center gap-3 text-purple-700 text-sm mb-4">
+                <div class="spinner w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full"></div>
                 Generating design...
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
                 <div class="mb-3 flex justify-end">
                     <div class="relative">
-                        <select id="ai-model" style="background-image:none" class="appearance-none bg-gray-900 border border-gray-800 rounded-xl pl-4 pr-9 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500 transition cursor-pointer">
+                        <select id="ai-model" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
                             <option value="fabric_light">Fabric Light</option>
                             <option value="fabric_pro">Fabric Pro</option>
                         </select>
-                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-xs pointer-events-none"></i>
                     </div>
                 </div>
                 <!-- Banner modo edición -->
-                <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/40 text-orange-400 text-sm font-medium">
+                <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-300 text-orange-700 text-sm font-medium">
                     <span>✏️ You are now editing the previous photo</span>
-                    <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-300 hover:text-white transition text-xs underline">Cancel</button>
+                    <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-600 hover:text-orange-800 transition-colors text-xs underline">Cancel</button>
                 </div>
                 <div class="flex gap-3 items-end">
     <!-- Upload image -->
-    <label class="cursor-pointer px-4 py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 transition">
-        <i class="fas fa-paperclip"></i>
+    <label class="cursor-pointer px-4 py-4 bg-cream-200 hover:bg-cream-300 transition-colors">
+        <i class="fas fa-paperclip text-ink-muted"></i>
         <input type="file" id="image-upload" accept="image/*" class="hidden">
     </label>
     <div id="image-preview" class="ml-2"></div>
@@ -151,16 +149,16 @@
         id="prompt"
         rows="1"
         placeholder="Describe the design or upload an image to edit..."
-        class="flex-1 bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4 text-sm resize-none
-               focus:outline-none focus:border-purple-500 transition
-               placeholder-gray-500 max-h-40 scrollbar-hide"></textarea>
+        class="flex-1 bg-cream-100 border border-cream-300 px-5 py-4 text-sm resize-none text-ink
+               focus:outline-none focus:border-ink transition-colors
+               placeholder-ink-muted/50 max-h-40 scrollbar-hide"></textarea>
 
     <button
         type="submit"
         id="submit-btn"
-        class="px-6 py-4 rounded-2xl font-semibold text-sm
-               bg-gradient-to-r from-purple-500 to-indigo-500
-               hover:opacity-90 transition disabled:opacity-50">
+        class="px-6 py-4 font-medium text-sm tracking-wide uppercase
+               bg-ink text-white
+               hover:bg-ink-light transition-colors disabled:opacity-50">
         Generate ✨
     </button>
 </div>
@@ -232,7 +230,7 @@
                 } else {
                     barEl.className = n <= 3
                         ? 'h-1.5 rounded-full transition-all duration-500 bg-orange-400'
-                        : 'h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-purple-500 to-indigo-500';
+                        : 'h-1.5 rounded-full transition-all duration-500 bg-purple-600';
                     iconEl.textContent = '\u26A1';
                     btnEl.classList.add('hidden');
                     if (submitBtn) submitBtn.disabled = false;
@@ -294,7 +292,7 @@
         function addUserMessage(text, imageBase64 = null) {
             const avatarHtml = userAvatarUrl
                 ? `<img src="${userAvatarUrl}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">`
-                : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">${userInitial}</div>`;
+                : `<div class="w-8 h-8 rounded-full bg-ink flex items-center justify-center text-white text-sm font-bold flex-shrink-0">${userInitial}</div>`;
 
             // Image as a separate bubble above the text
             if (imageBase64) {
@@ -303,7 +301,7 @@
                 imgDiv.innerHTML = `
                     <div class="w-8 h-8 flex-shrink-0"></div>
                     <img src="${imageBase64}" alt="Attached image"
-                         class="rounded-2xl max-w-xs max-h-56 object-cover shadow-md">
+                         class="rounded-lg max-w-xs max-h-56 object-cover shadow-sm">
                 `;
                 messagesContainer.appendChild(imgDiv);
             }
@@ -312,7 +310,7 @@
             messageDiv.className = 'mb-5 flex flex-row-reverse items-start gap-3';
             messageDiv.innerHTML = `
                 ${avatarHtml}
-                <div class="bg-white text-gray-900 px-4 py-3.5 rounded-xl text-sm leading-relaxed max-w-2xl">${escapeHtml(text)}</div>
+                <div class="bg-ink text-white px-4 py-3.5 rounded-lg text-sm leading-relaxed max-w-2xl">${escapeHtml(text)}</div>
             `;
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
@@ -328,32 +326,32 @@
             previewImageStore.push(imageUrl);
             
             messageDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 self-start overflow-hidden p-1">
+                <div class="w-10 h-10 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0 self-start overflow-hidden p-1">
                     <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col gap-3 max-w-2xl">
-                    <div id="${uniqueId}" class="rounded-2xl overflow-hidden bg-gray-900 p-2 transition-colors">
-                        <img src="${imageUrl}" alt="Generated design" class="rounded-xl shadow-lg w-full block" crossorigin="anonymous">
+                    <div id="${uniqueId}" class="rounded-lg overflow-hidden bg-cream-100 p-2 transition-colors">
+                        <img src="${imageUrl}" alt="Generated design" class="rounded-lg shadow-sm w-full block" crossorigin="anonymous">
                     </div>
                     <div class="flex gap-2 items-center flex-wrap px-1">
-                        <span class="text-xs text-gray-500 mr-1">Background:</span>
-                        <button type="button" onclick="changeBg('${uniqueId}', '#18181b')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-gray-900 hover:border-purple-500 transition-colors" title="Dark"></button>
-                        <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-white hover:border-purple-500 transition-colors" title="White"></button>
-                        <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-black hover:border-purple-500 transition-colors" title="Black"></button>
-                        <button type="button" onclick="changeBg('${uniqueId}', '#a78bfa')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-purple-400 hover:border-purple-500 transition-colors" title="Purple"></button>
-                        <button type="button" onclick="changeBg('${uniqueId}', '#6366f1')" class="w-7 h-7 rounded-md border-2 border-gray-700 bg-indigo-500 hover:border-purple-500 transition-colors" title="Indigo"></button>
-                        <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-7 h-7 rounded-md border-2 border-gray-700 cursor-pointer" title="Custom">
+                        <span class="text-xs text-ink-muted mr-1">Background:</span>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#18181b')" class="w-7 h-7 border border-cream-300 bg-gray-900 hover:border-ink transition-colors" title="Dark"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#ffffff')" class="w-7 h-7 border border-cream-300 bg-white hover:border-ink transition-colors" title="White"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#000000')" class="w-7 h-7 border border-cream-300 bg-black hover:border-ink transition-colors" title="Black"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#a78bfa')" class="w-7 h-7 border border-cream-300 bg-purple-400 hover:border-ink transition-colors" title="Purple"></button>
+                        <button type="button" onclick="changeBg('${uniqueId}', '#6366f1')" class="w-7 h-7 border border-cream-300 bg-indigo-500 hover:border-ink transition-colors" title="Indigo"></button>
+                        <input type="color" onchange="changeBg('${uniqueId}', this.value)" class="w-7 h-7 border border-cream-300 cursor-pointer" title="Custom">
                     </div>
                     <div class="flex gap-3 px-1">
                         <a href="${imageUrl}" download="design.png"
-                           class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
+                           class="px-4 py-2 bg-ink text-white text-sm font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
                             Download
                         </a>
-                        <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition edit-btn">
+                        <button type="button" class="px-4 py-2 border border-ink text-ink text-sm font-medium tracking-wide uppercase hover:bg-ink hover:text-white transition-colors edit-btn">
                             Edit image
                         </button>
-                        <button type="button" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium transition preview-btn" data-preview-idx="${previewIdx}">
-                            👕 Preview
+                        <button type="button" class="px-4 py-2 border border-ink text-ink text-sm font-medium tracking-wide uppercase hover:bg-ink hover:text-white transition-colors preview-btn" data-preview-idx="${previewIdx}">
+                            Preview
                         </button>
                     </div>
                 </div>
@@ -378,11 +376,11 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = 'mb-5 flex items-start gap-4';
             messageDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                <div class="w-10 h-10 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
                     <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                 </div>
-                <div class="bg-red-950/60 border border-red-800 rounded-2xl px-6 py-4 max-w-2xl text-red-300 text-sm leading-relaxed">
-                    ⚠️ ${escapeHtml(msg)}
+                <div class="bg-red-50 border border-red-200 rounded-lg px-6 py-4 max-w-2xl text-red-700 text-sm leading-relaxed">
+                    ${escapeHtml(msg)}
                 </div>
             `;
             messagesContainer.appendChild(messageDiv);
@@ -424,8 +422,8 @@
         div.className =
             'flex-1 px-3 py-2 rounded-lg cursor-pointer truncate ' +
             (chat.id === currentChatId
-                ? 'bg-gray-800 text-white'
-                : 'hover:bg-gray-800 text-gray-400');
+                ? 'bg-cream-200 text-ink'
+                : 'hover:bg-cream-100 text-ink-muted');
         div.textContent = chat.title ?? 'New chat';
         div.onclick = () => loadChat(chat.id);
 
@@ -433,7 +431,7 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.value = chat.title ?? 'New chat';
-        input.className = 'hidden flex-1 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-sm border border-purple-500 focus:outline-none';
+        input.className = 'hidden flex-1 px-3 py-1.5 rounded-lg bg-cream-100 text-ink text-sm border border-purple-600 focus:outline-none';
 
         let renameSaved = false;
         const saveRename = async () => {
@@ -470,7 +468,7 @@
 
         // Botón renombrar (lápiz)
         const renameBtn = document.createElement('button');
-        renameBtn.className = 'ml-1 text-gray-500 hover:text-purple-400 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
+        renameBtn.className = 'ml-1 text-ink-muted hover:text-purple-700 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
         renameBtn.title = 'Rename chat';
         renameBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
         renameBtn.onclick = (e) => {
@@ -485,7 +483,7 @@
 
         // Botón borrar
         const delBtn = document.createElement('button');
-        delBtn.className = 'ml-1 text-gray-500 hover:text-red-400 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
+        delBtn.className = 'ml-1 text-ink-muted hover:text-red-600 text-sm px-1 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity';
         delBtn.title = 'Delete chat';
         delBtn.innerHTML = '<i class="fas fa-trash"></i>';
         delBtn.onclick = async (e) => {
@@ -702,7 +700,7 @@ imageInput.addEventListener('change', async (e) => {
         // Mostrar miniatura
         const img = document.createElement('img');
         img.src = reader.result;
-        img.className = 'rounded-lg border border-gray-700 max-h-20 max-w-20 mt-2';
+        img.className = 'rounded-lg border border-cream-300 max-h-20 max-w-20 mt-2';
         img.alt = 'Preview';
         preview.appendChild(img);
         // Log para depuración
@@ -715,8 +713,8 @@ imageInput.addEventListener('change', async (e) => {
             const banner = document.getElementById('edit-banner');
             banner.classList.remove('hidden');
             banner.classList.add('flex');
-            promptInput.classList.remove('border-gray-800', 'focus:border-purple-500');
-            promptInput.classList.add('border-orange-500', 'focus:border-orange-400', 'bg-orange-950/30');
+            promptInput.classList.remove('border-cream-300', 'focus:border-ink');
+            promptInput.classList.add('border-orange-500', 'focus:border-orange-400', 'bg-orange-50');
             promptInput.placeholder = 'Describe how you want to edit the previous image....';
             promptInput.focus();
         }
@@ -726,8 +724,8 @@ imageInput.addEventListener('change', async (e) => {
             const banner = document.getElementById('edit-banner');
             banner.classList.add('hidden');
             banner.classList.remove('flex');
-            promptInput.classList.add('border-gray-800', 'focus:border-purple-500');
-            promptInput.classList.remove('border-orange-500', 'focus:border-orange-400', 'bg-orange-950/30');
+            promptInput.classList.add('border-cream-300', 'focus:border-ink');
+            promptInput.classList.remove('border-orange-500', 'focus:border-orange-400', 'bg-orange-50');
             promptInput.placeholder = 'Describe the design or upload an image to edit...';
         }
 
@@ -1011,19 +1009,19 @@ imageInput.addEventListener('change', async (e) => {
     </script>
 
     <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
-    <div id="preview-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
-        <div class="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                <h2 class="text-lg font-semibold text-white">Preview on Garment</h2>
-                <button onclick="closePreviewModal()" class="text-gray-400 hover:text-white transition">
+    <div id="preview-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300">
+                <h2 class="text-lg font-serif text-ink">Preview on Garment</h2>
+                <button onclick="closePreviewModal()" class="text-ink-muted hover:text-ink transition-colors">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
             <div class="p-6">
                 <div class="flex gap-4 mb-4 flex-wrap items-end">
                     <div class="flex flex-col gap-1">
-                        <label class="text-xs text-gray-400">Garment</label>
-                        <select id="garment-select" onchange="renderPreview()" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500">
+                        <label class="text-xs text-ink-muted uppercase tracking-wider">Garment</label>
+                        <select id="garment-select" onchange="renderPreview()" class="bg-cream-100 border border-cream-300 px-3 py-2 text-sm text-ink focus:outline-none focus:border-ink">
                             <option value="tshirt">Gildan 5000 — T-Shirt</option>
                             <option value="hoodie">Gildan 18500 — Hoodie</option>
                             <option value="tanktop">Bella+Canvas 3480 — Tank Top</option>
@@ -1032,16 +1030,16 @@ imageInput.addEventListener('change', async (e) => {
                         </select>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label class="text-xs text-gray-400">Color</label>
-                        <input type="color" id="garment-color" value="#ffffff" onchange="renderPreview()" class="w-10 h-10 rounded-lg border border-gray-700 cursor-pointer bg-transparent">
+                        <label class="text-xs text-ink-muted uppercase tracking-wider">Color</label>
+                        <input type="color" id="garment-color" value="#ffffff" onchange="renderPreview()" class="w-10 h-10 border border-cream-300 cursor-pointer bg-transparent">
                     </div>
                 </div>
-                <div class="flex justify-center bg-gray-800/50 rounded-xl p-4">
-                    <canvas id="preview-canvas" width="500" height="550" class="max-w-full h-auto rounded-lg" style="max-height: 450px;"></canvas>
+                <div class="flex justify-center bg-cream-100 p-4">
+                    <canvas id="preview-canvas" width="500" height="550" class="max-w-full h-auto" style="max-height: 450px;"></canvas>
                 </div>
-                <div id="printify-spec" class="mt-2 text-xs text-gray-500 text-center"></div>
+                <div id="printify-spec" class="mt-2 text-xs text-ink-muted text-center"></div>
                 <div class="flex justify-end mt-3">
-                    <button onclick="downloadPreview()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition">
+                    <button onclick="downloadPreview()" class="px-4 py-2 bg-ink text-white text-sm font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
                         Download Preview
                     </button>
                 </div>

@@ -12,7 +12,22 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                serif: ['"DM Serif Display"', 'Georgia', ...defaultTheme.fontFamily.serif],
+            },
+            colors: {
+                cream: {
+                    50: '#fdfcfa',
+                    100: '#faf8f4',
+                    200: '#f5f1ea',
+                    300: '#e8e3d9',
+                    400: '#d4cdc0',
+                },
+                ink: {
+                    DEFAULT: '#1a1a1a',
+                    light: '#4a4a4a',
+                    muted: '#8a8a8a',
+                },
             },
         },
     },
