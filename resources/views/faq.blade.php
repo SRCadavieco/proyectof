@@ -8,16 +8,17 @@
     @vite(['resources/css/app.css','resources/js/app.js'])
 </head>
 
-<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden">
+<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden grain">
 @include('layouts.navigation')
 
 <!-- ================= HERO ================= -->
 <section class="pt-36 pb-16 text-center">
     <div class="max-w-3xl mx-auto px-6">
-        <p class="text-sm font-medium tracking-widest uppercase text-ink-muted mb-4">Support</p>
-        <h1 class="font-serif text-5xl mb-6">
-            Frequently Asked Questions
+        <p class="text-sm font-medium tracking-widest uppercase text-accent mb-4">Support</p>
+        <h1 class="font-serif text-5xl sm:text-6xl mb-6">
+            Frequently Asked<br>Questions
         </h1>
+        <div class="w-16 h-px bg-accent mx-auto mt-2 mb-4"></div>
         <p class="text-ink-muted text-lg">
             Everything you need to know about FabricAI and how it works.
         </p>
@@ -57,19 +58,22 @@
             x-data="{ open: false }"
             x-intersect.once="$el.classList.remove('opacity-0','translate-y-4')"
             class="opacity-0 translate-y-4 transition-all duration-500
-                   bg-white"
+                   bg-white group"
         >
             <!-- Question -->
             <button
                 @click="open = !open"
-                class="w-full flex justify-between items-center px-8 py-6 text-left group"
+                class="w-full flex items-center px-8 py-6 text-left"
             >
-                <span class="font-medium text-ink text-base pr-4">
+                <span class="font-serif text-lg text-cream-400 group-hover:text-accent transition-colors duration-300 mr-5 shrink-0">
+                    {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}
+                </span>
+                <span class="font-medium text-ink text-base pr-4 flex-1">
                     {{ $faq['q'] }}
                 </span>
                 <span
-                    :class="open ? 'rotate-45' : ''"
-                    class="text-ink-muted text-xl transition-transform duration-300 shrink-0">
+                    :class="open ? 'rotate-45 text-accent' : 'text-ink-muted'"
+                    class="text-xl transition-all duration-300 shrink-0">
                     +
                 </span>
             </button>
@@ -78,7 +82,7 @@
                 x-show="open"
                 x-collapse
                 x-cloak
-                class="px-8 pb-6 text-ink-muted text-sm leading-relaxed"
+                class="px-8 pb-6 pl-[4.5rem] text-ink-muted text-sm leading-relaxed"
             >
                 {{ $faq['a'] }}
             </div>
@@ -88,15 +92,19 @@
 </section>
 
 <!-- ================= CTA ================= -->
-<section class="bg-ink text-white section-padding">
-    <div class="max-w-2xl mx-auto px-6 text-center">
-        <h2 class="font-serif text-4xl mb-4">Still have questions?</h2>
+<section class="bg-ink text-white section-padding relative overflow-hidden">
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+        <span class="font-serif text-[18vw] leading-none text-white/[0.03] whitespace-nowrap">FAQ</span>
+    </div>
+    <div class="relative max-w-2xl mx-auto px-6 text-center">
+        <div class="w-12 h-px bg-accent mx-auto mb-10"></div>
+        <h2 class="font-serif text-4xl sm:text-5xl mb-4">Still have questions?</h2>
         <p class="text-white/60 text-lg mb-10">
             Jump right in and experience FabricAI for yourself — no commitment needed.
         </p>
         <a href="{{ url('/designs') }}"
            class="inline-block px-10 py-4 bg-white text-ink text-sm font-medium tracking-wide uppercase
-                  hover:bg-cream-100 transition-colors duration-300">
+                  hover:bg-accent hover:text-white transition-colors duration-300">
             Try FabricAI now
         </a>
     </div>

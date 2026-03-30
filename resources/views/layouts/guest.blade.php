@@ -19,19 +19,23 @@
 
             <!-- Left decorative panel (hidden on mobile) -->
             <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-ink">
+                <!-- Large decorative background text -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                    <span class="font-serif text-[22vw] leading-none text-white/[0.03] whitespace-nowrap -rotate-12">Fabric</span>
+                </div>
                 <div class="relative z-10 text-center px-16">
                     <a href="/">
                         <img src="/images/logo.png" alt="FabricAI" class="h-20 w-20 mx-auto mb-10">
                     </a>
                     <h2 class="font-serif text-4xl text-white mb-4 leading-tight">
                         Design the future<br>
-                        <span class="italic text-purple-300">with intention</span>
+                        <span class="italic text-accent-light">with intention</span>
                     </h2>
                     <p class="text-white/50 text-lg max-w-sm mx-auto">
                         Describe your vision and watch it come to life as a unique fashion design.
                     </p>
-                    <!-- Decorative line -->
-                    <div class="mt-12 w-16 h-px bg-white/20 mx-auto"></div>
+                    <!-- Decorative accent line -->
+                    <div class="mt-12 w-16 h-px bg-accent mx-auto"></div>
                 </div>
             </div>
 

@@ -20,15 +20,15 @@
         <!-- Desktop links -->
         <div class="hidden md:flex gap-10 text-sm text-ink-muted font-medium tracking-wide uppercase">
             <a href="/#how-it-works"
-               class="hover:text-ink transition-colors duration-300">
+               class="link-underline hover:text-ink transition-colors duration-300 pb-0.5">
                 How it works
             </a>
             <a href="/pricing"
-               class="hover:text-ink transition-colors duration-300">
+               class="link-underline hover:text-ink transition-colors duration-300 pb-0.5">
                 Pricing
             </a>
             <a href="/faq"
-               class="hover:text-ink transition-colors duration-300">
+               class="link-underline hover:text-ink transition-colors duration-300 pb-0.5">
                 FAQ
             </a>
         </div>

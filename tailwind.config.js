@@ -28,6 +28,30 @@ export default {
                     light: '#4a4a4a',
                     muted: '#8a8a8a',
                 },
+                accent: {
+                    DEFAULT: '#c2704f',
+                    light: '#d4956e',
+                    dark: '#a85a3a',
+                },
+            },
+            keyframes: {
+                'marquee': {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                },
+                'fade-up': {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                'draw-line': {
+                    '0%': { width: '0%' },
+                    '100%': { width: '100%' },
+                },
+            },
+            animation: {
+                'marquee': 'marquee 30s linear infinite',
+                'fade-up': 'fade-up 0.8s ease-out forwards',
+                'draw-line': 'draw-line 1.2s ease-out forwards',
             },
         },
     },

@@ -7,18 +7,19 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden">
+<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden grain">
 
 @include('layouts.navigation')
 
 <!-- ================= HERO ================= -->
 <section class="pt-36 pb-16 text-center">
     <div class="max-w-3xl mx-auto px-6">
-        <p class="text-sm font-medium tracking-widest uppercase text-ink-muted mb-4">Pricing</p>
-        <h1 class="font-serif text-5xl sm:text-6xl leading-tight mb-6">
+        <p class="text-sm font-medium tracking-widest uppercase text-accent mb-4">Pricing</p>
+        <h1 class="font-serif text-5xl sm:text-6xl lg:text-7xl leading-tight mb-6">
             Simple, transparent<br>
             <span class="italic text-purple-700">pricing</span>
         </h1>
+        <div class="w-16 h-px bg-accent mx-auto mt-2 mb-6"></div>
         <p class="text-ink-muted text-lg max-w-xl mx-auto">
             Pick the plan that fits your creative needs. Upgrade or downgrade at any time.
         </p>
@@ -52,7 +53,7 @@
             <div class="mt-14 grid grid-cols-1 md:grid-cols-3 gap-px bg-cream-300 max-w-5xl mx-auto border border-cream-300">
 
                 <!-- FREE -->
-                <div class="flex flex-col bg-white p-10 text-left">
+                <div class="flex flex-col bg-white p-10 text-left group hover:bg-cream-50 transition-colors duration-500">
                     <p class="text-xs font-medium text-ink-muted uppercase tracking-widest mb-6">Free</p>
                     <div class="mb-6">
                         <span class="font-serif text-5xl">€0</span>
@@ -108,8 +109,8 @@
                 <div class="relative flex flex-col bg-ink text-white p-10 text-left">
 
                     <!-- Popular badge -->
-                    <div class="absolute -top-px left-0 right-0 h-1 bg-purple-600"></div>
-                    <div class="inline-flex self-start px-3 py-1 bg-purple-600 text-white text-xs font-medium uppercase tracking-widest mb-6">
+                    <div class="absolute -top-px left-0 right-0 h-1 bg-accent"></div>
+                    <div class="inline-flex self-start px-3 py-1 bg-accent text-white text-xs font-medium uppercase tracking-widest mb-6">
                         Most popular
                     </div>
 
@@ -174,7 +175,7 @@
                 </div>
 
                 <!-- STUDIO -->
-                <div class="flex flex-col bg-white p-10 text-left">
+                <div class="flex flex-col bg-white p-10 text-left group hover:bg-cream-50 transition-colors duration-500">
                     <p class="text-xs font-medium text-ink-muted uppercase tracking-widest mb-6">Studio</p>
                     <div class="mb-6">
                         <span class="font-serif text-5xl" x-text="yearly ? '€39' : '€49'">€49</span>
@@ -237,7 +238,7 @@
 
             <!-- ================= COMPARISON TABLE ================= -->
             <div class="mt-28 max-w-4xl mx-auto px-6">
-                <h2 class="font-serif text-3xl text-center mb-12">
+                <h2 class="font-serif text-3xl sm:text-4xl text-center mb-12">
                     Compare plans
                 </h2>
 
