@@ -53,6 +53,13 @@ return [
         'key' => env('PIXAZO_API_KEY'),
     ],
 
+    'chutes' => [
+        'url'          => env('CHUTES_BACKEND_URL'),
+        'token'        => env('CHUTES_API_TOKEN'),
+        'path'         => env('CHUTES_BACKEND_PATH', '/generate'),
+        'path_img2img' => env('CHUTES_BACKEND_PATH_IMG2IMG', '/img2img'),
+    ],
+
     'stripe' => [
         'prices' => [
             'pro_monthly' => env('STRIPE_PRO_MONTHLY_PRICE'),

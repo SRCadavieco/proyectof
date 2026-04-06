@@ -123,7 +123,16 @@
                 Generating design...
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
-                <div class="mb-3 flex justify-end">
+                <div class="mb-3 flex justify-end gap-2">
+                    {{-- Provider selector --}}
+                    <div class="relative">
+                        <select id="ai-provider" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
+                            <option value="gemini">Gemini</option>
+                            <option value="chutes">Chutes AI</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-xs pointer-events-none"></i>
+                    </div>
+                    {{-- Model selector (changes based on provider) --}}
                     <div class="relative">
                         <select id="ai-model" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
                             <option value="fabric_light">Fabric Light</option>
@@ -250,6 +259,27 @@
         let isCreatingChat = false;
         let chats = [];
         const aiModelSelect = document.getElementById('ai-model');
+        const aiProviderSelect = document.getElementById('ai-provider');
+
+        const geminiModels = [
+            { value: 'fabric_light', label: 'Fabric Light' },
+            { value: 'fabric_pro',   label: 'Fabric Pro' },
+        ];
+        const chutesModels = [
+            { value: 'chutes_standard', label: 'Standard' },
+        ];
+
+        function syncModelOptions() {
+            const provider = aiProviderSelect.value;
+            const models = provider === 'chutes' ? chutesModels : geminiModels;
+            const current = aiModelSelect.value;
+            aiModelSelect.innerHTML = models.map(m =>
+                `<option value="${m.value}"${m.value === current ? ' selected' : ''}>${m.label}</option>`
+            ).join('');
+        }
+
+        aiProviderSelect.addEventListener('change', syncModelOptions);
+
         const imageInput = document.getElementById('image-upload');
         const form = document.getElementById('design-form');
         const promptInput = document.getElementById('prompt');
@@ -609,14 +639,16 @@ async function loadChat(chatId) {
             setLoading(true);
 
             try {
-                const aiModel = aiModelSelect.value;
+                const aiModel    = aiModelSelect.value;
+                const aiProvider = aiProviderSelect.value;
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 console.log('Enviando datos:', {
                     prompt,
                     chat_id: currentChatId,
                     imageBase64: snapshotImage,
                     mimeType: snapshotMime,
-                    model: aiModel
+                    model: aiModel,
+                    provider: aiProvider
                 });
                 const res = await fetch('/designs/generate', {
                     method: 'POST',
@@ -631,6 +663,7 @@ async function loadChat(chatId) {
                         imageBase64: snapshotImage,
                         mimeType: snapshotMime,
                         model: aiModel,
+                        provider: aiProvider,
                         is_edit: isEditMode
                     })
                 });

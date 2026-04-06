@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\GeminiService;
+use App\Services\ChutesService;
 use App\Services\BackgroundRemovalService;
 use App\Jobs\GenerateDesignJob;
 use Illuminate\Http\Request;
@@ -40,6 +41,7 @@ class DesignController extends Controller
    public function generate(
     Request $request,
     GeminiService $gemini,
+    ChutesService $chutes,
     BackgroundRemovalService $backgrounds
 ) {
    try {
@@ -49,7 +51,8 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
-           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,chutes_standard'],
+           'provider' => ['nullable', 'string', 'in:gemini,chutes'],
            'is_edit' => ['nullable', 'boolean'],
        ]);
    } catch (\Illuminate\Validation\ValidationException $e) {
@@ -99,9 +102,13 @@ class DesignController extends Controller
     $imageBase64 = $validated['imageBase64'] ?? null;
     $mimeType = $validated['mimeType'] ?? 'image/png';
     $model = $validated['model'] ?? 'fabric_light';
-    
+    $provider = $validated['provider'] ?? 'gemini';
+
     // Detectar edición
     $isEdit = !empty($validated['is_edit']);
+
+// Seleccionar el servicio de IA según el proveedor elegido
+$ai = $provider === 'chutes' ? $chutes : $gemini;
 
 if ($isEdit) {
     // Buscar la última imagen del chat en BD; fallback a sesión
@@ -126,7 +133,7 @@ if ($isEdit) {
         $cleanBase64 = preg_replace('/^data:image\/(png|jpeg|jpg|webp);base64,/i', '', $cleanBase64);
     }
 
-    $result = $gemini->generateFromReference(
+    $result = $ai->generateFromReference(
         $prompt,
         $cleanBase64,
         'image/png',
@@ -143,7 +150,7 @@ if ($isEdit) {
         );
     }
 
-    $result = $gemini->generateFromReference(
+    $result = $ai->generateFromReference(
         $prompt,
         $imageBase64,
         $mimeType,
@@ -152,7 +159,7 @@ if ($isEdit) {
 
 } else {
 
-    $result = $gemini->generateDesignWithContext(
+    $result = $ai->generateDesignWithContext(
         $prompt,
         $context,
         $backgroundColor,
