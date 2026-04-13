@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>FabricAI — AI Design Studio</title>
+    <title>FabricAI — The Fitting Room</title>
     @vite(['resources/css/app.css','resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -23,8 +23,30 @@
             background: #d4cdc0;
             border-radius: 99px;
         }
-        ::-webkit-scrollbar-thumb:hover { background: #8a8a8a; }
+        ::-webkit-scrollbar-thumb:hover { background: #7c3ca0; }
         * { scrollbar-width: thin; scrollbar-color: #d4cdc0 transparent; }
+
+        /* Message entrance */
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .msg-enter { animation: msgIn 0.3s ease-out forwards; }
+
+        /* Loading dots */
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40%            { transform: translateY(-5px); }
+        }
+        .dot-1 { animation: dotBounce 1.2s infinite 0s; }
+        .dot-2 { animation: dotBounce 1.2s infinite 0.2s; }
+        .dot-3 { animation: dotBounce 1.2s infinite 0.4s; }
+
+        /* Sidebar accent stripe */
+        .sidebar-accent {
+            height: 3px;
+            background: linear-gradient(90deg, #5a2275 0%, #7c3ca0 40%, #c2704f 70%, #5a2275 100%);
+        }
     </style>
 </head>
 <body class="bg-cream-50 text-ink h-screen overflow-hidden font-sans">
@@ -32,10 +54,14 @@
 <div class="flex h-screen">
     <!-- ================= SIDEBAR ================= -->
     <aside class="w-72 bg-white border-r border-cream-300 flex flex-col">
-        <div class="p-6 border-b border-cream-300 flex justify-center">
+        <div class="sidebar-accent"></div>
+        <div class="p-6 border-b border-cream-300">
             <a href="/" class="flex items-center gap-2">
-                <img src="/images/logo.png" alt="Logo" class="h-12 w-12">
-                <span class="font-serif text-lg text-ink">FabricAI</span>
+                <img src="/images/logo.png" alt="Logo" class="h-10 w-10">
+                <div>
+                    <span class="font-serif text-base text-ink block leading-tight">FabricAI</span>
+                    <span class="text-[9px] font-medium tracking-[0.25em] uppercase" style="color:#7c3ca0">The Fitting Room</span>
+                </div>
             </a>
         </div>
         <div class="flex-1 overflow-y-auto p-4 text-sm text-ink-muted">
@@ -43,12 +69,12 @@
             <div class="flex-1 overflow-y-auto p-4 text-sm text-ink-muted">
     <button
         onclick="newChat()"
-        class="w-full mb-4 px-4 py-2.5 bg-ink text-white text-xs font-medium tracking-wide uppercase
-               hover:bg-ink-light transition-colors">
-        + New chat
+        class="w-full mb-3 px-4 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
+               hover:bg-purple-900 transition-colors">
+        + New Look
     </button>
-
-    <div id="chat-list" class="space-y-2"></div>
+    <p class="text-[9px] uppercase tracking-widest text-ink-muted mb-2 px-1">Your Sessions</p>
+    <div id="chat-list" class="space-y-1"></div>
 </div>
         </div>
 
@@ -56,7 +82,7 @@
         <div class="p-4 border-t border-cream-300">
             <div class="bg-cream-100 border border-cream-300 px-4 py-3 flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-ink-muted uppercase tracking-wider">Tokens</span>
+                    <span class="text-xs font-medium text-ink-muted uppercase tracking-wider">Design Credits</span>
                     <div class="flex items-center gap-1.5">
                         <span id="token-icon" class="text-base">&#9889;</span>
                         <span id="token-count" class="text-sm font-bold text-ink">{{ Auth::user()->tokens ?? 0 }}</span>
@@ -69,7 +95,7 @@
                 <button id="refill-btn"
                         onclick="TokenManager.refill()"
                         class="{{ (Auth::user()->tokens ?? 0) > 0 ? 'hidden' : '' }} w-full mt-1 py-2 bg-ink text-white text-xs font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
-                    Want more tokens?
+                    Want more credits?
                 </button>
             </div>
         </div>
@@ -84,7 +110,7 @@
             <!-- Left spacer -->
             <div class="flex-1"></div>
             <!-- Centered chat title -->
-            <h1 id="chat-title" class="font-medium text-ink text-sm truncate max-w-xs text-center">New chat</h1>
+            <h1 id="chat-title" class="font-medium text-ink text-sm truncate max-w-xs text-center">New Look</h1>
             <!-- Right: user + logout -->
             <div class="flex-1 flex justify-end items-center gap-3">
                 <span class="text-sm text-ink-muted">{{ Auth::user()->name }}</span>
@@ -99,40 +125,48 @@
         </header>
 
         <!-- ================= CHAT AREA ================= -->
-        <div id="chat-container" class="flex-1 overflow-y-auto p-8 relative z-10 bg-cream-50">
+        <div class="flex-1 relative overflow-hidden">
+            <!-- Fitting room background image with cream overlay for readability -->
+            <div class="absolute inset-0 z-0" style="
+                background-image: url('/images/fitting-room.jpg');
+                background-size: cover;
+                background-position: center;
+            "></div>
+            <!-- Cream wash to soften contrast -->
+            <div class="absolute inset-0 z-0" style="background: rgba(245, 240, 232, 0.55);"></div>
+
+        <div id="chat-container" class="absolute inset-0 overflow-y-auto p-8 z-10" style="background:transparent;">
             <div class="max-w-4xl mx-auto space-y-8">
                 <!-- Welcome Message -->
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                <div class="flex items-start gap-4 msg-enter">
+                    <div class="w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center flex-shrink-0 overflow-hidden p-1 shadow-sm">
                         <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                     </div>
-                    <div class="bg-white border border-cream-300 rounded-lg px-6 py-4 text-ink-light max-w-2xl">
-                        Welcome to FabricAI.  
-                        Describe the clothing design you want to create and I'll generate it for you.
+                    <div class="bg-white/90 backdrop-blur-sm border border-cream-300 rounded-lg px-6 py-5 text-ink-light max-w-2xl shadow-sm space-y-2">
+                        <p class="text-[10px] font-medium tracking-[0.2em] uppercase" style="color:#7c3ca0">Welcome to The Fitting Room</p>
+                        <p class="font-serif text-xl text-ink leading-snug">Your personal atelier, open 24 hours.</p>
+                        <p class="text-sm leading-relaxed">Tell me what you have in mind — a silhouette, a mood, a fabric — and I’ll tailor it into a design. Refine each look as many times as you like.</p>
+                        <p class="text-xs text-ink-muted border-t border-cream-200 pt-3">Try: <em>“A structured blazer in ivory linen with oversized lapels”</em></p>
                     </div>
                 </div>
                 <div id="messages" class="space-y-8"></div>
             </div>
         </div>
+        </div><!-- /fitting-room wrapper -->
 
         <!-- ================= INPUT AREA ================= -->
         <div class="relative z-10 border-t border-cream-300 p-6 bg-white">
             <div id="error" class="hidden text-red-600 text-sm mb-3"></div>
-            <div id="loader" class="hidden items-center gap-3 text-purple-700 text-sm mb-4">
-                <div class="spinner w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full"></div>
-                Generating design...
+            <div id="loader" class="hidden items-center gap-3 text-sm mb-4" style="color:#7c3ca0">
+                <div class="flex gap-1 items-end">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-700 dot-1"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-700 dot-2"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-700 dot-3"></span>
+                </div>
+                <span id="loader-text">Tailoring your look…</span>
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
-                <div class="mb-3 flex justify-end gap-2">
-                    {{-- Provider selector --}}
-                    <div class="relative">
-                        <select id="ai-provider" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
-                            <option value="gemini">Gemini</option>
-                            <option value="chutes">Chutes AI</option>
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-xs pointer-events-none"></i>
-                    </div>
-                    {{-- Model selector (changes based on provider) --}}
+                <div class="mb-3 flex justify-end">
                     <div class="relative">
                         <select id="ai-model" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
                             <option value="fabric_light">Fabric Light</option>
@@ -142,9 +176,9 @@
                     </div>
                 </div>
                 <!-- Banner modo edición -->
-                <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-300 text-orange-700 text-sm font-medium">
-                    <span>✏️ You are now editing the previous photo</span>
-                    <button type="button" id="cancel-edit-btn" class="ml-auto text-orange-600 hover:text-orange-800 transition-colors text-xs underline">Cancel</button>
+                <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 text-purple-800 text-sm font-medium">
+                    <span>&#9986; Retouching your look — the previous image is your base</span>
+                    <button type="button" id="cancel-edit-btn" class="ml-auto text-purple-600 hover:text-purple-900 transition-colors text-xs underline">Cancel</button>
                 </div>
                 <div class="flex gap-3 items-end">
     <!-- Upload image -->
@@ -157,18 +191,19 @@
     <textarea
         id="prompt"
         rows="1"
-        placeholder="Describe the design or upload an image to edit..."
+        placeholder="Describe your vision — silhouette, fabric, mood, reference…"
         class="flex-1 bg-cream-100 border border-cream-300 px-5 py-4 text-sm resize-none text-ink
-               focus:outline-none focus:border-ink transition-colors
+               focus:outline-none focus:border-purple-400 transition-colors
                placeholder-ink-muted/50 max-h-40 scrollbar-hide"></textarea>
 
     <button
         type="submit"
         id="submit-btn"
-        class="px-6 py-4 font-medium text-sm tracking-wide uppercase
-               bg-ink text-white
-               hover:bg-ink-light transition-colors disabled:opacity-50">
-        Generate ✨
+        class="px-6 py-4 font-medium text-sm tracking-widest uppercase
+               text-white transition-colors disabled:opacity-50"
+        style="background:#5a2275;"
+        onmouseover="this.style.background='#7c3ca0'" onmouseout="this.style.background='#5a2275'">
+        Create Look
     </button>
 </div>
             </form>
@@ -259,27 +294,6 @@
         let isCreatingChat = false;
         let chats = [];
         const aiModelSelect = document.getElementById('ai-model');
-        const aiProviderSelect = document.getElementById('ai-provider');
-
-        const geminiModels = [
-            { value: 'fabric_light', label: 'Fabric Light' },
-            { value: 'fabric_pro',   label: 'Fabric Pro' },
-        ];
-        const chutesModels = [
-            { value: 'chutes_standard', label: 'Standard' },
-        ];
-
-        function syncModelOptions() {
-            const provider = aiProviderSelect.value;
-            const models = provider === 'chutes' ? chutesModels : geminiModels;
-            const current = aiModelSelect.value;
-            aiModelSelect.innerHTML = models.map(m =>
-                `<option value="${m.value}"${m.value === current ? ' selected' : ''}>${m.label}</option>`
-            ).join('');
-        }
-
-        aiProviderSelect.addEventListener('change', syncModelOptions);
-
         const imageInput = document.getElementById('image-upload');
         const form = document.getElementById('design-form');
         const promptInput = document.getElementById('prompt');
@@ -304,12 +318,37 @@
             }
         });
         
+        // Rotating fitting-room loader messages
+        const ATELIER_MESSAGES = [
+            'Tailoring your look…',
+            'Stitching your idea together…',
+            'Cutting the pattern…',
+            'The atelier is at work…',
+            'Draping the fabric…',
+            'Fitting your design…',
+            'Pinning the details…',
+            'Pressing the seams…',
+        ];
+        let _loaderInterval = null;
+
         // Estado de carga
         function setLoading(loading) {
             submitBtn.disabled = loading;
             loader.classList.toggle('hidden', !loading);
             loader.classList.toggle('flex', loading);
             errorEl.classList.add('hidden');
+            const textEl = document.getElementById('loader-text');
+            if (loading && textEl) {
+                let idx = Math.floor(Math.random() * ATELIER_MESSAGES.length);
+                textEl.textContent = ATELIER_MESSAGES[idx];
+                _loaderInterval = setInterval(() => {
+                    idx = (idx + 1) % ATELIER_MESSAGES.length;
+                    textEl.textContent = ATELIER_MESSAGES[idx];
+                }, 2800);
+            } else {
+                clearInterval(_loaderInterval);
+                _loaderInterval = null;
+            }
         }
         
         // Mostrar error
@@ -337,7 +376,7 @@
             }
 
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-5 flex flex-row-reverse items-start gap-3';
+            messageDiv.className = 'mb-5 flex flex-row-reverse items-start gap-3 msg-enter';
             messageDiv.innerHTML = `
                 ${avatarHtml}
                 <div class="bg-ink text-white px-4 py-3.5 rounded-lg text-sm leading-relaxed max-w-2xl">${escapeHtml(text)}</div>
@@ -349,17 +388,17 @@
         // Agregar respuesta del bot con imagen
         function addBotResponse(imageUrl) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-5 flex items-start gap-4';
+            messageDiv.className = 'mb-5 flex items-start gap-4 msg-enter';
             
             const uniqueId = 'bg-' + Date.now();
             const previewIdx = previewImageStore.length;
             previewImageStore.push(imageUrl);
             
             messageDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0 self-start overflow-hidden p-1">
+                <div class="w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center flex-shrink-0 self-start overflow-hidden p-1 shadow-sm">
                     <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                 </div>
-                <div class="flex flex-col gap-3 max-w-2xl">
+                <div class="flex flex-col gap-3 max-w-2xl bg-white/90 backdrop-blur-sm border border-cream-300 rounded-lg p-3 shadow-sm">
                     <div id="${uniqueId}" class="rounded-lg overflow-hidden bg-cream-100 p-2 transition-colors">
                         <img src="${imageUrl}" alt="Generated design" class="rounded-lg shadow-sm w-full block" crossorigin="anonymous">
                     </div>
@@ -404,12 +443,12 @@
         // Mensaje de error del bot
         function addBotError(msg) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-5 flex items-start gap-4';
+            messageDiv.className = 'mb-5 flex items-start gap-4 msg-enter';
             messageDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                <div class="w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center flex-shrink-0 overflow-hidden p-1 shadow-sm">
                     <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
                 </div>
-                <div class="bg-red-50 border border-red-200 rounded-lg px-6 py-4 max-w-2xl text-red-700 text-sm leading-relaxed">
+                <div class="bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-lg px-6 py-4 max-w-2xl text-red-700 text-sm leading-relaxed">
                     ${escapeHtml(msg)}
                 </div>
             `;
@@ -454,13 +493,13 @@
             (chat.id === currentChatId
                 ? 'bg-cream-200 text-ink'
                 : 'hover:bg-cream-100 text-ink-muted');
-        div.textContent = chat.title ?? 'New chat';
+        div.textContent = chat.title ?? 'New Look';
         div.onclick = () => loadChat(chat.id);
 
         // Input inline para renombrar (oculto por defecto)
         const input = document.createElement('input');
         input.type = 'text';
-        input.value = chat.title ?? 'New chat';
+        input.value = chat.title ?? 'New Look';
         input.className = 'hidden flex-1 px-3 py-1.5 rounded-lg bg-cream-100 text-ink text-sm border border-purple-600 focus:outline-none';
 
         let renameSaved = false;
@@ -570,7 +609,7 @@ async function newChat() {
         }
         currentChatId = data.id;
         messagesContainer.innerHTML = '';
-        document.getElementById('chat-title').textContent = 'New chat';
+        document.getElementById('chat-title').textContent = 'New Look';
         await loadChats();
         return data.id;
     } finally {
@@ -584,7 +623,7 @@ async function loadChat(chatId) {
     const data = await res.json();
     currentChatId = chatId;
     messagesContainer.innerHTML = '';
-    document.getElementById('chat-title').textContent = data.chat?.title ?? 'New chat';
+    document.getElementById('chat-title').textContent = data.chat?.title ?? 'New Look';
     data.messages.forEach(msg => {
         if (msg.role === 'user') {
             addUserMessage(msg.content);
@@ -639,16 +678,14 @@ async function loadChat(chatId) {
             setLoading(true);
 
             try {
-                const aiModel    = aiModelSelect.value;
-                const aiProvider = aiProviderSelect.value;
+                const aiModel = aiModelSelect.value;
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 console.log('Enviando datos:', {
                     prompt,
                     chat_id: currentChatId,
                     imageBase64: snapshotImage,
                     mimeType: snapshotMime,
-                    model: aiModel,
-                    provider: aiProvider
+                    model: aiModel
                 });
                 const res = await fetch('/designs/generate', {
                     method: 'POST',
@@ -663,7 +700,6 @@ async function loadChat(chatId) {
                         imageBase64: snapshotImage,
                         mimeType: snapshotMime,
                         model: aiModel,
-                        provider: aiProvider,
                         is_edit: isEditMode
                     })
                 });
@@ -748,7 +784,7 @@ imageInput.addEventListener('change', async (e) => {
             banner.classList.add('flex');
             promptInput.classList.remove('border-cream-300', 'focus:border-ink');
             promptInput.classList.add('border-orange-500', 'focus:border-orange-400', 'bg-orange-50');
-            promptInput.placeholder = 'Describe how you want to edit the previous image....';
+            promptInput.placeholder = 'Describe how you want to retouch this look…';
             promptInput.focus();
         }
 
@@ -759,7 +795,7 @@ imageInput.addEventListener('change', async (e) => {
             banner.classList.remove('flex');
             promptInput.classList.add('border-cream-300', 'focus:border-ink');
             promptInput.classList.remove('border-orange-500', 'focus:border-orange-400', 'bg-orange-50');
-            promptInput.placeholder = 'Describe the design or upload an image to edit...';
+            promptInput.placeholder = 'Describe your vision — silhouette, fabric, mood, reference…';
         }
 
         document.getElementById('cancel-edit-btn').addEventListener('click', () => exitEditMode());
