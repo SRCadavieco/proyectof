@@ -63,7 +63,9 @@ class DesignController extends Controller
        ], 422);
    }
 
-    $prompt = trim($validated['prompt']);
+    $systemPrompt = "You are a professional fashion and apparel designer.\nCreate a print-ready, high-quality design suitable for clothing.\n\nDesign requirements:\n\nCentered composition\nPlain color background (no shadows)\nNo use of gradients\nBackground must be a color you haven't used for the design\nClean vector style with crisp, well-defined lines\nScalable without loss of quality\nDo not create any text unless the user specifies so. Create only the words the user has mentioned\n\n";
+    $userPrompt = trim($validated['prompt']);
+    $prompt = $systemPrompt . $userPrompt;
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
 
@@ -83,10 +85,10 @@ class DesignController extends Controller
     }
     $user->decrement('tokens');
 
-    // Guardar mensaje del usuario (con imagen si se proporciona)
+    // Guardar solo el prompt del usuario (sin el prefijo del sistema)
     $chat->messages()->create([
         'role' => 'user',
-        'content' => $prompt,
+        'content' => $userPrompt,
         'image' => $validated['imageBase64'] ?? null,
     ]);
 
