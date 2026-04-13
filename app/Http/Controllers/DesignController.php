@@ -211,7 +211,7 @@ if ($isEdit) {
         // Título automático del chat
         if (!$chat->title) {
             $chat->update([
-                'title' => Str::limit($prompt, 40),
+                'title' => Str::limit($userPrompt, 40),
             ]);
         }
     }
@@ -225,7 +225,7 @@ if ($isEdit) {
             'image' => null,
         ]);
         if (!$chat->title) {
-            $chat->update(['title' => Str::limit($prompt, 40)]);
+            $chat->update(['title' => Str::limit($userPrompt, 40)]);
         }
         return response()->json([
             'success' => false,

@@ -129,8 +129,9 @@
             <!-- Fitting room background image with cream overlay for readability -->
             <div class="absolute inset-0 z-0" style="
                 background-image: url('/images/fitting-room.jpg');
-                background-size: cover;
-                background-position: center;
+                background-size: 300%;
+                background-position: center 60%;
+                background-repeat: no-repeat;
             "></div>
             <!-- Cream wash to soften contrast -->
             <div class="absolute inset-0 z-0" style="background: rgba(245, 240, 232, 0.55);"></div>
@@ -166,7 +167,14 @@
                 <span id="loader-text">Tailoring your look…</span>
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
-                <div class="mb-3 flex justify-end">
+                <div class="mb-3 flex justify-end gap-3">
+                    <div class="relative">
+                        <select id="ai-provider" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
+                            <option value="gemini">Gemini</option>
+                            <option value="chutes">Chutes AI</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-xs pointer-events-none"></i>
+                    </div>
                     <div class="relative">
                         <select id="ai-model" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
                             <option value="fabric_light">Fabric Light</option>
@@ -293,6 +301,7 @@
         let isSubmitting = false;
         let isCreatingChat = false;
         let chats = [];
+        const aiProviderSelect = document.getElementById('ai-provider');
         const aiModelSelect = document.getElementById('ai-model');
         const imageInput = document.getElementById('image-upload');
         const form = document.getElementById('design-form');
@@ -679,13 +688,15 @@ async function loadChat(chatId) {
 
             try {
                 const aiModel = aiModelSelect.value;
+                const aiProvider = aiProviderSelect.value;
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 console.log('Enviando datos:', {
                     prompt,
                     chat_id: currentChatId,
                     imageBase64: snapshotImage,
                     mimeType: snapshotMime,
-                    model: aiModel
+                    model: aiModel,
+                    provider: aiProvider
                 });
                 const res = await fetch('/designs/generate', {
                     method: 'POST',
@@ -700,6 +711,7 @@ async function loadChat(chatId) {
                         imageBase64: snapshotImage,
                         mimeType: snapshotMime,
                         model: aiModel,
+                        provider: aiProvider,
                         is_edit: isEditMode
                     })
                 });
