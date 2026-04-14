@@ -303,6 +303,27 @@
         let chats = [];
         const aiProviderSelect = document.getElementById('ai-provider');
         const aiModelSelect = document.getElementById('ai-model');
+
+        const MODEL_OPTIONS = {
+            gemini: [
+                { value: 'fabric_light', label: 'Fabric Light' },
+                { value: 'fabric_pro',   label: 'Fabric Pro'   },
+            ],
+            chutes: [
+                { value: 'chutes_standard', label: 'Standard' },
+            ],
+        };
+
+        function syncModelOptions(provider) {
+            const options = MODEL_OPTIONS[provider] ?? MODEL_OPTIONS.gemini;
+            aiModelSelect.innerHTML = options
+                .map(o => `<option value="${o.value}">${o.label}</option>`)
+                .join('');
+        }
+
+        aiProviderSelect.addEventListener('change', () => syncModelOptions(aiProviderSelect.value));
+        syncModelOptions(aiProviderSelect.value);
+
         const imageInput = document.getElementById('image-upload');
         const form = document.getElementById('design-form');
         const promptInput = document.getElementById('prompt');
