@@ -35,7 +35,7 @@ class SocialiteController extends Controller
 
             Auth::login($user, true);
 
-            return redirect()->intended(route('designs.form'));
+            return redirect()->route('designs.form');
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Google OAuth error: ' . $e->getMessage());
