@@ -148,7 +148,7 @@ class ChutesService
                     : []),
             ]);
 
-            $request = Http::timeout(60)->retry(1, 1000);
+            $request = Http::timeout(180)->retry(1, 2000);
 
             if (!empty($token)) {
                 $request = $request->withToken($token);
