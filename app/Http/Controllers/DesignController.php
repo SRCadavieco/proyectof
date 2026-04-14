@@ -63,9 +63,17 @@ class DesignController extends Controller
        ], 422);
    }
 
-    $systemPrompt = "You are a professional fashion and apparel designer.\nCreate a print-ready, high-quality design suitable for clothing.\n\nDesign requirements:\n\nCentered composition\nPlain color background (no shadows)\nNo use of gradients\nBackground must be a color you haven't used for the design\nClean vector style with crisp, well-defined lines\nScalable without loss of quality\nDo not create any text unless the user specifies so. Create only the words the user has mentioned\n\n";
     $userPrompt = trim($validated['prompt']);
-    $prompt = $systemPrompt . $userPrompt;
+    $provider = $validated['provider'] ?? 'gemini';
+
+    if ($provider === 'chutes') {
+        // Modelos de difusión: prompt visual directo, sin instrucciones en lenguaje natural
+        $prompt = "print-ready clothing design, centered composition, solid plain background, clean vector style, crisp lines, no gradients, no shadows, no text, " . $userPrompt;
+    } else {
+        // Gemini (LLM): entiende instrucciones en lenguaje natural
+        $systemPrompt = "You are a professional fashion and apparel designer.\nCreate a print-ready, high-quality design suitable for clothing.\n\nDesign requirements:\n\nCentered composition\nPlain color background (no shadows)\nNo use of gradients\nBackground must be a color you haven't used for the design\nClean vector style with crisp, well-defined lines\nScalable without loss of quality\nDo not create any text unless the user specifies so. Create only the words the user has mentioned\n\n";
+        $prompt = $systemPrompt . $userPrompt;
+    }
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
 
@@ -104,7 +112,7 @@ class DesignController extends Controller
     $imageBase64 = $validated['imageBase64'] ?? null;
     $mimeType = $validated['mimeType'] ?? 'image/png';
     $model = $validated['model'] ?? 'fabric_light';
-    $provider = $validated['provider'] ?? 'gemini';
+    // $provider ya está definido arriba
 
     // Detectar edición
     $isEdit = !empty($validated['is_edit']);

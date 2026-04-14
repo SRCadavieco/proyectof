@@ -679,8 +679,12 @@ async function loadChat(chatId) {
             }
 
             if (TokenManager.get() <= 0) {
-                showError('You have no tokens left. Get more to keep designing!');
-                return;
+                // Sincronizar con servidor por si el admin añadió tokens
+                await TokenManager.sync();
+                if (TokenManager.get() <= 0) {
+                    showError('You have no tokens left. Get more to keep designing!');
+                    return;
+                }
             }
 
             isSubmitting = true;
@@ -762,6 +766,9 @@ async function loadChat(chatId) {
                 const errMsg = err.message || 'Could not generate the image. Please check your prompt and try again.';
                 addBotError(errMsg);
                 console.error('Error en submit:', err);
+                // Sincronizar tokens con el servidor: el backend puede haber descontado
+                // un token aunque la generación haya fallado (ej. timeout en Chutes)
+                await TokenManager.sync();
             } finally {
                 isSubmitting = false;
                 setLoading(false);
@@ -772,8 +779,16 @@ async function loadChat(chatId) {
                 document.getElementById('image-preview').innerHTML = '';
             }
         });
+        // Sincronizar tokens cuando el usuario vuelve a la pestaña
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                TokenManager.sync();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
     TokenManager.init();
+    await TokenManager.sync();
     await loadChats();
 
     // Auto-crear chat si no hay ninguno
