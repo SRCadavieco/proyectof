@@ -8,7 +8,6 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\StripeWebhookController;
-use App\Http\Controllers\SocialiteController;
 
 
 // FAQ page
@@ -24,10 +23,6 @@ Route::get('/pricing', function () {
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
-
-// Google OAuth
-Route::get('/auth/google', [SocialiteController::class, 'redirectToGoogle'])->name('auth.google');
-Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
 Route::middleware('auth')->group(function () {
     Route::get('/design', [DesignController::class, 'form']);

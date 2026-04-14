@@ -11,25 +11,30 @@ class GoogleController extends Controller
 {
     public function redirect()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     public function callback()
     {
-        $googleUser = Socialite::driver('google')->user();
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-        $user = User::updateOrCreate(
-            ['google_id' => $googleUser->getId()],
-            [
-                'name'              => $googleUser->getName(),
-                'email'             => $googleUser->getEmail(),
-                'avatar'            => $googleUser->getAvatar(),
-                'email_verified_at' => now(),
-            ]
-        );
+            $user = User::updateOrCreate(
+                ['email' => $googleUser->getEmail()],
+                [
+                    'name'              => $googleUser->getName(),
+                    'google_id'         => $googleUser->getId(),
+                    'email_verified_at' => now(),
+                ]
+            );
 
-        Auth::login($user, remember: true);
+            Auth::login($user, remember: true);
 
-        return redirect()->intended(route('dashboard'));
+            return redirect()->route('designs.form');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Google OAuth error: ' . $e->getMessage());
+            return redirect()->route('login')->withErrors(['email' => 'Google authentication failed. Please try again.']);
+        }
     }
 }
