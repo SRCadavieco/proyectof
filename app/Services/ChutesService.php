@@ -30,16 +30,17 @@ class ChutesService
      *   - Binaria (image/jpeg, image/png) → se convierte a base64.
      *   - JSON con campo `image` o `imageBase64` (base64 puro).
      */
-    public function generateDesign(string $prompt, ?string $backgroundColor = null, string $model = 'standard'): array
+    public function generateDesign(string $prompt, ?string $backgroundColor = null, string $model = 'z_image_turbo'): array
     {
-        $baseUrl = (string) config('services.chutes.url');
+        $urls    = config('services.chutes.urls', []);
+        $baseUrl = (string) ($urls[$model] ?? $urls['z_image_turbo'] ?? '');
         $token   = (string) config('services.chutes.token');
         $path    = (string) (config('services.chutes.path') ?? '/generate');
 
         if (empty($baseUrl)) {
             return [
                 'success' => false,
-                'error'   => 'Falta configuración: services.chutes.url (CHUTES_BACKEND_URL)',
+                'error'   => "Falta configuración para el modelo '{$model}' (services.chutes.urls)",
                 'status'  => 500,
                 'code'    => 'config_error',
             ];
@@ -79,16 +80,17 @@ class ChutesService
         string $prompt,
         string $imageBase64,
         string $mimeType = 'image/png',
-        string $model = 'standard'
+        string $model = 'z_image_turbo'
     ): array {
-        $baseUrl      = (string) config('services.chutes.url');
-        $token        = (string) config('services.chutes.token');
-        $img2imgPath  = (string) (config('services.chutes.path_img2img') ?? '/img2img');
+        $urls    = config('services.chutes.urls', []);
+        $baseUrl = (string) ($urls[$model] ?? $urls['z_image_turbo'] ?? '');
+        $token   = (string) config('services.chutes.token');
+        $path    = (string) (config('services.chutes.path') ?? '/generate');
 
         if (empty($baseUrl)) {
             return [
                 'success' => false,
-                'error'   => 'Falta configuración: services.chutes.url (CHUTES_BACKEND_URL)',
+                'error'   => "Falta configuración para el modelo '{$model}' (services.chutes.urls)",
                 'status'  => 500,
                 'code'    => 'config_error',
             ];
@@ -100,11 +102,15 @@ class ChutesService
             $base64 = preg_replace('/^data:image\/(png|jpeg|jpg|webp);base64,/i', '', $base64);
         }
 
-        $url     = rtrim($baseUrl, '/') . '/' . ltrim($img2imgPath, '/');
+        $url     = rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
+
+        // Incluir la imagen en todos los campos que usan distintos modelos Chutes.
+        // Si el modelo no soporta img2img simplemente ignorará los campos extra.
         $payload = [
-            'prompt'    => $prompt,
-            'image_b64' => $base64,
-            'mimeType'  => $mimeType,
+            'prompt'      => $prompt,
+            'image_b64'   => $base64,   // Z-Image / FLUX estilo Chutes
+            'init_image'  => $base64,   // Hunyuan y otros
+            'image'       => $base64,   // campo genérico
         ];
 
         return $this->sendRequest($url, $token, $payload);
@@ -118,7 +124,7 @@ class ChutesService
         string $prompt,
         array $context = [],
         ?string $backgroundColor = null,
-        string $model = 'standard'
+        string $model = 'z_image_turbo'
     ): array {
         $fullPrompt = $prompt;
         if (!empty($context)) {

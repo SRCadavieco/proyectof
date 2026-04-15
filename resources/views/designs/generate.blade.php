@@ -103,6 +103,14 @@
 
     <!-- ================= MAIN ================= -->
     <main class="flex-1 flex flex-col relative overflow-hidden">
+        <!-- Background fitting-room at main level — visible behind every panel -->
+        <div class="absolute inset-0 z-0" style="
+            background-image: url('/images/fitting-room.jpg');
+            background-size: 270%;
+            background-position: center 60%;
+            background-repeat: no-repeat;
+        "></div>
+        <div class="absolute inset-0 z-0" style="background: rgba(245, 240, 232, 0.55);"></div>
 
         <!-- HEADER -->
         <header class="relative z-10 px-8 py-4 border-b border-cream-300
@@ -126,17 +134,8 @@
 
         <!-- ================= CHAT AREA ================= -->
         <div class="flex-1 relative overflow-hidden">
-            <!-- Fitting room background image with cream overlay for readability -->
-            <div class="absolute inset-0 z-0" style="
-                background-image: url('/images/fitting-room.jpg');
-                background-size: 300%;
-                background-position: center 60%;
-                background-repeat: no-repeat;
-            "></div>
-            <!-- Cream wash to soften contrast -->
-            <div class="absolute inset-0 z-0" style="background: rgba(245, 240, 232, 0.55);"></div>
 
-        <div id="chat-container" class="absolute inset-0 overflow-y-auto p-8 z-10" style="background:transparent;">
+        <div id="chat-container" class="absolute inset-0 overflow-y-auto p-8 pb-4 z-10" style="background:transparent;">
             <div class="max-w-4xl mx-auto space-y-8">
                 <!-- Welcome Message -->
                 <div class="flex items-start gap-4 msg-enter">
@@ -156,7 +155,8 @@
         </div><!-- /fitting-room wrapper -->
 
         <!-- ================= INPUT AREA ================= -->
-        <div class="relative z-10 border-t border-cream-300 p-6 bg-white">
+        <div class="relative z-10 border-t border-cream-300/60 p-6"
+             style="background: rgba(250, 247, 242, 0.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);">
             <div id="error" class="hidden text-red-600 text-sm mb-3"></div>
             <div id="loader" class="hidden items-center gap-3 text-sm mb-4" style="color:#7c3ca0">
                 <div class="flex gap-1 items-end">
@@ -167,21 +167,31 @@
                 <span id="loader-text">Tailoring your look…</span>
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
-                <div class="mb-3 flex justify-end gap-3">
-                    <div class="relative">
-                        <select id="ai-provider" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
-                            <option value="gemini">Gemini</option>
-                            <option value="chutes">Chutes AI</option>
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-xs pointer-events-none"></i>
+                <!-- AI selector: provider tabs + model pills -->
+                <div class="mb-3 flex justify-end items-center gap-2.5">
+
+                    <!-- Provider segmented control -->
+                    <div class="inline-flex" style="border:1px solid #d4cdc0;">
+                        <button type="button" id="provider-btn-gemini" data-provider="gemini"
+                            class="provider-btn px-4 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors"
+                            style="background:#2a2520;color:#fff;">
+                            Gemini
+                        </button>
+                        <button type="button" id="provider-btn-chutes" data-provider="chutes"
+                            class="provider-btn px-4 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors"
+                            style="background:transparent;color:#88827a;border-left:1px solid #d4cdc0;">
+                            Chutes AI
+                        </button>
                     </div>
-                    <div class="relative">
-                        <select id="ai-model" style="background-image:none" class="appearance-none bg-cream-100 border border-cream-300 pl-4 pr-9 py-2 text-sm text-ink focus:outline-none focus:border-ink transition-colors cursor-pointer">
-                            <option value="fabric_light">Fabric Light</option>
-                            <option value="fabric_pro">Fabric Pro</option>
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-xs pointer-events-none"></i>
-                    </div>
+
+                    <span class="text-cream-400 text-xs select-none">&rsaquo;</span>
+
+                    <!-- Model pills -->
+                    <div id="model-pills" class="inline-flex" style="border:1px solid #d4cdc0;"></div>
+
+                    <!-- Hidden inputs used when submitting -->
+                    <input type="hidden" id="ai-provider" value="gemini">
+                    <input type="hidden" id="ai-model"    value="fabric_light">
                 </div>
                 <!-- Banner modo edición -->
                 <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 text-purple-800 text-sm font-medium">
@@ -301,8 +311,8 @@
         let isSubmitting = false;
         let isCreatingChat = false;
         let chats = [];
-        const aiProviderSelect = document.getElementById('ai-provider');
-        const aiModelSelect = document.getElementById('ai-model');
+        const imageInput = document.getElementById('image-upload');
+        const form = document.getElementById('design-form');
 
         const MODEL_OPTIONS = {
             gemini: [
@@ -310,22 +320,58 @@
                 { value: 'fabric_pro',   label: 'Fabric Pro'   },
             ],
             chutes: [
-                { value: 'chutes_standard', label: 'Standard' },
+                { value: 'z_image_turbo', label: 'Z-Image Turbo' },
+                { value: 'flux_schnell',  label: 'FLUX Schnell'  },
             ],
         };
 
+        const providerHidden = document.getElementById('ai-provider');
+        const modelHidden    = document.getElementById('ai-model');
+        const modelPillsEl   = document.getElementById('model-pills');
+
         function syncModelOptions(provider) {
             const options = MODEL_OPTIONS[provider] ?? MODEL_OPTIONS.gemini;
-            aiModelSelect.innerHTML = options
-                .map(o => `<option value="${o.value}">${o.label}</option>`)
-                .join('');
+            modelPillsEl.innerHTML = options.map((m, i) => {
+                const border = i > 0 ? 'border-left:1px solid #d4cdc0;' : '';
+                const style  = i === 0
+                    ? `background:#5a2275;color:#fff;${border}`
+                    : `background:transparent;color:#88827a;${border}`;
+                return `<button type="button" data-model="${m.value}"
+                    class="model-pill px-3.5 py-2 text-[10px] font-medium tracking-[0.12em] uppercase transition-colors"
+                    style="${style}">${m.label}</button>`;
+            }).join('');
+
+            modelHidden.value = options[0].value;
+
+            modelPillsEl.querySelectorAll('.model-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modelPillsEl.querySelectorAll('.model-pill').forEach(b => {
+                        b.style.background = 'transparent';
+                        b.style.color = '#88827a';
+                    });
+                    btn.style.background = '#5a2275';
+                    btn.style.color = '#fff';
+                    modelHidden.value = btn.dataset.model;
+                });
+            });
         }
 
-        aiProviderSelect.addEventListener('change', () => syncModelOptions(aiProviderSelect.value));
-        syncModelOptions(aiProviderSelect.value);
-
-        const imageInput = document.getElementById('image-upload');
-        const form = document.getElementById('design-form');
+        function initProviderButtons() {
+            document.querySelectorAll('.provider-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.provider-btn').forEach(b => {
+                        b.style.background = 'transparent';
+                        b.style.color = '#88827a';
+                        b.style.borderLeft = b.dataset.provider === 'chutes' ? '1px solid #d4cdc0' : '';
+                    });
+                    btn.style.background = '#2a2520';
+                    btn.style.color = '#fff';
+                    providerHidden.value = btn.dataset.provider;
+                    syncModelOptions(btn.dataset.provider);
+                });
+            });
+            syncModelOptions('gemini');
+        }
         const promptInput = document.getElementById('prompt');
         const submitBtn = document.getElementById('submit-btn');
         const loader = document.getElementById('loader');
@@ -712,8 +758,8 @@ async function loadChat(chatId) {
             setLoading(true);
 
             try {
-                const aiModel = aiModelSelect.value;
-                const aiProvider = aiProviderSelect.value;
+                const aiModel    = modelHidden.value;
+                const aiProvider = providerHidden.value;
                 const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 console.log('Enviando datos:', {
                     prompt,
@@ -789,6 +835,7 @@ async function loadChat(chatId) {
         document.addEventListener('DOMContentLoaded', async () => {
     TokenManager.init();
     await TokenManager.sync();
+    initProviderButtons();
     await loadChats();
 
     // Auto-crear chat si no hay ninguno

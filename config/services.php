@@ -60,10 +60,12 @@ return [
     ],
 
     'chutes' => [
-        'url'          => env('CHUTES_BACKEND_URL'),
-        'token'        => env('CHUTES_API_TOKEN'),
-        'path'         => env('CHUTES_BACKEND_PATH', '/generate'),
-        'path_img2img' => env('CHUTES_BACKEND_PATH_IMG2IMG', '/img2img'),
+        'token' => env('CHUTES_API_TOKEN'),
+        'path'  => '/generate',
+        'urls'  => [
+            'z_image_turbo' => env('CHUTES_URL_ZIMAGE',  'https://chutes-z-image-turbo.chutes.ai'),
+            'flux_schnell'  => env('CHUTES_URL_FLUX',    'https://chutes-flux-1-schnell.chutes.ai'),
+        ],
     ],
 
     'stripe' => [

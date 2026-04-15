@@ -44,6 +44,7 @@ class DesignController extends Controller
     ChutesService $chutes,
     BackgroundRemovalService $backgrounds
 ) {
+   set_time_limit(300); // Chutes models can take up to ~3 min on cold start
    try {
        $validated = $request->validate([
            'prompt' => ['required', 'string'],
@@ -51,7 +52,7 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
-           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,chutes_standard'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_schnell'],
            'provider' => ['nullable', 'string', 'in:gemini,chutes'],
            'is_edit' => ['nullable', 'boolean'],
        ]);
@@ -67,8 +68,11 @@ class DesignController extends Controller
     $provider = $validated['provider'] ?? 'gemini';
 
     if ($provider === 'chutes') {
-        // Modelos de difusión: prompt visual directo, sin instrucciones en lenguaje natural
-        $prompt = "print-ready clothing design, centered composition, solid plain background, clean vector style, crisp lines, no gradients, no shadows, no text, " . $userPrompt;
+        // Para modelos de difusión: prompt visual descriptivo, no instrucciones en lenguaje natural
+        $prompt = "print-ready graphic design for clothing, centered on white background, "
+                . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
+                . "no text unless specified, high contrast, isolated subject, "
+                . $userPrompt;
     } else {
         // Gemini (LLM): entiende instrucciones en lenguaje natural
         $systemPrompt = "You are a professional fashion and apparel designer.\nCreate a print-ready, high-quality design suitable for clothing.\n\nDesign requirements:\n\nCentered composition\nPlain color background (no shadows)\nNo use of gradients\nBackground must be a color you haven't used for the design\nClean vector style with crisp, well-defined lines\nScalable without loss of quality\nDo not create any text unless the user specifies so. Create only the words the user has mentioned\n\n";
@@ -111,10 +115,9 @@ class DesignController extends Controller
         ->toArray();
     $imageBase64 = $validated['imageBase64'] ?? null;
     $mimeType = $validated['mimeType'] ?? 'image/png';
-    $model = $validated['model'] ?? 'fabric_light';
+    $model = $validated['model'] ?? ($provider === 'chutes' ? 'z_image_turbo' : 'fabric_light');
     // $provider ya está definido arriba
 
-    // Detectar edición
     $isEdit = !empty($validated['is_edit']);
 
 // Seleccionar el servicio de IA según el proveedor elegido
