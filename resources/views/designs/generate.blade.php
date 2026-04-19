@@ -498,9 +498,6 @@
                         <button type="button" class="px-4 py-2 border border-ink text-ink text-sm font-medium tracking-wide uppercase hover:bg-ink hover:text-white transition-colors preview-btn" data-preview-idx="${previewIdx}">
                             Preview
                         </button>
-                        <button type="button" class="px-4 py-2 border border-purple-600 text-purple-700 text-sm font-medium tracking-wide uppercase hover:bg-purple-700 hover:text-white transition-colors printful-quick-btn" data-image-src="${imageUrl}">
-                            Printful
-                        </button>
                     </div>
                 </div>
                         `;
@@ -1173,124 +1170,6 @@ imageInput.addEventListener('change', async (e) => {
             link.click();
         }
 
-        // ─── Printful integration ────────────────────────────────────────
-        let printfulStoresLoaded = false;
-
-        async function loadPrintfulStores() {
-            if (printfulStoresLoaded) return;
-            const sel     = document.getElementById('printful-store');
-            const connect = document.getElementById('printful-connect-notice');
-            sel.innerHTML = '<option value="">Loading…</option>';
-            try {
-                // Check connection status first
-                const statusRes = await fetch('/printful/status', { headers: { 'Accept': 'application/json' } });
-                const status    = await statusRes.json();
-                if (!status.connected) {
-                    sel.closest('.flex.flex-col').classList.add('hidden');
-                    if (connect) connect.classList.remove('hidden');
-                    return;
-                }
-                const res    = await fetch('/printful/stores', { headers: { 'Accept': 'application/json' } });
-                const stores = await res.json();
-                if (!res.ok) throw new Error(stores.error || 'Could not load stores');
-                if (!Array.isArray(stores) || stores.length === 0) {
-                    sel.innerHTML = '<option value="">No stores found</option>';
-                    return;
-                }
-                sel.innerHTML = stores.map(s =>
-                    `<option value="${s.id}">${escapeHtml(s.name)}</option>`
-                ).join('');
-                printfulStoresLoaded = true;
-            } catch (err) {
-                sel.innerHTML = `<option value="">Error: ${escapeHtml(err.message)}</option>`;
-            }
-        }
-
-        function togglePrintfulPanel() {
-            const panel = document.getElementById('printful-panel');
-            const isHidden = panel.classList.contains('hidden');
-            panel.classList.toggle('hidden', !isHidden);
-            if (isHidden) {
-                const garmentSel = document.getElementById('garment-select');
-                const garmentLabel = garmentSel.options[garmentSel.selectedIndex]?.text ?? 'Custom Design';
-                document.getElementById('printful-title').value = `FabricAI — ${garmentLabel}`;
-                resetPrintfulFeedback();
-                loadPrintfulStores();
-            }
-        }
-
-        function resetPrintfulFeedback() {
-            const fb = document.getElementById('printful-feedback');
-            fb.className = 'hidden text-sm py-2';
-            fb.innerHTML = '';
-        }
-
-        function showPrintfulFeedback(html, type = 'error') {
-            const fb = document.getElementById('printful-feedback');
-            fb.className = `text-sm py-2 ${type === 'success' ? 'text-green-700' : 'text-red-600'}`;
-            fb.innerHTML = html;
-            fb.classList.remove('hidden');
-        }
-
-        async function sendToPrintful() {
-            const storeId     = document.getElementById('printful-store').value;
-            const title       = document.getElementById('printful-title').value.trim();
-            const garmentType = document.getElementById('garment-select').value;
-            const btn         = document.getElementById('printful-send-btn');
-
-            if (!storeId) { showPrintfulFeedback('Please select a Printful store.'); return; }
-            if (!title)   { showPrintfulFeedback('Please enter a product name.'); return; }
-            if (!previewDesignSrc) { showPrintfulFeedback('No design loaded in preview.'); return; }
-
-            btn.disabled = true;
-            btn.textContent = 'Creating product…';
-            resetPrintfulFeedback();
-
-            try {
-                const csrf = document.querySelector('meta[name="csrf-token"]').content;
-                const res  = await fetch('/printful/products', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrf,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        store_id:     parseInt(storeId),
-                        garment_type: garmentType,
-                        image_source: previewDesignSrc,
-                        title,
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    throw new Error(data.error || `HTTP ${res.status}`);
-                }
-                showPrintfulFeedback(
-                    `✓ Product created! <a href="${data.printful_url}" target="_blank" rel="noopener noreferrer"
-                        class="underline font-medium">Open in Printful →</a>`,
-                    'success'
-                );
-                btn.textContent = 'Create Another';
-            } catch (err) {
-                showPrintfulFeedback(`Failed: ${escapeHtml(err.message)}`);
-                btn.textContent = 'Retry';
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        // "Printful" quick-button on each bot response card
-        document.addEventListener('click', function(e) {
-            const quickBtn = e.target.closest ? e.target.closest('.printful-quick-btn') : null;
-            if (!quickBtn) return;
-            const src = quickBtn.getAttribute('data-image-src');
-            if (src) openPreviewModal(src);
-            // Open the Printful panel automatically
-            const panel = document.getElementById('printful-panel');
-            if (panel.classList.contains('hidden')) togglePrintfulPanel();
-        });
-        // ─────────────────────────────────────────────────────────────────
     </script>
 
     <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
@@ -1326,45 +1205,6 @@ imageInput.addEventListener('change', async (e) => {
                 <div class="flex justify-end gap-3 mt-3">
                     <button onclick="downloadPreview()" class="px-4 py-2 bg-ink text-white text-sm font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
                         Download Preview
-                    </button>
-                    <button onclick="togglePrintfulPanel()" class="px-4 py-2 border border-ink text-ink text-sm font-medium tracking-wide uppercase hover:bg-ink hover:text-white transition-colors">
-                        Send to Printful
-                    </button>
-                </div>
-
-                <!-- ─── Printful send panel ─── -->
-                <div id="printful-panel" class="hidden mt-4 border border-cream-300 bg-cream-50 p-4 space-y-3">
-                    <p class="text-xs font-medium tracking-widest uppercase text-ink-muted">Create product on Printful</p>
-
-                    <!-- Not connected notice -->
-                    <div id="printful-connect-notice" class="hidden px-4 py-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
-                        Your Printful account is not connected yet.
-                        <a href="/profile" target="_blank" class="underline font-medium">Go to Profile → Connect Printful</a>
-                    </div>
-
-                    <!-- Product title -->
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs text-ink-muted">Product name</label>
-                        <input id="printful-title" type="text" value=""
-                               class="bg-white border border-cream-300 px-3 py-2 text-sm text-ink focus:outline-none focus:border-purple-400 transition-colors">
-                    </div>
-
-                    <!-- Store selector -->
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs text-ink-muted">Printful store</label>
-                        <select id="printful-store" class="bg-white border border-cream-300 px-3 py-2 text-sm text-ink focus:outline-none focus:border-purple-400">
-                            <option value="">Loading stores…</option>
-                        </select>
-                    </div>
-
-                    <!-- Feedback -->
-                    <div id="printful-feedback" class="hidden text-sm py-2"></div>
-
-                    <!-- Action -->
-                    <button id="printful-send-btn" onclick="sendToPrintful()"
-                            class="w-full py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
-                                   hover:bg-purple-900 transition-colors disabled:opacity-50">
-                        Create Product
                     </button>
                 </div>
             </div>
