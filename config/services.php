@@ -59,6 +59,11 @@ return [
         'key' => env('PIXAZO_API_KEY'),
     ],
 
+    'printful' => [
+        'client_id'     => env('PRINTFUL_CLIENT_ID'),
+        'client_secret' => env('PRINTFUL_CLIENT_SECRET'),
+    ],
+
     'chutes' => [
         'token' => env('CHUTES_API_TOKEN'),
         'path'  => '/generate',

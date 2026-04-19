@@ -3,6 +3,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DesignController;
+use App\Http\Controllers\PrintfulController;
+use App\Http\Controllers\PrintfulOAuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminController;
@@ -34,6 +36,16 @@ Route::middleware('auth')->group(function () {
         $user = auth()->user();
         return response()->json(['remaining' => $user->tokens, 'total' => 10]);
     })->name('api.tokens');
+
+    // Printful OAuth
+    Route::get('/printful/connect',    [PrintfulOAuthController::class, 'redirect'])->name('printful.connect');
+    Route::get('/printful/callback',   [PrintfulOAuthController::class, 'callback'])->name('printful.callback');
+    Route::delete('/printful/disconnect', [PrintfulOAuthController::class, 'disconnect'])->name('printful.disconnect');
+
+    // Printful API (requires connected account)
+    Route::get('/printful/status',    [PrintfulController::class, 'status'])->name('printful.status');
+    Route::get('/printful/stores',    [PrintfulController::class, 'stores'])->name('printful.stores');
+    Route::post('/printful/products', [PrintfulController::class, 'createProduct'])->name('printful.products');
 
     // Subscription / Billing
     Route::post('/subscribe', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');

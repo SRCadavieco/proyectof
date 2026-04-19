@@ -61,4 +61,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Chat::class);
     }
+
+    public function printfulConnection()
+    {
+        return $this->hasOne(\App\Models\PrintfulConnection::class);
+    }
 }
