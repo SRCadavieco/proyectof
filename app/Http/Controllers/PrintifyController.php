@@ -18,23 +18,26 @@ class PrintifyController extends Controller
         $token = trim($request->input('api_token'));
 
         try {
-            $shops = $this->printify->getShops($token);
-        } catch (\Throwable $e) {
+            $shops     = $this->printify->getShops($token);
+            $firstShop = is_array($shops) ? ($shops[0] ?? null) : null;
+
+            PrintifyConnection::updateOrCreate(
+                ['user_id' => auth()->id()],
+                [
+                    'api_token' => $token,
+                    'shop_id'   => $firstShop['id']    ?? null,
+                    'shop_name' => $firstShop['title'] ?? null,
+                ]
+            );
+
+            return back()->with('printify_success', 'Printify account connected successfully!');
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            \Log::error('Printify connect HTTP error: ' . $e->getMessage());
             return back()->withErrors(['api_token' => 'Invalid token or cannot reach Printify. Please check your API key.']);
+        } catch (\Throwable $e) {
+            \Log::error('Printify connect error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            return back()->withErrors(['api_token' => 'Error: ' . $e->getMessage()]);
         }
-
-        $firstShop = $shops[0] ?? null;
-
-        PrintifyConnection::updateOrCreate(
-            ['user_id' => auth()->id()],
-            [
-                'api_token' => $token,
-                'shop_id'   => $firstShop['id']   ?? null,
-                'shop_name' => $firstShop['title'] ?? null,
-            ]
-        );
-
-        return back()->with('printify_success', 'Printify account connected successfully!');
     }
 
     // DELETE /printify/disconnect
