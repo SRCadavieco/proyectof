@@ -3,6 +3,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DesignController;
+use App\Http\Controllers\PrintifyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminController;
@@ -34,6 +35,13 @@ Route::middleware('auth')->group(function () {
         $user = auth()->user();
         return response()->json(['remaining' => $user->tokens, 'total' => 10]);
     })->name('api.tokens');
+
+    // Printify
+    Route::post('/printify/connect',    [PrintifyController::class, 'connect'])->name('printify.connect');
+    Route::delete('/printify/disconnect', [PrintifyController::class, 'disconnect'])->name('printify.disconnect');
+    Route::get('/printify/status',      [PrintifyController::class, 'status'])->name('printify.status');
+    Route::get('/printify/shops',       [PrintifyController::class, 'shops'])->name('printify.shops');
+    Route::post('/printify/products',   [PrintifyController::class, 'createProduct'])->name('printify.products');
 
     // Subscription / Billing
     Route::post('/subscribe', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');

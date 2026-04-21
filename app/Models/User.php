@@ -62,4 +62,8 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\Chat::class);
     }
 
+    public function printifyConnection()
+    {
+        return $this->hasOne(\App\Models\PrintifyConnection::class);
+    }
 }

@@ -498,6 +498,9 @@
                         <button type="button" class="px-4 py-2 border border-ink text-ink text-sm font-medium tracking-wide uppercase hover:bg-ink hover:text-white transition-colors preview-btn" data-preview-idx="${previewIdx}">
                             Preview
                         </button>
+                        <button type="button" class="px-4 py-2 border border-purple-600 text-purple-700 text-sm font-medium tracking-wide uppercase hover:bg-purple-700 hover:text-white transition-colors printify-quick-btn" data-image-src="${imageUrl}">
+                            Send to Printify
+                        </button>
                     </div>
                 </div>
                         `;
@@ -1170,6 +1173,121 @@ imageInput.addEventListener('change', async (e) => {
             link.click();
         }
 
+        // ─── Printify integration ─────────────────────────────────────────
+        let printifyShopsLoaded = false;
+
+        async function loadPrintifyShops() {
+            if (printifyShopsLoaded) return;
+            const sel     = document.getElementById('printify-shop');
+            const notice  = document.getElementById('printify-connect-notice');
+            sel.innerHTML = '<option value="">Loading…</option>';
+            try {
+                const statusRes = await fetch('/printify/status', { headers: { 'Accept': 'application/json' } });
+                const status    = await statusRes.json();
+                if (!status.connected) {
+                    sel.closest('.flex.flex-col').classList.add('hidden');
+                    if (notice) notice.classList.remove('hidden');
+                    return;
+                }
+                const res   = await fetch('/printify/shops', { headers: { 'Accept': 'application/json' } });
+                const shops = await res.json();
+                if (!res.ok) throw new Error(shops.error || 'Could not load shops');
+                if (!Array.isArray(shops) || shops.length === 0) {
+                    sel.innerHTML = '<option value="">No shops found</option>';
+                    return;
+                }
+                sel.innerHTML = shops.map(s =>
+                    `<option value="${s.id}">${escapeHtml(s.name)}</option>`
+                ).join('');
+                printifyShopsLoaded = true;
+            } catch (err) {
+                sel.innerHTML = `<option value="">Error: ${escapeHtml(err.message)}</option>`;
+            }
+        }
+
+        function togglePrintifyPanel() {
+            const panel    = document.getElementById('printify-panel');
+            const isHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !isHidden);
+            if (isHidden) {
+                const garmentSel   = document.getElementById('garment-select');
+                const garmentLabel = garmentSel.options[garmentSel.selectedIndex]?.text ?? 'Custom Design';
+                document.getElementById('printify-title').value = `FabricAI — ${garmentLabel}`;
+                resetPrintifyFeedback();
+                loadPrintifyShops();
+            }
+        }
+
+        function resetPrintifyFeedback() {
+            const fb = document.getElementById('printify-feedback');
+            fb.className = 'hidden text-sm py-2';
+            fb.innerHTML = '';
+        }
+
+        function showPrintifyFeedback(html, type = 'error') {
+            const fb = document.getElementById('printify-feedback');
+            fb.className = `text-sm py-2 ${type === 'success' ? 'text-green-700' : 'text-red-600'}`;
+            fb.innerHTML = html;
+            fb.classList.remove('hidden');
+        }
+
+        async function sendToPrintify() {
+            const shopId      = document.getElementById('printify-shop').value;
+            const title       = document.getElementById('printify-title').value.trim();
+            const garmentType = document.getElementById('garment-select').value;
+            const btn         = document.getElementById('printify-send-btn');
+
+            if (!shopId)          { showPrintifyFeedback('Please select a Printify shop.'); return; }
+            if (!title)           { showPrintifyFeedback('Please enter a product name.'); return; }
+            if (!previewDesignSrc){ showPrintifyFeedback('No design loaded in preview.'); return; }
+
+            btn.disabled    = true;
+            btn.textContent = 'Creating product…';
+            resetPrintifyFeedback();
+
+            try {
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const res  = await fetch('/printify/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept':       'application/json',
+                    },
+                    body: JSON.stringify({
+                        shop_id:      parseInt(shopId),
+                        garment_type: garmentType,
+                        image_source: previewDesignSrc,
+                        title,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                showPrintifyFeedback(
+                    `✓ Product created! <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer"
+                        class="underline font-medium">Open in Printify →</a>`,
+                    'success'
+                );
+                btn.textContent = 'Create Another';
+            } catch (err) {
+                showPrintifyFeedback(`Failed: ${escapeHtml(err.message)}`);
+                btn.textContent = 'Retry';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // "Send to Printify" quick-button on each design card
+        document.addEventListener('click', function(e) {
+            const quickBtn = e.target.closest ? e.target.closest('.printify-quick-btn') : null;
+            if (!quickBtn) return;
+            const src = quickBtn.getAttribute('data-image-src');
+            if (src) openPreviewModal(src);
+            const panel = document.getElementById('printify-panel');
+            if (panel.classList.contains('hidden')) togglePrintifyPanel();
+        });
+        // ─────────────────────────────────────────────────────────────────
+
     </script>
 
     <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
@@ -1205,6 +1323,45 @@ imageInput.addEventListener('change', async (e) => {
                 <div class="flex justify-end gap-3 mt-3">
                     <button onclick="downloadPreview()" class="px-4 py-2 bg-ink text-white text-sm font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
                         Download Preview
+                    </button>
+                    <button onclick="togglePrintifyPanel()" class="px-4 py-2 border border-purple-600 text-purple-700 text-sm font-medium tracking-wide uppercase hover:bg-purple-700 hover:text-white transition-colors">
+                        Send to Printify
+                    </button>
+                </div>
+
+                <!-- ─── Printify send panel ─── -->
+                <div id="printify-panel" class="hidden mt-4 border border-cream-300 bg-cream-50 p-4 space-y-3">
+                    <p class="text-xs font-medium tracking-widest uppercase text-ink-muted">Create product on Printify</p>
+
+                    <!-- Not connected notice -->
+                    <div id="printify-connect-notice" class="hidden px-4 py-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+                        Your Printify account is not connected yet.
+                        <a href="/profile" target="_blank" class="underline font-medium">Go to Profile → Connect Printify</a>
+                    </div>
+
+                    <!-- Product title -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs text-ink-muted">Product name</label>
+                        <input id="printify-title" type="text" value=""
+                               class="bg-white border border-cream-300 px-3 py-2 text-sm text-ink focus:outline-none focus:border-purple-400 transition-colors">
+                    </div>
+
+                    <!-- Shop selector -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs text-ink-muted">Printify store</label>
+                        <select id="printify-shop" class="bg-white border border-cream-300 px-3 py-2 text-sm text-ink focus:outline-none focus:border-purple-400">
+                            <option value="">Loading stores…</option>
+                        </select>
+                    </div>
+
+                    <!-- Feedback -->
+                    <div id="printify-feedback" class="hidden text-sm py-2"></div>
+
+                    <!-- Action -->
+                    <button id="printify-send-btn" onclick="sendToPrintify()"
+                            class="w-full py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
+                                   hover:bg-purple-900 transition-colors disabled:opacity-50">
+                        Create Product
                     </button>
                 </div>
             </div>
