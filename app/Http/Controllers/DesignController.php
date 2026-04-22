@@ -242,20 +242,10 @@ if ($isEdit) {
             'status'   => $aiStatus,
             'error'    => $aiError,
         ]);
-        $errorMsg = app()->environment('local')
-            ? "[{$provider}/{$model} HTTP {$aiStatus}] {$aiError}"
-            : 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.';
-        $chat->messages()->create([
-            'role'    => 'assistant',
-            'content' => 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.',
-            'image'   => null,
-        ]);
-        if (!$chat->title) {
-            $chat->update(['title' => Str::limit($userPrompt, 40)]);
-        }
         return response()->json([
             'success' => false,
-            'error'   => $errorMsg,
+            'error'   => 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.',
+            'debug'   => "[{$provider}/{$model} HTTP {$aiStatus}] {$aiError}",
         ], 422);
     }
 
