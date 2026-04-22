@@ -232,20 +232,30 @@ if ($isEdit) {
         }
     }
 
-    // Si no hay imagen, guardar el error como mensaje assistant y devolver error claro
+    // Si no hay imagen, loguear el error real y devolverlo
     if (!$imageValue) {
-        $errorMsg = 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.';
+        $aiError = is_array($result) ? ($result['error'] ?? 'sin error') : 'resultado no es array';
+        $aiStatus = is_array($result) ? ($result['status'] ?? '?') : '?';
+        \Illuminate\Support\Facades\Log::error('DesignController: no image generated', [
+            'provider' => $provider,
+            'model'    => $model,
+            'status'   => $aiStatus,
+            'error'    => $aiError,
+        ]);
+        $errorMsg = app()->environment('local')
+            ? "[{$provider}/{$model} HTTP {$aiStatus}] {$aiError}"
+            : 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.';
         $chat->messages()->create([
-            'role' => 'assistant',
-            'content' => $errorMsg,
-            'image' => null,
+            'role'    => 'assistant',
+            'content' => 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.',
+            'image'   => null,
         ]);
         if (!$chat->title) {
             $chat->update(['title' => Str::limit($userPrompt, 40)]);
         }
         return response()->json([
             'success' => false,
-            'error' => $errorMsg,
+            'error'   => $errorMsg,
         ], 422);
     }
 
