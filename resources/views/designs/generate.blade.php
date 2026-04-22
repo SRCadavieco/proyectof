@@ -1102,8 +1102,16 @@ imageInput.addEventListener('change', async (e) => {
 
         function openPreviewModal(imageSrc) {
             previewDesignSrc = imageSrc;
+            // Reset position sliders
+            document.getElementById('design-pos-x').value = 0;
+            document.getElementById('design-pos-y').value = 0;
+            document.getElementById('design-scale').value = 1;
+            document.getElementById('pos-x-val').textContent = '0';
+            document.getElementById('pos-y-val').textContent = '0';
+            document.getElementById('scale-val').textContent = '1.00';
             document.getElementById('preview-modal').classList.remove('hidden');
             document.getElementById('preview-modal').classList.add('flex');
+            initDesignDrag();
             renderPreview();
         }
 
@@ -1113,13 +1121,13 @@ imageInput.addEventListener('change', async (e) => {
             previewDesignSrc = null;
         }
 
-        function renderPreview() {
-            if (!previewDesignSrc) return;
-            const canvas = document.getElementById('preview-canvas');
-            const ctx = canvas.getContext('2d');
-            const garmentType = document.getElementById('garment-select').value;
+        // Dibuja el fondo, la prenda y el recuadro del área de impresión
+        function renderGarment() {
+            const canvas = document.getElementById('garment-canvas');
+            const ctx    = canvas.getContext('2d');
+            const garment      = GARMENTS[document.getElementById('garment-select').value];
             const garmentColor = document.getElementById('garment-color').value;
-            const garment = GARMENTS[garmentType];
+            const pa = garment.printArea;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1133,8 +1141,6 @@ imageInput.addEventListener('change', async (e) => {
 
             garment.draw(ctx, garmentColor);
 
-            // Draw print area boundary (Printify safe zone)
-            const pa = garment.printArea;
             ctx.setLineDash([6, 4]);
             ctx.strokeStyle = 'rgba(168, 85, 247, 0.45)';
             ctx.lineWidth = 1;
@@ -1144,34 +1150,135 @@ imageInput.addEventListener('change', async (e) => {
             ctx.fillStyle = 'rgba(168, 85, 247, 0.55)';
             ctx.fillText('Print area', pa.x + 2, pa.y - 3);
 
-            // Update spec info below canvas
             const specEl = document.getElementById('printify-spec');
             if (specEl) {
                 specEl.innerHTML = `<span class="text-purple-400 font-medium">${garment.ref}</span> &mdash; ${garment.printPx} px &middot; ${garment.printInches} &middot; ${garment.dpi} DPI`;
             }
+        }
+
+        // Coloca el canvas de diseño encima del área de impresión exacta
+        function positionDesignCanvas() {
+            const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+            const dc = document.getElementById('design-canvas');
+            dc.width  = pa.w;
+            dc.height = pa.h;
+            dc.style.left   = (pa.x / 500 * 100) + '%';
+            dc.style.top    = (pa.y / 550 * 100) + '%';
+            dc.style.width  = (pa.w / 500 * 100) + '%';
+            dc.style.height = (pa.h / 550 * 100) + '%';
+        }
+
+        // Dibuja la imagen generada (diseño) sobre el canvas del área de impresión
+        function renderDesign() {
+            if (!previewDesignSrc) return;
+            const dc  = document.getElementById('design-canvas');
+            const ctx = dc.getContext('2d');
+            const pa  = GARMENTS[document.getElementById('garment-select').value].printArea;
+
+            ctx.clearRect(0, 0, dc.width, dc.height);
 
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
+                const posX     = parseFloat(document.getElementById('design-pos-x').value);
+                const posY     = parseFloat(document.getElementById('design-pos-y').value);
+                const scaleVal = parseFloat(document.getElementById('design-scale').value);
+
                 const ir = img.width / img.height;
                 const pr = pa.w / pa.h;
                 let dw, dh;
                 if (ir > pr) { dw = pa.w; dh = pa.w / ir; }
-                else { dh = pa.h; dw = pa.h * ir; }
-                const dx = pa.x + (pa.w - dw) / 2;
-                const dy = pa.y + (pa.h - dh) / 2;
+                else          { dh = pa.h; dw = pa.h * ir; }
+
+                dw *= scaleVal;
+                dh *= scaleVal;
+
+                // Coordenadas relativas al origen del design-canvas (= esquina superior del área de impresión)
+                const dx = (pa.w - dw) / 2 + posX * (pa.w / 2);
+                const dy = (pa.h - dh) / 2 + posY * (pa.h / 2);
+
                 ctx.drawImage(img, dx, dy, dw, dh);
             };
             img.src = previewDesignSrc;
         }
 
+        function renderPreview() {
+            renderGarment();
+            positionDesignCanvas();
+            renderDesign();
+        }
+
         function downloadPreview() {
-            const canvas = document.getElementById('preview-canvas');
+            const gc  = document.getElementById('garment-canvas');
+            const dc  = document.getElementById('design-canvas');
+            const pa  = GARMENTS[document.getElementById('garment-select').value].printArea;
+            // Compone prenda + diseño en un canvas temporal
+            const tmp = document.createElement('canvas');
+            tmp.width  = gc.width;
+            tmp.height = gc.height;
+            const ctx = tmp.getContext('2d');
+            ctx.drawImage(gc, 0, 0);
+            ctx.drawImage(dc, pa.x, pa.y, pa.w, pa.h);
             const link = document.createElement('a');
             link.download = 'garment-preview.png';
-            link.href = canvas.toDataURL('image/png');
+            link.href = tmp.toDataURL('image/png');
             link.click();
         }
+
+        // ─── Arrastre del diseño generado sobre el área de impresión ─────
+        // Se inicializa lazy (al abrir el modal) para garantizar que el DOM exista
+        let _dragInitialized = false;
+        function initDesignDrag() {
+            if (_dragInitialized) return;
+            _dragInitialized = true;
+            const dc = document.getElementById('design-canvas');
+            let isDragging = false, lastX = 0, lastY = 0;
+
+            function dragStart(clientX, clientY) {
+                isDragging = true;
+                lastX = clientX;
+                lastY = clientY;
+                dc.style.cursor = 'grabbing';
+            }
+
+            function dragMove(clientX, clientY) {
+                if (!isDragging) return;
+                const rect   = dc.getBoundingClientRect();
+                const pa     = GARMENTS[document.getElementById('garment-select').value].printArea;
+                // Escala: convierte píxeles en pantalla → coordenadas internas del canvas de diseño
+                const scaleX = pa.w / rect.width;
+                const scaleY = pa.h / rect.height;
+                const deltaX = (clientX - lastX) * scaleX;
+                const deltaY = (clientY - lastY) * scaleY;
+                lastX = clientX;
+                lastY = clientY;
+
+                const sliderX = document.getElementById('design-pos-x');
+                const sliderY = document.getElementById('design-pos-y');
+                const newX = Math.max(-1, Math.min(1, parseFloat(sliderX.value) + deltaX * 2 / pa.w));
+                const newY = Math.max(-1, Math.min(1, parseFloat(sliderY.value) + deltaY * 2 / pa.h));
+
+                sliderX.value = newX;
+                sliderY.value = newY;
+                document.getElementById('pos-x-val').textContent = newX.toFixed(2);
+                document.getElementById('pos-y-val').textContent = newY.toFixed(2);
+                renderDesign();
+            }
+
+            function dragEnd() {
+                isDragging = false;
+                dc.style.cursor = 'grab';
+            }
+
+            dc.addEventListener('mousedown',  e => { e.preventDefault(); dragStart(e.clientX, e.clientY); });
+            document.addEventListener('mousemove', e => dragMove(e.clientX, e.clientY));
+            document.addEventListener('mouseup',   () => dragEnd());
+
+            dc.addEventListener('touchstart', e => { e.preventDefault(); dragStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+            document.addEventListener('touchmove', e => { if (isDragging) { e.preventDefault(); dragMove(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+            document.addEventListener('touchend', () => dragEnd());
+        }
+        // ─────────────────────────────────────────────────────────────────
 
         // ─── Printify integration ─────────────────────────────────────────
         let printifyShopsLoaded = false;
@@ -1241,6 +1348,13 @@ imageInput.addEventListener('change', async (e) => {
             if (!title)           { showPrintifyFeedback('Please enter a product name.'); return; }
             if (!previewDesignSrc){ showPrintifyFeedback('No design loaded in preview.'); return; }
 
+            // Read position values and convert to Printify coords (0.5 = center)
+            const posX     = parseFloat(document.getElementById('design-pos-x').value);
+            const posY     = parseFloat(document.getElementById('design-pos-y').value);
+            const scaleVal = parseFloat(document.getElementById('design-scale').value);
+            const printX   = 0.5 + posX * 0.5;
+            const printY   = 0.5 + posY * 0.5;
+
             btn.disabled    = true;
             btn.textContent = 'Creating product…';
             resetPrintifyFeedback();
@@ -1259,6 +1373,9 @@ imageInput.addEventListener('change', async (e) => {
                         garment_type: garmentType,
                         image_source: previewDesignSrc,
                         title,
+                        pos_x:        printX,
+                        pos_y:        printY,
+                        design_scale: scaleVal,
                     }),
                 });
                 const data = await res.json();
@@ -1316,8 +1433,42 @@ imageInput.addEventListener('change', async (e) => {
                         <input type="color" id="garment-color" value="#ffffff" onchange="renderPreview()" class="w-10 h-10 border border-cream-300 cursor-pointer bg-transparent">
                     </div>
                 </div>
+
+                <!-- ─── Position controls ─── -->
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs text-ink-muted uppercase tracking-wider">Pos X</label>
+                            <span id="pos-x-val" class="text-xs text-ink-muted">0</span>
+                        </div>
+                        <input type="range" id="design-pos-x" min="-1" max="1" step="0.01" value="0"
+                               oninput="document.getElementById('pos-x-val').textContent=parseFloat(this.value).toFixed(2); renderPreview()"
+                               class="w-full accent-purple-600">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs text-ink-muted uppercase tracking-wider">Pos Y</label>
+                            <span id="pos-y-val" class="text-xs text-ink-muted">0</span>
+                        </div>
+                        <input type="range" id="design-pos-y" min="-1" max="1" step="0.01" value="0"
+                               oninput="document.getElementById('pos-y-val').textContent=parseFloat(this.value).toFixed(2); renderPreview()"
+                               class="w-full accent-purple-600">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs text-ink-muted uppercase tracking-wider">Scale</label>
+                            <span id="scale-val" class="text-xs text-ink-muted">1.00</span>
+                        </div>
+                        <input type="range" id="design-scale" min="0.2" max="2" step="0.01" value="1"
+                               oninput="document.getElementById('scale-val').textContent=parseFloat(this.value).toFixed(2); renderPreview()"
+                               class="w-full accent-purple-600">
+                    </div>
+                </div>
                 <div class="flex justify-center bg-cream-100 p-4">
-                    <canvas id="preview-canvas" width="500" height="550" class="max-w-full h-auto" style="max-height: 450px;"></canvas>
+                    <div id="canvas-wrapper" style="position: relative; display: inline-block; max-width: 100%; line-height: 0;">
+                        <canvas id="garment-canvas" width="500" height="550" class="max-w-full h-auto" style="max-height: 450px; display: block;"></canvas>
+                        <canvas id="design-canvas" style="position: absolute; left: 0; top: 0; cursor: grab;"></canvas>
+                    </div>
                 </div>
                 <div id="printify-spec" class="mt-2 text-xs text-ink-muted text-center"></div>
                 <div class="flex justify-end gap-3 mt-3">

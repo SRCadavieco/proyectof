@@ -68,12 +68,13 @@ class PrintifyService
         return $response->json();
     }
 
-    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl): array
+    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0): array
     {
         $blueprintId = self::BLUEPRINT_MAP[$garmentType] ?? self::BLUEPRINT_MAP['tshirt'];
 
         // 1. Upload the design image
-        $upload  = $this->uploadImage($token, $imageUrl);        $imageId = $upload['id'];
+        $upload  = $this->uploadImage($token, $imageUrl);
+        $imageId = $upload['id'];
 
         // 2. Pick first print provider for this blueprint
         $providers = $this->getPrintProviders($token, $blueprintId);
@@ -117,9 +118,9 @@ class PrintifyService
                             'images'   => [
                                 [
                                     'id'    => $imageId,
-                                    'x'     => 0.5,
-                                    'y'     => 0.5,
-                                    'scale' => 1,
+                                    'x'     => $posX,
+                                    'y'     => $posY,
+                                    'scale' => $scale,
                                     'angle' => 0,
                                 ],
                             ],
