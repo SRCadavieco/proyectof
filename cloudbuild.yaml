@@ -8,7 +8,7 @@ substitutions:
   _APP_URL: https://fabricai.net
   # Chutes AI — token se fija UNA VEZ manualmente en Cloud Run Console, nunca en el deploy
   _CHUTES_URL_ZIMAGE:  https://chutes-z-image-turbo.chutes.ai
-  _CHUTES_URL_FLUX:    https://chutes-flux1-schnell.chutes.ai
+  _CHUTES_URL_FLUX:    https://chutes-flux-1-schnell.chutes.ai
 
   # RnBulkTools — token se fija UNA VEZ manualmente en Cloud Run Console, nunca en el deploy
 
