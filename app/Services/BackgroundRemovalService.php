@@ -2,16 +2,146 @@
 
 namespace App\Services;
 
-/**
- * Simple server-side background removal using GD.
- *
- * Strategy:
- * - Sample multiple random edge pixels to estimate background color (median RGB).
- * - For each pixel, if the color distance to background <= tolerance, make it transparent.
- * - Return a data URL (PNG base64) with alpha preserved.
- */
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 class BackgroundRemovalService
 {
+    private string $apiUrl = 'https://rnbulktools.top';
+    private string $token;
+
+    public function __construct()
+    {
+        $this->token = config('services.rnbulktools.token', '');
+    }
+
+    /**
+     * Remove background using the RnBulkTools API.
+     * @param string $imageBase64 Base64 string or data URL
+     * @return string|null data URL (data:image/png;base64,...) or null on failure
+     */
+    public function removeBackground(string $imageBase64): ?string
+    {
+        $binary = $this->base64ToBinary($imageBase64);
+        if ($binary === null) return null;
+
+        try {
+            $response = Http::withToken($this->token)
+                ->timeout(60)
+                ->attach('file', $binary, 'image.png')
+                ->post("{$this->apiUrl}/remove-bg");
+
+            if (!$response->successful()) {
+                Log::error('RnBulkTools remove-bg failed', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                ]);
+                return null;
+            }
+
+            return $this->parseImageResponse($response, 'image/png');
+        } catch (\Throwable $e) {
+            Log::error('RnBulkTools remove-bg exception', ['message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Convert image to WebP using the RnBulkTools API.
+     * @param string $imageBase64 Base64 string or data URL
+     * @return string|null data URL (data:image/webp;base64,...) or null on failure
+     */
+    public function convertToWebp(string $imageBase64): ?string
+    {
+        $binary = $this->base64ToBinary($imageBase64);
+        if ($binary === null) return null;
+
+        try {
+            $response = Http::withToken($this->token)
+                ->timeout(60)
+                ->asMultipart()
+                ->post("{$this->apiUrl}/convert", [
+                    ['name' => 'file',          'contents' => $binary, 'filename' => 'image.png'],
+                    ['name' => 'target_format', 'contents' => 'webp'],
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('RnBulkTools convert failed', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                ]);
+                return null;
+            }
+
+            return $this->parseImageResponse($response, 'image/webp');
+        } catch (\Throwable $e) {
+            Log::error('RnBulkTools convert exception', ['message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Parse API response: handles binary image or JSON with url/base64 fields.
+     */
+    private function parseImageResponse(\Illuminate\Http\Client\Response $response, string $defaultMime): ?string
+    {
+        $contentType = $response->header('Content-Type') ?? '';
+
+        // Binary image response
+        if (str_contains($contentType, 'image/')) {
+            $mime = strtok($contentType, ';');
+            return "data:{$mime};base64," . base64_encode($response->body());
+        }
+
+        // JSON response with url or base64 data
+        $json = $response->json();
+        if (is_array($json)) {
+            foreach (['url', 'image_url', 'result_url', 'file_url'] as $key) {
+                if (!empty($json[$key]) && is_string($json[$key])) {
+                    $imgResponse = Http::timeout(30)->get($json[$key]);
+                    if ($imgResponse->successful()) {
+                        $ct   = $imgResponse->header('Content-Type') ?? $defaultMime;
+                        $mime = strtok($ct, ';');
+                        return "data:{$mime};base64," . base64_encode($imgResponse->body());
+                    }
+                }
+            }
+            foreach (['base64', 'image', 'data', 'result'] as $key) {
+                if (!empty($json[$key]) && is_string($json[$key])) {
+                    $val = $json[$key];
+                    if (str_starts_with($val, 'data:')) return $val;
+                    return "data:{$defaultMime};base64," . $val;
+                }
+            }
+        }
+
+        // Fallback: treat entire body as raw binary
+        $body = $response->body();
+        if (strlen($body) > 0) {
+            return "data:{$defaultMime};base64," . base64_encode($body);
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert base64 string or data URL to binary string.
+     */
+    private function base64ToBinary(string $input): ?string
+    {
+        if (str_starts_with($input, 'data:')) {
+            $pos = strpos($input, ',');
+            if ($pos === false) return null;
+            $input = substr($input, $pos + 1);
+        }
+
+        $binary = base64_decode($input, true);
+        return $binary !== false ? $binary : null;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Legacy GD-based method kept for reference (no longer used in production)
+    // ---------------------------------------------------------------------------
     /**
      * Remove (make transparent) background similar to the edge color.
      * @param string $imageBase64 Base64 string or data URL (PNG/JPEG)

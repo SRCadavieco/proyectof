@@ -197,7 +197,12 @@ if ($isEdit) {
             ?? null;
 
         if ($base64) {
-            $processed = $backgrounds->removeBackgroundByEdgeSample($base64, 30);
+            $noBg = $backgrounds->removeBackground($base64);
+            if ($noBg) {
+                $processed = $backgrounds->convertToWebp($noBg) ?? $noBg;
+            } else {
+                $processed = null;
+            }
 
             if (is_string($processed) && $processed !== '') {
                 $result['imageBase64'] = $processed;

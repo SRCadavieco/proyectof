@@ -59,6 +59,10 @@ return [
         'key' => env('PIXAZO_API_KEY'),
     ],
 
+    'rnbulktools' => [
+        'token' => env('RNBULKTOOLS_TOKEN'),
+    ],
+
     'chutes' => [
         'token' => env('CHUTES_API_TOKEN'),
         'path'  => '/generate',
