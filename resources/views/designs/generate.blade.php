@@ -131,6 +131,11 @@
                     style="background:transparent;color:#88827a;border-left:1px solid #d4cdc0;">
                     Chutes AI
                 </button>
+                <button type="button" id="provider-btn-together" data-provider="together"
+                    class="provider-btn flex-1 px-3 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors text-center"
+                    style="background:transparent;color:#88827a;border-left:1px solid #d4cdc0;">
+                    Together
+                </button>
             </div>
             <div id="model-pills" class="flex w-full" style="border:1px solid #d4cdc0;"></div>
             <input type="hidden" id="ai-provider" value="gemini">
@@ -335,6 +340,9 @@
                 { value: 'z_image_turbo', label: 'Z-Image Turbo' },
                 { value: 'flux_schnell',  label: 'FLUX Schnell'  },
             ],
+            together: [
+                { value: 'flux_dev', label: 'FLUX.2 Dev' },
+            ],
         };
 
         const providerHidden = document.getElementById('ai-provider');
@@ -374,7 +382,6 @@
                     document.querySelectorAll('.provider-btn').forEach(b => {
                         b.style.background = 'transparent';
                         b.style.color = '#88827a';
-                        b.style.borderLeft = b.dataset.provider === 'chutes' ? '1px solid #d4cdc0' : '';
                     });
                     btn.style.background = '#2a2520';
                     btn.style.color = '#fff';

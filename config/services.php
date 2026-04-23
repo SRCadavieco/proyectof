@@ -72,6 +72,10 @@ return [
         ],
     ],
 
+    'together' => [
+        'key' => env('TOGETHER_API_KEY'),
+    ],
+
     'stripe' => [
         'prices' => [
             'pro_monthly' => env('STRIPE_PRO_MONTHLY_PRICE'),
