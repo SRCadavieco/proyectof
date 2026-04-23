@@ -10,7 +10,8 @@ class Message extends Model
         'chat_id',
         'role',
         'content',
-        'image'
+        'image',
+        'model',
     ];
 
     public function chat()

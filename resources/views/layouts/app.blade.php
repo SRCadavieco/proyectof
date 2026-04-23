@@ -16,15 +16,12 @@
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white border-b border-cream-200">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
+                <header class="bg-white border-b border-cream-200 pt-20">
                 </header>
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main class="{{ isset($header) ? '' : 'pt-20' }}">
                 {{ $slot }}
             </main>
         </div>

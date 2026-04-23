@@ -129,11 +129,27 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Handle cancelled checkout.
+     * Handle cancelled checkout (Stripe redirect).
      */
     public function cancel()
     {
         return view('subscription.cancel');
+    }
+
+    /**
+     * Cancel the user's active subscription immediately.
+     */
+    public function cancelSubscription(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->subscribed()) {
+            $user->subscription()->cancel();
+            $user->update(['plan' => 'free', 'tokens' => self::tokensForPlan('free')]);
+        }
+
+        return redirect()->route('profile.show')
+            ->with('subscription_cancelled', 'Your subscription has been cancelled. You are now on the Free plan.');
     }
 
     /**

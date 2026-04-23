@@ -61,6 +61,10 @@
                              <p class="text-sm font-medium text-ink truncate">{{ Auth::user()->name }}</p>
                              <p class="text-xs text-ink-muted truncate">{{ Auth::user()->email }}</p>
                             </div>
+                            <a href="{{ route('profile.show') }}"
+                               class="block px-4 py-2.5 text-sm text-ink-light hover:text-ink hover:bg-cream-100 transition-colors">
+                                <i class="fas fa-user mr-2"></i>My Profile
+                            </a>
                             @if(Auth::user()->is_admin)
                                 <a href="{{ route('admin.dashboard') }}"
                                    class="block px-4 py-2.5 text-sm text-ink-light hover:text-ink hover:bg-cream-100 transition-colors">

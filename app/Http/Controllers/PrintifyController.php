@@ -113,6 +113,8 @@ class PrintifyController extends Controller
             $productId = $product['id'];
             $url       = "https://printify.com/app/store/{$shopId}/products/{$productId}/edit";
 
+            $conn->increment('products_pushed');
+
             return response()->json(['success' => true, 'printify_url' => $url, 'product' => $product]);
         } catch (\Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);

@@ -47,13 +47,52 @@
             height: 3px;
             background: linear-gradient(90deg, #5a2275 0%, #7c3ca0 40%, #c2704f 70%, #5a2275 100%);
         }
+        /* Sidebar mobile/desktop positioning */
+        #sidebar {
+            transition: transform 0.3s ease;
+        }
+        @media (max-width: 767px) {
+            #sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                z-index: 40;
+                height: 100vh;
+                transform: translateX(-100%);
+            }
+            #sidebar.sidebar-open {
+                transform: translateX(0);
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+            }
+            #sidebar-backdrop {
+                display: none;
+            }
+            #sidebar-backdrop.sidebar-open {
+                display: block;
+            }
+        }
+        @media (min-width: 768px) {
+            #sidebar {
+                position: relative;
+                transform: none;
+                flex-shrink: 0;
+            }
+            #sidebar-backdrop {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-cream-50 text-ink h-screen overflow-hidden font-sans">
 
 <div class="flex h-screen">
+    <!-- Mobile sidebar backdrop -->
+    <div id="sidebar-backdrop"
+         onclick="closeSidebar()"
+         class="fixed inset-0 bg-black/50 z-30"></div>
+
     <!-- ================= SIDEBAR ================= -->
-    <aside class="w-72 bg-white border-r border-cream-300 flex flex-col">
+    <aside id="sidebar"
+           class="w-72 bg-white border-r border-cream-300 flex flex-col h-screen">
         <div class="sidebar-accent"></div>
         <div class="p-6 border-b border-cream-300">
             <a href="/" class="flex items-center gap-2">
@@ -69,7 +108,7 @@
             <div class="flex-1 overflow-y-auto p-4 text-sm text-ink-muted">
     <button
         onclick="newChat()"
-        class="w-full mb-3 px-4 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
+        class="w-full mb-3 px-4 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase text-center
                hover:bg-purple-900 transition-colors">
         + New Look
     </button>
@@ -78,25 +117,34 @@
 </div>
         </div>
 
+        <!-- AI Model selector -->
+        <div class="p-4 border-t border-cream-300">
+            <p class="text-[9px] uppercase tracking-widest text-ink-muted mb-2">AI Model</p>
+            <div class="flex mb-2" style="border:1px solid #d4cdc0;">
+                <button type="button" id="provider-btn-gemini" data-provider="gemini"
+                    class="provider-btn flex-1 px-3 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors text-center"
+                    style="background:#2a2520;color:#fff;">
+                    Gemini
+                </button>
+                <button type="button" id="provider-btn-chutes" data-provider="chutes"
+                    class="provider-btn flex-1 px-3 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors text-center"
+                    style="background:transparent;color:#88827a;border-left:1px solid #d4cdc0;">
+                    Chutes AI
+                </button>
+            </div>
+            <div id="model-pills" class="flex w-full" style="border:1px solid #d4cdc0;"></div>
+            <input type="hidden" id="ai-provider" value="gemini">
+            <input type="hidden" id="ai-model"    value="fabric_light">
+        </div>
+
         <!-- Token counter -->
         <div class="p-4 border-t border-cream-300">
-            <div class="bg-cream-100 border border-cream-300 px-4 py-3 flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-ink-muted uppercase tracking-wider">Design Credits</span>
-                    <div class="flex items-center gap-1.5">
-                        <span id="token-icon" class="text-base">&#9889;</span>
-                        <span id="token-count" class="text-sm font-bold text-ink">{{ Auth::user()->tokens ?? 0 }}</span>
-                        <span class="text-xs text-ink-muted">/ 10</span>
-                    </div>
+            <div class="bg-cream-100 border border-cream-300 px-4 py-3 flex items-center justify-between">
+                <span class="text-xs font-medium text-ink-muted uppercase tracking-wider">Design Credits</span>
+                <div class="flex items-center gap-1.5">
+                    <span id="token-icon" class="text-base">&#9889;</span>
+                    <span id="token-count" class="text-sm font-bold text-ink">{{ Auth::user()->tokens ?? 0 }}</span>
                 </div>
-                <div class="w-full bg-cream-300 rounded-full h-1.5">
-                    <div id="token-bar" class="h-1.5 rounded-full transition-all duration-500 bg-purple-600" style="width:{{ ((Auth::user()->tokens ?? 0) / 10) * 100 }}%"></div>
-                </div>
-                <button id="refill-btn"
-                        onclick="TokenManager.refill()"
-                        class="{{ (Auth::user()->tokens ?? 0) > 0 ? 'hidden' : '' }} w-full mt-1 py-2 bg-ink text-white text-xs font-medium tracking-wide uppercase hover:bg-ink-light transition-colors">
-                    Want more credits?
-                </button>
             </div>
         </div>
     </aside>
@@ -113,15 +161,19 @@
         <div class="absolute inset-0 z-0" style="background: rgba(245, 240, 232, 0.55);"></div>
 
         <!-- HEADER -->
-        <header class="relative z-10 px-8 py-4 border-b border-cream-300
-                       bg-white flex items-center">
-            <!-- Left spacer -->
-            <div class="flex-1"></div>
+        <header class="relative z-10 px-4 md:px-8 py-4 border-b border-cream-300
+                       bg-white flex items-center gap-3">
+            <!-- Hamburger (mobile only) -->
+            <button onclick="toggleSidebar()"
+                    class="md:hidden p-1.5 text-ink-muted hover:text-ink transition-colors flex-shrink-0"
+                    aria-label="Open menu">
+                <i class="fas fa-bars text-base"></i>
+            </button>
             <!-- Centered chat title -->
-            <h1 id="chat-title" class="font-medium text-ink text-sm truncate max-w-xs text-center">New Look</h1>
+            <h1 id="chat-title" class="font-medium text-ink text-sm truncate flex-1 text-center">New Look</h1>
             <!-- Right: user + logout -->
-            <div class="flex-1 flex justify-end items-center gap-3">
-                <span class="text-sm text-ink-muted">{{ Auth::user()->name }}</span>
+            <div class="flex justify-end items-center gap-2 flex-shrink-0">
+                <span class="text-sm text-ink-muted hidden sm:block">{{ Auth::user()->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"
@@ -135,7 +187,7 @@
         <!-- ================= CHAT AREA ================= -->
         <div class="flex-1 relative overflow-hidden">
 
-        <div id="chat-container" class="absolute inset-0 overflow-y-auto p-8 pb-4 z-10" style="background:transparent;">
+        <div id="chat-container" class="absolute inset-0 overflow-y-auto p-4 md:p-8 pb-4 z-10" style="background:transparent;">
             <div class="max-w-4xl mx-auto space-y-8">
                 <!-- Welcome Message -->
                 <div class="flex items-start gap-4 msg-enter">
@@ -155,7 +207,7 @@
         </div><!-- /fitting-room wrapper -->
 
         <!-- ================= INPUT AREA ================= -->
-        <div class="relative z-10 border-t border-cream-300/60 p-6"
+        <div class="relative z-10 border-t border-cream-300/60 px-4 py-4 md:p-6"
              style="background: rgba(250, 247, 242, 0.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);">
             <div id="error" class="hidden text-red-600 text-sm mb-3"></div>
             <div id="loader" class="hidden items-center gap-3 text-sm mb-4" style="color:#7c3ca0">
@@ -167,61 +219,36 @@
                 <span id="loader-text">Tailoring your look…</span>
             </div>
             <form id="design-form" class="max-w-4xl mx-auto">
-                <!-- AI selector: provider tabs + model pills -->
-                <div class="mb-3 flex justify-end items-center gap-2.5">
-
-                    <!-- Provider segmented control -->
-                    <div class="inline-flex" style="border:1px solid #d4cdc0;">
-                        <button type="button" id="provider-btn-gemini" data-provider="gemini"
-                            class="provider-btn px-4 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors"
-                            style="background:#2a2520;color:#fff;">
-                            Gemini
-                        </button>
-                        <button type="button" id="provider-btn-chutes" data-provider="chutes"
-                            class="provider-btn px-4 py-2 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors"
-                            style="background:transparent;color:#88827a;border-left:1px solid #d4cdc0;">
-                            Chutes AI
-                        </button>
-                    </div>
-
-                    <span class="text-cream-400 text-xs select-none">&rsaquo;</span>
-
-                    <!-- Model pills -->
-                    <div id="model-pills" class="inline-flex" style="border:1px solid #d4cdc0;"></div>
-
-                    <!-- Hidden inputs used when submitting -->
-                    <input type="hidden" id="ai-provider" value="gemini">
-                    <input type="hidden" id="ai-model"    value="fabric_light">
-                </div>
                 <!-- Banner modo edición -->
                 <div id="edit-banner" class="hidden mb-3 flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 text-purple-800 text-sm font-medium">
                     <span>&#9986; Retouching your look — the previous image is your base</span>
                     <button type="button" id="cancel-edit-btn" class="ml-auto text-purple-600 hover:text-purple-900 transition-colors text-xs underline">Cancel</button>
                 </div>
-                <div class="flex gap-3 items-end">
+                <div class="flex gap-2 items-end">
     <!-- Upload image -->
-    <label class="cursor-pointer px-4 py-4 bg-cream-200 hover:bg-cream-300 transition-colors">
+    <label class="cursor-pointer px-3 py-3 md:px-4 md:py-4 bg-cream-200 hover:bg-cream-300 transition-colors flex-shrink-0">
         <i class="fas fa-paperclip text-ink-muted"></i>
         <input type="file" id="image-upload" accept="image/*" class="hidden">
     </label>
-    <div id="image-preview" class="ml-2"></div>
+    <div id="image-preview" class="relative ml-1 flex-shrink-0"></div>
 
     <textarea
         id="prompt"
         rows="1"
-        placeholder="Describe your vision — silhouette, fabric, mood, reference…"
-        class="flex-1 bg-cream-100 border border-cream-300 px-5 py-4 text-sm resize-none text-ink
+        placeholder="Describe your vision — silhouette, fabric, mood…"
+        class="flex-1 bg-cream-100 border border-cream-300 px-3 py-3 md:px-5 md:py-4 text-sm resize-none text-ink
                focus:outline-none focus:border-purple-400 transition-colors
                placeholder-ink-muted/50 max-h-40 scrollbar-hide"></textarea>
 
     <button
         type="submit"
         id="submit-btn"
-        class="px-6 py-4 font-medium text-sm tracking-widest uppercase
-               text-white transition-colors disabled:opacity-50"
+        class="px-4 py-3 md:px-6 md:py-4 font-medium text-xs md:text-sm tracking-widest uppercase text-center
+               text-white transition-colors disabled:opacity-50 flex-shrink-0"
         style="background:#5a2275;"
         onmouseover="this.style.background='#7c3ca0'" onmouseout="this.style.background='#5a2275'">
-        Create Look
+        <span class="hidden sm:inline">Create Look</span>
+        <span class="sm:hidden"><i class="fas fa-arrow-up"></i></span>
     </button>
 </div>
             </form>
@@ -278,25 +305,10 @@
 
             _render(n) {
                 const countEl = document.getElementById('token-count');
-                const barEl   = document.getElementById('token-bar');
-                const btnEl   = document.getElementById('refill-btn');
                 const iconEl  = document.getElementById('token-icon');
                 if (!countEl) return;
                 countEl.textContent = n;
-                barEl.style.width = ((n / this.MAX) * 100) + '%';
-                if (n === 0) {
-                    barEl.className = 'h-1.5 rounded-full transition-all duration-500 bg-red-500';
-                    iconEl.textContent = String.fromCodePoint(0x1FABA);
-                    btnEl.classList.remove('hidden');
-                    if (submitBtn) submitBtn.disabled = true;
-                } else {
-                    barEl.className = n <= 3
-                        ? 'h-1.5 rounded-full transition-all duration-500 bg-orange-400'
-                        : 'h-1.5 rounded-full transition-all duration-500 bg-purple-600';
-                    iconEl.textContent = '\u26A1';
-                    btnEl.classList.add('hidden');
-                    if (submitBtn) submitBtn.disabled = false;
-                }
+                iconEl.textContent = '\u26A1';
             },
 
             init() { this._render(this.get()); }
@@ -337,7 +349,7 @@
                     ? `background:#5a2275;color:#fff;${border}`
                     : `background:transparent;color:#88827a;${border}`;
                 return `<button type="button" data-model="${m.value}"
-                    class="model-pill px-3.5 py-2 text-[10px] font-medium tracking-[0.12em] uppercase transition-colors"
+                    class="model-pill flex-1 px-2 py-2 text-[10px] font-medium tracking-[0.12em] uppercase transition-colors text-center"
                     style="${style}">${m.label}</button>`;
             }).join('');
 
@@ -391,6 +403,61 @@
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
+
+        // ─── Image preview helper ────────────────────────────────────────
+        function showImagePreview(dataUrl) {
+            const preview = document.getElementById('image-preview');
+            preview.innerHTML = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative inline-block';
+
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.className = 'rounded-lg border border-cream-300 max-h-20 max-w-20 block';
+            img.alt = 'Preview';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.title = 'Remove image';
+            btn.className = 'absolute -top-1.5 -right-1.5 w-5 h-5 bg-ink text-white rounded-full ' +
+                'flex items-center justify-center text-xs leading-none hover:bg-red-600 transition-colors shadow';
+            btn.innerHTML = '&times;';
+            btn.addEventListener('click', () => {
+                clearImagePreview();
+            });
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(btn);
+            preview.appendChild(wrapper);
+        }
+
+        function clearImagePreview() {
+            document.getElementById('image-preview').innerHTML = '';
+            document.getElementById('image-upload').value = '';
+            uploadedImageBase64 = null;
+            uploadedImageMime = null;
+        }
+        // ─────────────────────────────────────────────────────────────────
+
+        // Ctrl+V / paste image directly into the prompt bar
+        promptInput.addEventListener('paste', function(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (!file) continue;
+                    uploadedImageMime = file.type;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        uploadedImageBase64 = reader.result;
+                        showImagePreview(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                    break;
+                }
             }
         });
         
@@ -573,7 +640,7 @@
                 ? 'bg-cream-200 text-ink'
                 : 'hover:bg-cream-100 text-ink-muted');
         div.textContent = chat.title ?? 'New Look';
-        div.onclick = () => loadChat(chat.id);
+        div.onclick = () => { loadChat(chat.id); closeSidebar(); };
 
         // Input inline para renombrar (oculto por defecto)
         const input = document.createElement('input');
@@ -727,15 +794,6 @@ async function loadChat(chatId) {
                 return;
             }
 
-            if (TokenManager.get() <= 0) {
-                // Sincronizar con servidor por si el admin añadió tokens
-                await TokenManager.sync();
-                if (TokenManager.get() <= 0) {
-                    showError('You have no tokens left. Get more to keep designing!');
-                    return;
-                }
-            }
-
             isSubmitting = true;
 
             // Si no hay chat actual, crear uno antes de enviar
@@ -753,10 +811,7 @@ async function loadChat(chatId) {
             const snapshotMime  = uploadedImageMime;
 
             // Clear image input immediately after sending
-            imageInput.value = '';
-            document.getElementById('image-preview').innerHTML = '';
-            uploadedImageBase64 = null;
-            uploadedImageMime = null;
+            clearImagePreview();
 
             setLoading(true);
 
@@ -822,10 +877,7 @@ async function loadChat(chatId) {
                 isSubmitting = false;
                 setLoading(false);
                 exitEditMode();
-                uploadedImageBase64 = null;
-                uploadedImageMime = null;
-                imageInput.value = '';
-                document.getElementById('image-preview').innerHTML = '';
+                clearImagePreview();
             }
         });
         // Sincronizar tokens cuando el usuario vuelve a la pestaña
@@ -864,13 +916,7 @@ imageInput.addEventListener('change', async (e) => {
     const reader = new FileReader();
     reader.onload = () => {
         uploadedImageBase64 = reader.result;
-        // Mostrar miniatura
-        const img = document.createElement('img');
-        img.src = reader.result;
-        img.className = 'rounded-lg border border-cream-300 max-h-20 max-w-20 mt-2';
-        img.alt = 'Preview';
-        preview.appendChild(img);
-        // Log para depuración
+        showImagePreview(reader.result);
         console.log('Imagen subida:', uploadedImageBase64);
     };
     reader.readAsDataURL(file);
@@ -1403,6 +1449,26 @@ imageInput.addEventListener('change', async (e) => {
             const panel = document.getElementById('printify-panel');
             if (panel.classList.contains('hidden')) togglePrintifyPanel();
         });
+        // ─────────────────────────────────────────────────────────────────
+
+        // ─── Mobile sidebar ──────────────────────────────────────────────
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const isOpen = sidebar.classList.contains('sidebar-open');
+            if (isOpen) {
+                closeSidebar();
+            } else {
+                sidebar.classList.add('sidebar-open');
+                backdrop.classList.add('sidebar-open');
+            }
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('sidebar-open');
+            document.getElementById('sidebar-backdrop').classList.remove('sidebar-open');
+        }
+        // Close sidebar when a chat is selected on mobile
+        const _origLoadChat = loadChat;
         // ─────────────────────────────────────────────────────────────────
 
     </script>

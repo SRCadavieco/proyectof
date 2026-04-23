@@ -12,6 +12,39 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
+     * Display the user's profile dashboard.
+     */
+    public function show(Request $request): View
+    {
+        $user     = $request->user();
+        $printify = $user->printifyConnection;
+
+        // Images generated = assistant messages with an image across all user chats
+        $imagesGenerated = \App\Models\Message::where('role', 'assistant')
+            ->whereNotNull('image')
+            ->whereHas('chat', fn ($q) => $q->where('user_id', $user->id))
+            ->count();
+
+        // Most used model
+        $mostUsedModel = \App\Models\Message::where('role', 'assistant')
+            ->whereNotNull('model')
+            ->whereHas('chat', fn ($q) => $q->where('user_id', $user->id))
+            ->selectRaw('model, count(*) as total')
+            ->groupBy('model')
+            ->orderByDesc('total')
+            ->value('model');
+
+        $stats = [
+            'tokens_used'      => $user->tokens_used ?? 0,
+            'images_generated' => $imagesGenerated,
+            'most_used_model'  => $mostUsedModel ?? '—',
+            'products_pushed'  => $printify?->products_pushed ?? 0,
+        ];
+
+        return view('profile.show', compact('user', 'printify', 'stats'));
+    }
+
+    /**
      * Display the user's profile form.
      */
     public function edit(Request $request): View

@@ -125,11 +125,6 @@
         </div>
     </div>
 
-    <!-- Scroll indicator -->
-    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
-        <div class="w-px h-12 bg-cream-400 mx-auto mb-2"></div>
-        <p class="text-xs text-ink-muted tracking-widest uppercase">Scroll</p>
-    </div>
 </section>
 
 <!-- ================= MARQUEE ================= -->

@@ -20,20 +20,27 @@
 @layer components {
     /* ── Buttons ── */
     .btn-primary {
-        @apply inline-block px-8 py-3.5 bg-ink text-white text-sm font-medium tracking-wide uppercase
+        @apply inline-flex items-center justify-center px-8 py-3.5 bg-ink text-white text-sm font-medium tracking-wide uppercase
                hover:bg-ink-light transition-all duration-300
                relative overflow-hidden;
     }
     .btn-primary::after {
-        content: ' →';
-        @apply opacity-0 inline-block -translate-x-2 transition-all duration-300;
+        content: '→';
+        @apply inline-block opacity-0 max-w-0 overflow-hidden ml-0 transition-all duration-300;
     }
     .btn-primary:hover::after {
-        @apply opacity-100 translate-x-0;
+        @apply opacity-100 max-w-xs ml-2;
     }
     .btn-outline {
-        @apply inline-block px-8 py-3.5 border border-ink text-ink text-sm font-medium tracking-wide uppercase
+        @apply inline-flex items-center justify-center px-8 py-3.5 border border-ink text-ink text-sm font-medium tracking-wide uppercase
                hover:bg-ink hover:text-white transition-all duration-300;
+    }
+    .btn-outline::after {
+        content: '→';
+        @apply inline-block opacity-0 max-w-0 overflow-hidden ml-0 transition-all duration-300;
+    }
+    .btn-outline:hover::after {
+        @apply opacity-100 max-w-xs ml-2;
     }
 
     /* ── Typography ── */

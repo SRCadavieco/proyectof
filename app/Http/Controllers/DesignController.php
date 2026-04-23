@@ -96,6 +96,7 @@ class DesignController extends Controller
         ], 403);
     }
     $user->decrement('tokens');
+    $user->increment('tokens_used');
 
     // Guardar solo el prompt del usuario (sin el prefijo del sistema)
     $chat->messages()->create([
@@ -220,8 +221,9 @@ if ($isEdit) {
     // Solo guardar respuesta IA si se generó una imagen
     if ($imageValue) {
         $chat->messages()->create([
-            'role' => 'assistant',
+            'role'  => 'assistant',
             'image' => $imageValue,
+            'model' => $model,
         ]);
 
         // Título automático del chat
