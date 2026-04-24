@@ -12,7 +12,19 @@ class ChatController extends Controller
         return Auth::user()
             ->chats()
             ->latest()
-            ->get(['id', 'title', 'created_at']);
+            ->with(['messages' => function ($q) {
+                $q->where('role', 'assistant')
+                  ->whereNotNull('image')
+                  ->orderBy('created_at')
+                  ->limit(1);
+            }])
+            ->get(['id', 'title', 'created_at'])
+            ->map(fn ($chat) => [
+                'id'         => $chat->id,
+                'title'      => $chat->title,
+                'created_at' => $chat->created_at,
+                'thumbnail'  => $chat->messages->first()?->image,
+            ]);
     }
 
     public function store()
