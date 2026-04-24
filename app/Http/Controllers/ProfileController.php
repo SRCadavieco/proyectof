@@ -7,7 +7,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -55,19 +58,50 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Update the user's profile information (name + avatar).
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->name = $request->validated()['name'];
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
+            $file = $request->file('avatar');
+
+            // Delete old avatar file if it exists
+            if ($user->avatar) {
+                $oldPath = ltrim(parse_url($user->avatar, PHP_URL_PATH), '/');
+                $oldPath = preg_replace('#^storage/#', '', $oldPath);
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $file->store('avatars', 'public');
+            // Store as relative URL so it works on any domain/protocol
+            $user->avatar = '/storage/' . $path;
         }
 
-        $request->user()->save();
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's email address.
+     */
+    public function updateEmail(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('updateEmail', [
+            'email'              => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($request->user()->id)],
+            'email_confirmation' => ['required', 'same:email'],
+            'password'           => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+        $user->email = $request->input('email');
+        $user->email_verified_at = null;
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('status', 'email-updated');
     }
 
     /**

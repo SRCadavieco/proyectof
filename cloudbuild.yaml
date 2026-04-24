@@ -9,7 +9,7 @@ substitutions:
   # Chutes AI — token se fija UNA VEZ manualmente en Cloud Run Console, nunca en el deploy
   _CHUTES_URL_ZIMAGE:  https://chutes-z-image-turbo.chutes.ai
   _CHUTES_URL_FLUX:    https://chutes-flux-1-schnell.chutes.ai
-  _TOGETHER_API_KEY:   tgp_v1_yHo98XYI4iR-uuh67miuRABPYuQBPjzMDbxFiU9cwFg
+  _TOGETHER_API_KEY:   ""
 
   # RnBulkTools — token se fija UNA VEZ manualmente en Cloud Run Console, nunca en el deploy
 
