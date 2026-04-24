@@ -105,7 +105,7 @@ class PrintifyService
         return $response->json();
     }
 
-    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0): array
+    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = ''): array
     {
         $blueprintId = self::BLUEPRINT_MAP[$garmentType] ?? self::BLUEPRINT_MAP['tshirt'];
 
@@ -120,15 +120,13 @@ class PrintifyService
         }
         $providerId = $providers[0]['id'];
 
-        // 3. Get variants — limit to first 10 to stay within Printify's max
+        // 3. Get available variants, filter by color, limit to 10 sizes
         $variantsData = $this->getVariants($token, $blueprintId, $providerId);
-        $variants     = array_slice(
-            array_values(array_filter(
-                $variantsData['variants'] ?? [],
-                fn($v) => $v['is_available'] ?? true
-            )),
-            0, 10
-        );
+        $available    = array_values(array_filter(
+            $variantsData['variants'] ?? [],
+            fn($v) => $v['is_available'] ?? true
+        ));
+        $variants = array_slice($this->filterVariantsByColor($available, $color), 0, 10);
 
         if (empty($variants)) {
             throw new \RuntimeException('No variants available for this product.');
@@ -176,7 +174,43 @@ class PrintifyService
      * Upload the design once, then create one product per clothing garment type.
      * Returns array keyed by garment_type => ['success' => bool, 'url' => ..., 'error' => ...]
      */
-    public function sendDesignToAll(string $token, int $shopId, string $title, string $imageSource, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0): array
+    private function filterVariantsByColor(array $variants, string $color): array
+    {
+        if (empty(trim($color))) return $variants;
+
+        $getColor = fn($v) => $v['options']['color'] ?? $v['title'] ?? '';
+
+        // 1. Exact substring match (e.g. "Dark Heather" inside "Dark Heather Grey")
+        $filtered = array_values(array_filter($variants, fn($v) =>
+            stripos($getColor($v), $color) !== false
+        ));
+        if (!empty($filtered)) return $filtered;
+
+        // 2. Any significant word from the color name (e.g. "heather" or "dark")
+        $words = array_filter(explode(' ', strtolower($color)), fn($w) => strlen($w) > 3);
+        if (!empty($words)) {
+            $filtered = array_values(array_filter($variants, function ($v) use ($words, $getColor) {
+                $hay = strtolower($getColor($v));
+                foreach ($words as $word) {
+                    if (str_contains($hay, $word)) return true;
+                }
+                return false;
+            }));
+            if (!empty($filtered)) return $filtered;
+        }
+
+        // 3. No match at all — return only the first available color group (not everything)
+        $firstColor = null;
+        $firstGroup = [];
+        foreach ($variants as $v) {
+            $c = $getColor($v);
+            if ($firstColor === null) $firstColor = $c;
+            if ($c === $firstColor) $firstGroup[] = $v;
+        }
+        return !empty($firstGroup) ? $firstGroup : array_slice($variants, 0, 5);
+    }
+
+    public function sendDesignToAll(string $token, int $shopId, string $title, string $imageSource, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = ''): array
     {
         // Upload the image only once
         $upload  = $this->uploadImage($token, $imageSource);
@@ -195,13 +229,11 @@ class PrintifyService
                 $providerId = $providers[0]['id'];
 
                 $variantsData = $this->getVariants($token, $blueprintId, $providerId);
-                $variants = array_slice(
-                    array_values(array_filter(
-                        $variantsData['variants'] ?? [],
-                        fn($v) => $v['is_available'] ?? true
-                    )),
-                    0, 10
-                );
+                $available    = array_values(array_filter(
+                    $variantsData['variants'] ?? [],
+                    fn($v) => $v['is_available'] ?? true
+                ));
+                $variants = array_slice($this->filterVariantsByColor($available, $color), 0, 10);
 
                 if (empty($variants)) {
                     $results[$garmentType] = ['success' => false, 'error' => 'No variants available'];

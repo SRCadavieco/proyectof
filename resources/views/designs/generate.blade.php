@@ -1375,6 +1375,12 @@ imageInput.addEventListener('change', async (e) => {
                 document.getElementById('printify-title').value = `FabricAI — ${garmentLabel}`;
                 resetPrintifyFeedback();
                 loadPrintifyShops();
+                // Sync color picker with current garment preview color
+                const currentHex = document.getElementById('garment-color').value;
+                const pch = document.getElementById('printify-color-hex');
+                const nameEl = document.getElementById('printify-color-name');
+                if (pch) pch.value = currentHex;
+                if (nameEl) nameEl.textContent = hexToColorName(currentHex);
             }
         }
 
@@ -1426,6 +1432,7 @@ imageInput.addEventListener('change', async (e) => {
                         garment_type: garmentType,
                         image_source: previewDesignSrc,
                         title,
+                        color:        hexToColorName(document.getElementById('printify-color-hex').value),
                         pos_x:        printX,
                         pos_y:        printY,
                         design_scale: scaleVal,
@@ -1507,6 +1514,7 @@ imageInput.addEventListener('change', async (e) => {
                             garment_type: type,
                             image_source: previewDesignSrc,
                             title:        title + ' — ' + label,
+                            color:        hexToColorName(document.getElementById('printify-color-hex').value),
                             pos_x:        printX,
                             pos_y:        printY,
                             design_scale: scaleVal,
@@ -1526,6 +1534,62 @@ imageInput.addEventListener('change', async (e) => {
             send.disabled     = false;
             btn.textContent   = 'Upload to All';
         }
+
+        // Color palette for mapping hex → nearest Printify color name
+        const PRINTIFY_PALETTE = [
+            { name: 'Black',        hex: '#18181b' },
+            { name: 'Dark Heather', hex: '#4b5563' },
+            { name: 'Sport Grey',   hex: '#9ca3af' },
+            { name: 'White',        hex: '#f9f9f9' },
+            { name: 'Navy',         hex: '#1e3a5f' },
+            { name: 'Royal',        hex: '#1d4ed8' },
+            { name: 'Sky',          hex: '#7dd3fc' },
+            { name: 'Red',          hex: '#dc2626' },
+            { name: 'Maroon',       hex: '#7f1d1d' },
+            { name: 'Orange',       hex: '#ea580c' },
+            { name: 'Gold',         hex: '#ca8a04' },
+            { name: 'Forest Green', hex: '#15803d' },
+            { name: 'Olive',        hex: '#4d7c0f' },
+            { name: 'Purple',       hex: '#7e22ce' },
+            { name: 'Heliconia',    hex: '#db2777' },
+        ];
+
+        function hexToRgb(hex) {
+            const n = parseInt(hex.replace('#',''), 16);
+            return [(n>>16)&255, (n>>8)&255, n&255];
+        }
+        function colorDist([r1,g1,b1],[r2,g2,b2]) {
+            return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2);
+        }
+        function hexToColorName(hex) {
+            const rgb = hexToRgb(hex);
+            let best = PRINTIFY_PALETTE[0], bestDist = Infinity;
+            for (const p of PRINTIFY_PALETTE) {
+                const d = colorDist(rgb, hexToRgb(p.hex));
+                if (d < bestDist) { bestDist = d; best = p; }
+            }
+            return best.name;
+        }
+
+        function onPrintifyColorChange(hex) {
+            // Sync to garment preview
+            const gc = document.getElementById('garment-color');
+            if (gc) { gc.value = hex; renderPreview(); }
+            // Update color name label
+            const nameEl = document.getElementById('printify-color-name');
+            if (nameEl) nameEl.textContent = hexToColorName(hex);
+        }
+
+        // Keep Printify color picker in sync when garment-color changes from the modal top
+        document.addEventListener('DOMContentLoaded', () => {
+            const gc = document.getElementById('garment-color');
+            if (gc) gc.addEventListener('input', e => {
+                const pch = document.getElementById('printify-color-hex');
+                const nameEl = document.getElementById('printify-color-name');
+                if (pch) pch.value = e.target.value;
+                if (nameEl) nameEl.textContent = hexToColorName(e.target.value);
+            });
+        });
 
         // "Send to Printify" quick-button on each design card
         document.addEventListener('click', function(e) {
@@ -1583,7 +1647,7 @@ imageInput.addEventListener('change', async (e) => {
                     </div>
                     <div class="flex flex-col gap-1">
                         <label class="text-xs text-ink-muted uppercase tracking-wider">Color</label>
-                        <input type="color" id="garment-color" value="#ffffff" onchange="renderPreview()" class="w-10 h-10 border border-cream-300 cursor-pointer bg-transparent">
+                        <input type="color" id="garment-color" value="#ffffff" oninput="renderPreview()" class="w-10 h-10 border border-cream-300 cursor-pointer bg-transparent">
                     </div>
                 </div>
 
@@ -1656,6 +1720,17 @@ imageInput.addEventListener('change', async (e) => {
                         <select id="printify-shop" class="bg-white border border-cream-300 px-3 py-2 text-sm text-ink focus:outline-none focus:border-purple-400">
                             <option value="">Loading stores…</option>
                         </select>
+                    </div>
+
+                    <!-- Color (synced with preview) -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs text-ink-muted">Garment color</label>
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="printify-color-hex" value="#ffffff"
+                                   oninput="onPrintifyColorChange(this.value)"
+                                   class="w-10 h-10 border border-cream-300 cursor-pointer bg-transparent rounded">
+                            <span id="printify-color-name" class="text-xs text-ink font-medium">White</span>
+                        </div>
                     </div>
 
                     <!-- Feedback -->
