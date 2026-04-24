@@ -40,11 +40,16 @@
                 <!-- Avatar dropdown -->
                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                     <button @click="open = !open"
-                    class="w-9 h-9 rounded-full bg-ink
-                    flex items-center justify-center text-white text-sm font-bold
-                    hover:bg-ink-light transition-colors select-none focus:outline-none">
-                    {{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
-                </button>
+                            class="w-9 h-9 rounded-full overflow-hidden bg-ink
+                                   flex items-center justify-center text-white text-sm font-bold
+                                   hover:ring-2 hover:ring-purple-400 transition-all select-none focus:outline-none">
+                        @if(Auth::user()->avatar)
+                            <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
+                                 class="w-full h-full object-cover">
+                        @else
+                            {{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
+                        @endif
+                    </button>
                 
                 <!-- Dropdown -->
                 <div x-show="open"

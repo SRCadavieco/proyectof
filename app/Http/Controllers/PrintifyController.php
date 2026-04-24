@@ -120,4 +120,41 @@ class PrintifyController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    // POST /printify/products/bulk
+    public function createProductBulk(Request $request)
+    {
+        $conn = auth()->user()->printifyConnection;
+        if (!$conn) {
+            return response()->json(['error' => 'Printify not connected'], 401);
+        }
+
+        $data = $request->validate([
+            'shop_id'      => 'required|integer',
+            'image_source' => 'required|string',
+            'title'        => 'required|string|max:140',
+            'pos_x'        => 'nullable|numeric|min:0|max:1',
+            'pos_y'        => 'nullable|numeric|min:0|max:1',
+            'design_scale' => 'nullable|numeric|min:0.1|max:3',
+        ]);
+
+        try {
+            $results = $this->printify->sendDesignToAll(
+                $conn->api_token,
+                (int) $data['shop_id'],
+                $data['title'],
+                $data['image_source'],
+                (float) ($data['pos_x']        ?? 0.5),
+                (float) ($data['pos_y']        ?? 0.5),
+                (float) ($data['design_scale'] ?? 1.0)
+            );
+
+            $successCount = count(array_filter($results, fn($r) => $r['success']));
+            $conn->increment('products_pushed', $successCount);
+
+            return response()->json(['success' => true, 'results' => $results]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

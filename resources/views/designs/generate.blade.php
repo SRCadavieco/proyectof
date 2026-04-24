@@ -268,7 +268,7 @@
     <script>
         // User identity (ready for profile photos)
         const userInitial = '{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}';
-        const userAvatarUrl = null; // set to profile photo URL when available
+        const userAvatarUrl = @json(Auth::user()->avatar);
 
         // ─── Token Manager (server-backed) ─────────────────────────────
         const TokenManager = {
@@ -1447,6 +1447,86 @@ imageInput.addEventListener('change', async (e) => {
             }
         }
 
+        async function sendToAllPrintify() {
+            const shopId = document.getElementById('printify-shop').value;
+            const title  = document.getElementById('printify-title').value.trim();
+            const btn    = document.getElementById('printify-bulk-btn');
+            const send   = document.getElementById('printify-send-btn');
+
+            if (!shopId)          { showPrintifyFeedback('Please select a Printify shop.'); return; }
+            if (!title)           { showPrintifyFeedback('Please enter a product name.'); return; }
+            if (!previewDesignSrc){ showPrintifyFeedback('No design loaded in preview.'); return; }
+
+            const posX     = parseFloat(document.getElementById('design-pos-x').value);
+            const posY     = parseFloat(document.getElementById('design-pos-y').value);
+            const scaleVal = parseFloat(document.getElementById('design-scale').value);
+            const printX   = 0.5 + posX * 0.5;
+            const printY   = 0.5 + posY * 0.5;
+
+            const garments = [
+                { type: 'tshirt',     label: 'T-Shirt' },
+                { type: 'hoodie',     label: 'Hoodie' },
+                { type: 'tanktop',    label: 'Tank Top' },
+                { type: 'longsleeve', label: 'Long Sleeve' },
+                { type: 'sweatshirt', label: 'Sweatshirt' },
+            ];
+
+            btn.disabled  = true;
+            send.disabled = true;
+            resetPrintifyFeedback();
+
+            const csrf        = document.querySelector('meta[name="csrf-token"]').content;
+            const resultLines = [];
+
+            const renderProgress = (current, currentLabel) => {
+                const pct = Math.round((current / garments.length) * 100);
+                showPrintifyFeedback(`
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs text-ink-muted mb-0.5">
+                            <span>${current < garments.length ? `Uploading ${currentLabel}…` : 'Done'}</span>
+                            <span>${current}/${garments.length}</span>
+                        </div>
+                        <div class="w-full bg-cream-200 rounded h-1.5">
+                            <div class="bg-purple-600 h-1.5 rounded transition-all duration-300" style="width:${pct}%"></div>
+                        </div>
+                        <div class="space-y-0.5 pt-1">${resultLines.join('')}</div>
+                    </div>
+                `);
+            };
+
+            for (let i = 0; i < garments.length; i++) {
+                const { type, label } = garments[i];
+                renderProgress(i, label);
+
+                try {
+                    const res  = await fetch('/printify/products', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            shop_id:      parseInt(shopId),
+                            garment_type: type,
+                            image_source: previewDesignSrc,
+                            title:        title + ' — ' + label,
+                            pos_x:        printX,
+                            pos_y:        printY,
+                            design_scale: scaleVal,
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                    resultLines.push(`<div class="text-green-700 text-xs">✓ ${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></div>`);
+                } catch (err) {
+                    resultLines.push(`<div class="text-red-600 text-xs">✗ ${label}: ${escapeHtml(err.message)}</div>`);
+                }
+            }
+
+            // Final 100%
+            renderProgress(garments.length, '');
+            btn.disabled      = false;
+            send.disabled     = false;
+            btn.textContent   = 'Upload to All';
+        }
+
         // "Send to Printify" quick-button on each design card
         document.addEventListener('click', function(e) {
             const quickBtn = e.target.closest ? e.target.closest('.printify-quick-btn') : null;
@@ -1581,12 +1661,20 @@ imageInput.addEventListener('change', async (e) => {
                     <!-- Feedback -->
                     <div id="printify-feedback" class="hidden text-sm py-2"></div>
 
-                    <!-- Action -->
-                    <button id="printify-send-btn" onclick="sendToPrintify()"
-                            class="w-full py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
-                                   hover:bg-purple-900 transition-colors disabled:opacity-50">
-                        Create Product
-                    </button>
+                    <!-- Actions -->
+                    <div class="flex gap-2">
+                        <button id="printify-send-btn" onclick="sendToPrintify()"
+                                class="flex-1 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
+                                       hover:bg-purple-900 transition-colors disabled:opacity-50">
+                            Create Product
+                        </button>
+                        <button id="printify-bulk-btn" onclick="sendToAllPrintify()"
+                                title="Upload design to all clothing types at once"
+                                class="flex-1 py-2.5 bg-purple-700 text-white text-xs font-medium tracking-widest uppercase
+                                       hover:bg-purple-900 transition-colors disabled:opacity-50">
+                            Upload to All
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
