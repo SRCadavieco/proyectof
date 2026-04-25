@@ -69,9 +69,15 @@ class DesignController extends Controller
 
     $userPrompt = trim($validated['prompt']);
     $provider = $validated['provider'] ?? 'gemini';
+    $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
-    if ($provider === 'chutes') {
-        // Para modelos de difusión: prompt visual descriptivo, no instrucciones en lenguaje natural
+    if ($hasReferenceImage) {
+        // When the user uploads a reference image, pass the prompt as-is so the model
+        // can actually follow the instruction about what to DO with that image.
+        // Prepending a graphic-design boilerplate would override the user's image and intent.
+        $prompt = $userPrompt;
+    } elseif ($provider === 'chutes') {
+        // Text-to-image: add graphic design boilerplate so diffusion models output clean prints
         $prompt = "print-ready graphic design, centered on white background, "
                 . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
                 . "no text unless specified, high contrast, isolated subject, "
