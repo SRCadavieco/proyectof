@@ -9,18 +9,18 @@
 @section('content')
 
 {{-- Header --}}
-<div class="mb-8 flex items-center justify-between">
+<div class="mb-8 flex flex-wrap items-start gap-3 justify-between">
     <div>
         <h1 class="text-2xl font-serif">API Costs</h1>
         <p class="text-sm text-ink-muted mt-1">Fixed price per generated image — no estimation needed</p>
     </div>
-    <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full font-medium">
+    <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full font-medium shrink-0">
         <i class="fas fa-circle-check mr-1"></i> Fixed price per image
     </span>
 </div>
 
 {{-- Summary cards --}}
-<div class="grid grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     <div class="bg-white rounded-xl border border-cream-200 p-5">
         <p class="text-xs text-ink-muted uppercase tracking-wider mb-1">Total to date</p>
         <p class="text-2xl font-serif font-bold">${{ number_format($totalCost, 4) }}</p>
@@ -45,7 +45,7 @@
     </div>
 </div>
 
-<div class="grid grid-cols-3 gap-6 mb-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     {{-- Cost by service --}}
     <div class="col-span-1 bg-white rounded-xl border border-cream-200 p-6">
         <h2 class="text-sm font-semibold mb-4">By service</h2>
@@ -74,7 +74,7 @@
     </div>
 
     {{-- Daily chart --}}
-    <div class="col-span-2 bg-white rounded-xl border border-cream-200 p-6">
+    <div class="lg:col-span-2 bg-white rounded-xl border border-cream-200 p-6">
         <h2 class="text-sm font-semibold mb-4">Daily cost (last 30 days)</h2>
         <div style="position:relative;height:220px">
             <canvas id="dailyCostChart"></canvas>
@@ -82,7 +82,7 @@
     </div>
 </div>
 
-<div class="grid grid-cols-2 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     {{-- By model --}}
     <div class="bg-white rounded-xl border border-cream-200 p-6">
         <h2 class="text-sm font-semibold mb-4">By model</h2>

@@ -57,7 +57,7 @@ class GeminiService
                 ->timeout(30)
                 ->withToken($token)
                 ->post($url, [
-                    'prompt' => $prompt,
+                    'prompt' => $this->wrapReferenceImagePrompt($prompt),
                     'imageBase64' => $base64,
                     'mimeType' => $mimeType,
                     'model' => $model
@@ -258,5 +258,29 @@ class GeminiService
     $fullPrompt .= $prompt;
 
     return $this->generateDesign($fullPrompt, $backgroundColor, $model);
+}
+
+/**
+ * Wraps the user's prompt for reference-image requests so the model always
+ * outputs a new IMAGE rather than text/code.
+ *
+ * Problems this solves:
+ *  - "make it SVG" → model outputs SVG XML text instead of an image
+ *  - "describe this" → model outputs a text description
+ *
+ * Strategy: frame the instruction as a visual transformation task and
+ * explicitly forbid text/code output.
+ */
+private function wrapReferenceImagePrompt(string $userPrompt): string
+{
+    // Gemini generates SVG/text output when it sees format keywords like "svg", "vector file", etc.
+    // Replace them before they reach the model so it always outputs a raster image.
+    $sanitized = preg_replace('/\bsvg\b/i', 'flat vector art style', $userPrompt);
+    $sanitized = preg_replace('/\bvector\s*(file|format|image)?\b/i', 'flat vector art style illustration', $sanitized);
+    $sanitized = preg_replace('/\b(formato?|format)\s+svg\b/i', 'flat vector art style', $sanitized);
+
+    return "Based on the reference image, generate a new illustration: {$sanitized}. "
+        . "Output must be a raster PNG/JPEG image with transparent or white background. "
+        . "Do NOT output SVG markup, code, or text — only a rendered graphic design image.";
 }
 }

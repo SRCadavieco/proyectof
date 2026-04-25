@@ -132,6 +132,12 @@ class DesignController extends Controller
     $mimeType = $validated['mimeType'] ?? 'image/png';
     $model = $validated['model'] ?? ($provider === 'chutes' ? 'z_image_turbo' : ($provider === 'together' ? 'flux_dev' : 'fabric_light'));
 
+    // Resize user-uploaded image before sending to AI backends (they reject large payloads)
+    if ($imageBase64) {
+        $imageBase64 = $this->resizeImageForAI($imageBase64);
+        $mimeType = 'image/jpeg'; // always JPEG after resize
+    }
+
     $isEdit = !empty($validated['is_edit']);
 
 // Seleccionar el servicio de IA según el proveedor elegido
@@ -140,6 +146,19 @@ $ai = match($provider) {
     'together' => $together,
     default    => $gemini,
 };
+
+// Chutes and Together are text-to-image only — they completely ignore any uploaded image.
+// Whenever the user provides a reference image OR is in edit mode, always use Gemini
+// (multimodal LLM) which actually reads and follows instructions about the image.
+$needsImg2Img = !empty($imageBase64) || $isEdit;
+if ($needsImg2Img) {
+    // Together: use it directly — FLUX.2-dev supports img2img via image_url
+    // Chutes: fall back to Gemini (text-to-image only, ignores the image)
+    if ($provider === 'chutes') {
+        $ai    = $gemini;
+        $model = 'fabric_light';
+    }
+}
 
 if ($isEdit) {
     // Buscar la última imagen del chat en BD; fallback a sesión
@@ -171,6 +190,11 @@ if ($isEdit) {
         $model
     );
 
+    // If Together failed (e.g. local URL unreachable), retry with Gemini
+    if ($provider === 'together' && (!is_array($result) || !empty($result['error']))) {
+        $result = $gemini->generateFromReference($prompt, $cleanBase64, 'image/png', 'fabric_light');
+    }
+
 } elseif ($imageBase64) {
 
     if (str_starts_with($imageBase64, 'data:image')) {
@@ -187,6 +211,11 @@ if ($isEdit) {
         $mimeType,
         $model
     );
+
+    // If Together failed (e.g. local URL unreachable), retry with Gemini
+    if ($provider === 'together' && (!is_array($result) || !empty($result['error']))) {
+        $result = $gemini->generateFromReference($prompt, $imageBase64, $mimeType, 'fabric_light');
+    }
 
 } else {
 
@@ -273,7 +302,7 @@ if ($isEdit) {
             'success' => false,
             'error'   => 'No se pudo generar la imagen. Revisa bien el prompt e inténtalo de nuevo.',
             'debug'   => "[{$provider}/{$model} HTTP {$aiStatus}] {$aiError}",
-        ], 422);
+        ], 500);
     }
 
     // Status HTTP
@@ -289,5 +318,61 @@ if ($isEdit) {
     }
 
     return response()->json($result, $status);
+}
+
+/**
+ * Resize a base64 image to max 1024px on the longest side, JPEG quality 85.
+ * This keeps payloads under ~300 KB which all AI backends accept.
+ * Returns base64 string without data URI prefix.
+ */
+private function resizeImageForAI(string $base64): string
+{
+    // Strip data URI prefix if present
+    $raw = $base64;
+    if (str_starts_with($raw, 'data:image')) {
+        $raw = preg_replace('/^data:image\/[^;]+;base64,/i', '', $raw);
+    }
+
+    $binary = base64_decode($raw);
+    if (!$binary) return $raw;
+
+    $src = @imagecreatefromstring($binary);
+    if (!$src) return $raw;
+
+    $origW = imagesx($src);
+    $origH = imagesy($src);
+    $maxDim = 1024;
+
+    if ($origW <= $maxDim && $origH <= $maxDim) {
+        // Already small enough — just re-encode as JPEG to reduce file size
+        ob_start();
+        imagejpeg($src, null, 85);
+        $out = ob_get_clean();
+        imagedestroy($src);
+        return base64_encode($out);
+    }
+
+    // Scale down proportionally
+    if ($origW >= $origH) {
+        $newW = $maxDim;
+        $newH = (int) round($origH * $maxDim / $origW);
+    } else {
+        $newH = $maxDim;
+        $newW = (int) round($origW * $maxDim / $origH);
+    }
+
+    $dst = imagecreatetruecolor($newW, $newH);
+    // Preserve transparency for PNG sources
+    imagealphablending($dst, false);
+    imagesavealpha($dst, true);
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+    imagedestroy($src);
+
+    ob_start();
+    imagejpeg($dst, null, 85);
+    $out = ob_get_clean();
+    imagedestroy($dst);
+
+    return base64_encode($out);
 }
 }

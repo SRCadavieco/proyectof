@@ -37,12 +37,112 @@ class TogetherService
     }
 
     /**
-     * Together AI does not expose an img2img endpoint for FLUX.1-dev yet,
-     * so we fall back to text-to-image, appending the instruction.
+     * FLUX.2-dev image-to-image via the `image_url` parameter.
+     * Together AI requires a real URL (not base64), so we write the image to
+     * a temporary public file, pass its URL to the API, then delete it.
      */
     public function generateFromReference(string $prompt, string $imageBase64, string $mimeType = 'image/png', string $model = 'flux_dev'): array
     {
-        return $this->generate($prompt, $model);
+        // Strip data URI prefix if present
+        $base64 = $imageBase64;
+        if (str_starts_with($base64, 'data:image')) {
+            $base64 = preg_replace('/^data:image\/[^;]+;base64,/i', '', $base64);
+        }
+
+        // Write to a temp public file so Together can fetch it via URL
+        $ext      = str_contains($mimeType, 'jpeg') || str_contains($mimeType, 'jpg') ? 'jpg' : 'png';
+        $filename = \Illuminate\Support\Str::uuid() . '.' . $ext;
+        $tmpDir   = public_path('tmp');
+        $tmpPath  = $tmpDir . DIRECTORY_SEPARATOR . $filename;
+
+        if (!is_dir($tmpDir)) {
+            mkdir($tmpDir, 0755, true);
+        }
+
+        file_put_contents($tmpPath, base64_decode($base64));
+
+        $imageUrl = rtrim((string) config('app.url'), '/') . '/tmp/' . $filename;
+
+        try {
+            return $this->generateWithImageUrl($prompt, $imageUrl, $model);
+        } finally {
+            if (file_exists($tmpPath)) {
+                unlink($tmpPath);
+            }
+        }
+    }
+
+    private function generateWithImageUrl(string $prompt, string $imageUrl, string $model): array
+    {
+        $token     = (string) config('services.together.key');
+        $modelName = self::MODEL_MAP[$model] ?? self::MODEL_MAP['flux_dev'];
+
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'error'   => 'Missing Together AI API key (TOGETHER_API_KEY)',
+                'status'  => 500,
+                'code'    => 'config_error',
+            ];
+        }
+
+        $payload = [
+            'model'     => $modelName,
+            'prompt'    => $prompt,
+            'image_url' => $imageUrl,
+            'width'     => 1024,
+            'height'    => 1024,
+            'steps'     => 28,
+            'n'         => 1,
+        ];
+
+        try {
+            Log::debug('TogetherService img2img request', [
+                'model'     => $modelName,
+                'image_url' => $imageUrl,
+                'prompt'    => substr($prompt, 0, 120),
+            ]);
+
+            $response = Http::withToken($token)
+                ->timeout(120)
+                ->post(self::API_URL, $payload);
+
+            Log::debug('TogetherService img2img response', [
+                'status' => $response->status(),
+            ]);
+
+            if ($response->failed()) {
+                $json  = null;
+                try { $json = $response->json(); } catch (\Throwable) {}
+                $error = is_array($json)
+                    ? ($json['error']['message'] ?? $json['error'] ?? $response->body())
+                    : $response->body();
+
+                return ['success' => false, 'error' => $error, 'status' => $response->status()];
+            }
+
+            $json = $response->json();
+
+            $b64 = $json['data'][0]['b64_json'] ?? null;
+            if ($b64) {
+                return ['success' => true, 'imageBase64' => $b64];
+            }
+
+            $url = $json['data'][0]['url'] ?? null;
+            if ($url) {
+                $imgResponse = Http::timeout(60)->get($url);
+                if ($imgResponse->successful()) {
+                    return ['success' => true, 'imageBase64' => base64_encode($imgResponse->body())];
+                }
+                return ['success' => true, 'imageUrl' => $url];
+            }
+
+            return ['success' => false, 'error' => 'No image in Together response', 'status' => 500];
+
+        } catch (\Throwable $e) {
+            Log::error('TogetherService img2img exception', ['error' => $e->getMessage()]);
+            return ['success' => false, 'error' => $e->getMessage(), 'status' => 500];
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

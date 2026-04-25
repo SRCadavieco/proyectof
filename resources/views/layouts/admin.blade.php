@@ -11,35 +11,65 @@
 </head>
 <body class="bg-cream-50 text-ink min-h-screen">
 
-<div class="flex min-h-screen">
+<div x-data="{ open: false }" class="min-h-screen">
+
+    {{-- ── Mobile top bar ───────────────────────────────────────────── --}}
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-cream-200 h-14 flex items-center px-4 gap-3">
+        <button @click="open = true" class="w-9 h-9 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-cream-100 transition">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="/"><img src="/images/logo.png" alt="FabricAI" class="h-7 w-7"></a>
+        <span class="font-serif font-bold text-sm">FabricAI Admin</span>
+    </header>
+
+    {{-- ── Mobile overlay ───────────────────────────────────────────── --}}
+    <div x-show="open"
+         x-transition:enter="transition-opacity ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="open = false"
+         class="lg:hidden fixed inset-0 z-40 bg-ink/40 backdrop-blur-sm"
+         style="display:none;"></div>
 
     {{-- ── Sidebar ───────────────────────────────────────────────────── --}}
-    <aside class="w-64 bg-white border-r border-cream-200 flex flex-col fixed h-full z-30">
+    <aside class="w-64 bg-white border-r border-cream-200 flex flex-col fixed h-full z-50
+                  -translate-x-full lg:translate-x-0 transition-transform duration-200"
+           :class="{ 'translate-x-0': open }">
 
         {{-- Logo --}}
         <div class="p-6 border-b border-cream-200 flex items-center gap-3">
             <a href="/"><img src="/images/logo.png" alt="FabricAI" class="h-12 w-12"></a>
-            <div>
+            <div class="flex-1 min-w-0">
                 <p class="font-serif font-bold text-sm">FabricAI</p>
                 <p class="text-xs text-ink-muted uppercase tracking-wider">Admin Panel</p>
             </div>
+            {{-- Close button (mobile only) --}}
+            <button @click="open = false" class="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-cream-100 transition">
+                <i class="fas fa-times text-sm"></i>
+            </button>
         </div>
 
         {{-- Nav links --}}
         <nav class="flex-1 p-4 space-y-1">
             <a href="{{ route('admin.dashboard') }}"
+               @click="open = false"
                class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition
                       {{ request()->routeIs('admin.dashboard') ? 'bg-purple-50 text-purple-700' : 'text-ink-muted hover:text-ink hover:bg-cream-100' }}">
                 <i class="fas fa-chart-pie w-5 text-center"></i>
                 Dashboard
             </a>
             <a href="{{ route('admin.users') }}"
+               @click="open = false"
                class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition
                       {{ request()->routeIs('admin.users') ? 'bg-purple-50 text-purple-700' : 'text-ink-muted hover:text-ink hover:bg-cream-100' }}">
                 <i class="fas fa-users w-5 text-center"></i>
                 Users
             </a>
             <a href="{{ route('admin.api-costs') }}"
+               @click="open = false"
                class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition
                       {{ request()->routeIs('admin.api-costs') ? 'bg-purple-50 text-purple-700' : 'text-ink-muted hover:text-ink hover:bg-cream-100' }}">
                 <i class="fas fa-coins w-5 text-center"></i>
@@ -72,7 +102,7 @@
     </aside>
 
     {{-- ── Main content ──────────────────────────────────────────────── --}}
-    <main class="flex-1 ml-64 p-8">
+    <main class="lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
         @yield('content')
     </main>
 
