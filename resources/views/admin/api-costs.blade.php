@@ -142,6 +142,84 @@
 </div>
 
 
+{{-- Pricing reference --}}
+<div class="mt-8 bg-white rounded-xl border border-cream-200 p-6">
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+        <h2 class="text-sm font-semibold">Pricing reference</h2>
+        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+            <i class="fas fa-triangle-exclamation mr-1"></i>Prices verified Apr 2025
+        </span>
+        <span class="text-xs text-ink-muted ml-auto">* = official price not publicly listed (estimate)</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        {{-- Together FLUX.2-dev --}}
+        <div class="rounded-lg border border-purple-100 bg-purple-50 p-4 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-mono bg-purple-100 text-purple-700 px-2 py-0.5 rounded">together</span>
+                <span class="text-lg font-serif font-bold text-purple-700">$0.0154 <span class="text-xs font-sans text-ink-muted">/ img</span></span>
+            </div>
+            <p class="text-xs font-semibold">FLUX.2 [dev]</p>
+            <p class="text-xs text-ink-muted leading-relaxed">
+                Text-to-image <em>and</em> img2img (reference photo edits).
+                Together's highest-quality image model. 1024 × 1024 · 28 steps.
+            </p>
+            <div class="mt-auto pt-2 border-t border-purple-100">
+                <p class="text-xs text-ink-muted">
+                    <i class="fas fa-circle-info mr-1"></i>
+                    Official price per image at 1024×1024 · 28 steps (confirmed via Together API docs).
+                </p>
+            </div>
+        </div>
+
+        {{-- Chutes --}}
+        <div class="rounded-lg border border-blue-100 bg-blue-50 p-4 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-mono bg-blue-100 text-blue-700 px-2 py-0.5 rounded">chutes</span>
+                <span class="text-sm font-serif font-bold text-blue-700">variable</span>
+            </div>
+            <p class="text-xs font-semibold">z_image_turbo &amp; flux_schnell</p>
+            <p class="text-xs text-ink-muted leading-relaxed">
+                Fast text-to-image only. No reference-image support — requests with an uploaded photo use a dedicated backend.
+            </p>
+            <div class="mt-auto pt-2 border-t border-blue-100 space-y-1">
+                <p class="text-xs text-ink-muted">
+                    <span class="font-mono font-semibold text-blue-700">z_image_turbo</span>
+                    — $0.0005 / sec of compute
+                </p>
+                <p class="text-xs text-ink-muted">
+                    <span class="font-mono font-semibold text-blue-700">flux_schnell</span>
+                    — $0.0010 / step
+                </p>
+            </div>
+        </div>
+
+        {{-- RnBulkTools --}}
+        <div class="rounded-lg border border-amber-100 bg-amber-50 p-4 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-mono bg-amber-100 text-amber-700 px-2 py-0.5 rounded">rnbulktools</span>
+                <span class="text-lg font-serif font-bold text-amber-700">~$0.01 <span class="text-xs font-sans text-ink-muted">/ op *</span></span>
+            </div>
+            <p class="text-xs font-semibold">remove_bg</p>
+            <p class="text-xs text-ink-muted leading-relaxed">
+                Background removal. Called automatically on <em>every</em> generated image before it is shown to the user.
+            </p>
+            <div class="mt-auto pt-2 border-t border-amber-100">
+                <p class="text-xs text-ink-muted">
+                    <i class="fas fa-circle-info mr-1"></i>
+                    Pricing not publicly accessible. $0.01 is an internal estimate.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <p class="text-xs text-ink-muted mt-4 text-right">
+        Costs tracked via <code class="font-mono bg-cream-100 px-1 rounded">api_usage_logs</code> table · <code class="font-mono bg-cream-100 px-1 rounded">App\Models\ApiUsageLog::COST_MAP</code>
+    </p>
+</div>
+
 @endsection
 
 @push('scripts')
