@@ -156,19 +156,16 @@
             <div>
                 <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted mb-1.5">AI Engine</p>
                 <div class="flex border border-cream-300 rounded-lg overflow-hidden">
-                    <button type="button" id="provider-btn-gemini" data-provider="gemini"
-                            class="provider-btn"
-                            style="background:#1a1a1a;color:#fff;">Gemini</button>
                     <button type="button" id="provider-btn-chutes" data-provider="chutes"
                             class="provider-btn"
-                            style="background:transparent;color:#8a8a8a;border-left:1px solid #e8e3d9;">Chutes</button>
+                            style="background:#1a1a1a;color:#fff;">Chutes</button>
                     <button type="button" id="provider-btn-together" data-provider="together"
                             class="provider-btn"
                             style="background:transparent;color:#8a8a8a;border-left:1px solid #e8e3d9;">Together</button>
                 </div>
                 <div id="model-pills" class="flex border border-cream-300 rounded-lg overflow-hidden mt-1"></div>
-                <input type="hidden" id="ai-provider" value="gemini">
-                <input type="hidden" id="ai-model"    value="fabric_light">
+                <input type="hidden" id="ai-provider" value="chutes">
+                <input type="hidden" id="ai-model"    value="z_image_turbo">
             </div>
 
             <!-- Design credits -->
@@ -527,7 +524,6 @@
     const previewImageStore = [];
 
     const MODEL_OPTIONS = {
-        gemini:   [{ value:'fabric_light', label:'Fabric Light' }, { value:'fabric_pro', label:'Fabric Pro' }],
         chutes:   [{ value:'z_image_turbo', label:'Z-Image Turbo' }, { value:'flux_schnell', label:'FLUX Schnell' }],
         together: [{ value:'flux_dev', label:'FLUX.2 Dev' }],
     };
@@ -624,7 +620,7 @@
                 syncModelOptions(btn.dataset.provider);
             });
         });
-        syncModelOptions('gemini');
+        syncModelOptions('chutes');
     }
 
     // ─── Textarea auto-resize ─────────────────────────────────────────

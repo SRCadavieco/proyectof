@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Chat;
 use App\Models\Message;
+use App\Models\ApiUsageLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -165,5 +166,72 @@ class AdminController extends Controller
             'fabric_pro' => $fabricProChats,
             'fabric_light' => $fabricLightChats,
         ]);
+    }
+
+    public function apiCosts()
+    {
+        // Total cost and calls by service
+        $byService = ApiUsageLog::select(
+                'service',
+                DB::raw('COUNT(*) as calls'),
+                DB::raw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successes'),
+                DB::raw('SUM(cost_usd) as total_cost')
+            )
+            ->groupBy('service')
+            ->orderByDesc('total_cost')
+            ->get();
+
+        // By service + model
+        $byModel = ApiUsageLog::select(
+                'service',
+                'model',
+                DB::raw('COUNT(*) as calls'),
+                DB::raw('SUM(cost_usd) as total_cost')
+            )
+            ->groupBy('service', 'model')
+            ->orderByDesc('total_cost')
+            ->get();
+
+        // Daily cost last 30 days
+        $driver = DB::getDriverName();
+        $dateRaw = $driver === 'sqlite'
+            ? "strftime('%Y-%m-%d', created_at) as date"
+            : "DATE(created_at) as date";
+
+        $rawDaily = ApiUsageLog::where('created_at', '>=', now()->subDays(29)->startOfDay())
+            ->select(DB::raw($dateRaw), DB::raw('SUM(cost_usd) as total'))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('total', 'date')
+            ->toArray();
+
+        $dailyCost = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $day = now()->subDays($i)->format('Y-m-d');
+            $dailyCost[$day] = round((float)($rawDaily[$day] ?? 0), 5);
+        }
+
+        // Top users by cost
+        $topUsers = ApiUsageLog::select(
+                'user_id',
+                DB::raw('COUNT(*) as calls'),
+                DB::raw('SUM(cost_usd) as total_cost')
+            )
+            ->whereNotNull('user_id')
+            ->groupBy('user_id')
+            ->orderByDesc('total_cost')
+            ->with('user:id,name,email')
+            ->limit(10)
+            ->get();
+
+        $totalCost = ApiUsageLog::sum('cost_usd');
+        $totalCalls = ApiUsageLog::count();
+        $thisMonthCost = ApiUsageLog::where('created_at', '>=', now()->startOfMonth())->sum('cost_usd');
+        $todayCost = ApiUsageLog::where('created_at', '>=', now()->startOfDay())->sum('cost_usd');
+
+        return view('admin.api-costs', compact(
+            'byService', 'byModel', 'dailyCost', 'topUsers',
+            'totalCost', 'totalCalls', 'thisMonthCost', 'todayCost'
+        ));
     }
 }

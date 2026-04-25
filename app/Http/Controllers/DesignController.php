@@ -7,6 +7,7 @@ use App\Services\ChutesService;
 use App\Services\TogetherService;
 use App\Services\BackgroundRemovalService;
 use App\Jobs\GenerateDesignJob;
+use App\Models\ApiUsageLog;
 use Illuminate\Http\Request;
 use App\Models\Chat;
 
@@ -71,12 +72,12 @@ class DesignController extends Controller
 
     if ($provider === 'chutes') {
         // Para modelos de difusión: prompt visual descriptivo, no instrucciones en lenguaje natural
-        $prompt = "print-ready graphic design for clothing, centered on white background, "
+        $prompt = "print-ready graphic design, centered on white background, "
                 . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
                 . "no text unless specified, high contrast, isolated subject, "
                 . $userPrompt;
     } elseif ($provider === 'together') {
-        $prompt = "print-ready graphic design for clothing, centered on white background, "
+        $prompt = "print-ready graphic design, centered on white background, "
                 . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
                 . "no text unless specified, high contrast, isolated subject, "
                 . $userPrompt;
@@ -191,6 +192,13 @@ if ($isEdit) {
     );
 }
 
+    // Log AI generation call
+    $aiSuccess = is_array($result) && (
+        !empty($result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null)
+        || !empty($result['imageUrl'] ?? $result['image_url'] ?? $result['url'] ?? null)
+    );
+    ApiUsageLog::record($provider, $model, $isEdit ? 'img2img' : 'generate', $user->id, $aiSuccess);
+
     // Procesar imagen
     $imageValue = null;
 
@@ -209,6 +217,7 @@ if ($isEdit) {
 
         if ($base64) {
             $noBg = $backgrounds->removeBackground($base64);
+            ApiUsageLog::record('rnbulktools', 'remove_bg', 'remove_bg', $user->id, $noBg !== null);
             if ($noBg) {
                 $processed = $backgrounds->convertToWebp($noBg) ?? $noBg;
             } else {

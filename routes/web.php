@@ -64,6 +64,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/users/{user}/tokens', [AdminController::class, 'addTokens'])->name('users.tokens');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
     Route::get('/stats', [AdminController::class, 'stats'])->name('stats');
+    Route::get('/api-costs', [AdminController::class, 'apiCosts'])->name('api-costs');
 });
 
 // Debug local-only endpoint to inspect Gemini config
