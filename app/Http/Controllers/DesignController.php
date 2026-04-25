@@ -183,16 +183,20 @@ if ($isEdit) {
         $cleanBase64 = preg_replace('/^data:image\/(png|jpeg|jpg|webp);base64,/i', '', $cleanBase64);
     }
 
+    // Resize stored image before sending — previous AI output can be large webp
+    $cleanBase64 = $this->resizeImageForAI($cleanBase64);
+    $editMimeType = 'image/jpeg'; // resizeImageForAI always outputs JPEG
+
     $result = $ai->generateFromReference(
         $prompt,
         $cleanBase64,
-        'image/png',
+        $editMimeType,
         $model
     );
 
     // If Together failed (e.g. local URL unreachable), retry with Gemini
     if ($provider === 'together' && (!is_array($result) || !empty($result['error']))) {
-        $result = $gemini->generateFromReference($prompt, $cleanBase64, 'image/png', 'fabric_light');
+        $result = $gemini->generateFromReference($prompt, $cleanBase64, $editMimeType, 'fabric_light');
     }
 
 } elseif ($imageBase64) {
