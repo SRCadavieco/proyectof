@@ -56,6 +56,21 @@ Route::middleware('auth')->group(function () {
 // Stripe webhooks (no CSRF)
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
+// Temp image route — serves files written to sys_get_temp_dir() by TogetherService img2img.
+// Files are deleted immediately after Together fetches them (or after the request).
+Route::get('/tmp-img/{filename}', function (string $filename) {
+    // Sanitise: only allow UUID-named image files, no path traversal
+    if (!preg_match('/^[0-9a-f\-]{36}\.(jpg|png)$/i', $filename)) {
+        abort(404);
+    }
+    $path = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . $filename;
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    $mime = str_ends_with($filename, '.png') ? 'image/png' : 'image/jpeg';
+    return response()->file($path, ['Content-Type' => $mime]);
+})->name('tmp-img');
+
 // Admin panel
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');

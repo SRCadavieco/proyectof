@@ -39,7 +39,13 @@ class TogetherService
     /**
      * FLUX.2-dev image-to-image via the `image_url` parameter.
      * Together AI requires a real URL (not base64), so we write the image to
-     * a temporary public file, pass its URL to the API, then delete it.
+     * a temporary file in sys_get_temp_dir() (writable even on Cloud Run),
+     * serve it through a signed Laravel route, then delete it.
+     *
+     * Note: Cloud Run's public/ directory is read-only at runtime, so we use
+     * /tmp (always writable) and pass the URL only if the app can serve it.
+     * If the app URL is not publicly reachable from Together's servers (e.g.
+     * local dev), Together will fail and the caller retries with Gemini.
      */
     public function generateFromReference(string $prompt, string $imageBase64, string $mimeType = 'image/png', string $model = 'flux_dev'): array
     {
@@ -49,25 +55,29 @@ class TogetherService
             $base64 = preg_replace('/^data:image\/[^;]+;base64,/i', '', $base64);
         }
 
-        // Write to a temp public file so Together can fetch it via URL
+        // Use sys_get_temp_dir() — always writable, including on Cloud Run
         $ext      = str_contains($mimeType, 'jpeg') || str_contains($mimeType, 'jpg') ? 'jpg' : 'png';
         $filename = \Illuminate\Support\Str::uuid() . '.' . $ext;
-        $tmpDir   = public_path('tmp');
+        $tmpDir   = rtrim(sys_get_temp_dir(), '/\\');
         $tmpPath  = $tmpDir . DIRECTORY_SEPARATOR . $filename;
 
-        if (!is_dir($tmpDir)) {
-            mkdir($tmpDir, 0755, true);
+        $written = @file_put_contents($tmpPath, base64_decode($base64));
+        if ($written === false) {
+            return [
+                'success' => false,
+                'error'   => 'Could not write temp image file for Together img2img',
+                'status'  => 500,
+            ];
         }
 
-        file_put_contents($tmpPath, base64_decode($base64));
-
-        $imageUrl = rtrim((string) config('app.url'), '/') . '/tmp/' . $filename;
+        // Serve the temp file via a short-lived public route
+        $imageUrl = rtrim((string) config('app.url'), '/') . '/tmp-img/' . $filename;
 
         try {
             return $this->generateWithImageUrl($prompt, $imageUrl, $model);
         } finally {
             if (file_exists($tmpPath)) {
-                unlink($tmpPath);
+                @unlink($tmpPath);
             }
         }
     }
