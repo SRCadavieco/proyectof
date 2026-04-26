@@ -31,6 +31,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
 
+    // Saved designs
+    Route::get('/designs/saved',                  [DesignController::class, 'savedDesigns'])->name('designs.saved.index');
+    Route::post('/designs/saved',                 [DesignController::class, 'saveDesign'])->name('designs.saved.store');
+    Route::delete('/designs/saved/{savedDesign}', [DesignController::class, 'deleteSavedDesign'])->name('designs.saved.destroy');
+
     // Token API
     Route::get('/api/tokens', function () {
         $user = auth()->user();

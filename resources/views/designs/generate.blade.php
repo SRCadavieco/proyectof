@@ -298,14 +298,34 @@
 <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
 <div id="preview-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-2xl rounded-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300">
+    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col" style="max-height:95dvh;">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300 flex-shrink-0">
             <h2 class="text-base font-semibold text-ink">Preview on Garment</h2>
             <button onclick="closePreviewModal()" class="icon-btn">
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="p-5 overflow-y-auto max-h-[85dvh]">
+        <div class="flex flex-1 min-h-0 overflow-hidden">
+
+            <!-- ── Saved Designs panel ── -->
+            <div id="saved-designs-panel" class="w-44 flex-shrink-0 border-r border-cream-300 flex flex-col bg-cream-50">
+                <div class="px-3 py-2.5 border-b border-cream-200">
+                    <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted font-medium">Saved Designs</p>
+                </div>
+                <div id="saved-designs-list" class="flex-1 overflow-y-auto p-2 space-y-2">
+                    <p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed">Loading…</p>
+                </div>
+                <div class="p-2 border-t border-cream-200 flex-shrink-0">
+                    <button id="add-to-canvas-btn" disabled onclick="addSelectedToCanvas()"
+                            class="w-full py-2 bg-[#5a2275] text-white text-[10px] font-medium uppercase tracking-widest
+                                   rounded-lg hover:bg-[#7c3ca0] transition-colors disabled:opacity-40">
+                        + Add to Canvas
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── Editor ── -->
+            <div class="flex-1 p-5 overflow-y-auto min-w-0">
             <div class="flex gap-4 mb-4 flex-wrap items-end">
                 <div class="flex flex-col gap-1">
                     <label class="text-xs text-ink-muted uppercase tracking-wider">Garment</label>
@@ -328,14 +348,14 @@
             </div>
 
             <!-- Position controls -->
-            <div class="grid grid-cols-3 gap-3 mb-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                 <div class="flex flex-col gap-1">
                     <div class="flex justify-between">
                         <label class="text-xs text-ink-muted uppercase tracking-wider">Pos X</label>
                         <span id="pos-x-val" class="text-xs text-ink-muted">0</span>
                     </div>
                     <input type="range" id="design-pos-x" min="-1" max="1" step="0.01" value="0"
-                           oninput="document.getElementById('pos-x-val').textContent=parseFloat(this.value).toFixed(2); renderPreview()"
+                           oninput="document.getElementById('pos-x-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
                            class="w-full accent-purple-600">
                 </div>
                 <div class="flex flex-col gap-1">
@@ -344,7 +364,7 @@
                         <span id="pos-y-val" class="text-xs text-ink-muted">0</span>
                     </div>
                     <input type="range" id="design-pos-y" min="-1" max="1" step="0.01" value="0"
-                           oninput="document.getElementById('pos-y-val').textContent=parseFloat(this.value).toFixed(2); renderPreview()"
+                           oninput="document.getElementById('pos-y-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
                            class="w-full accent-purple-600">
                 </div>
                 <div class="flex flex-col gap-1">
@@ -353,7 +373,16 @@
                         <span id="scale-val" class="text-xs text-ink-muted">1.00</span>
                     </div>
                     <input type="range" id="design-scale" min="0.2" max="2" step="0.01" value="1"
-                           oninput="document.getElementById('scale-val').textContent=parseFloat(this.value).toFixed(2); renderPreview()"
+                           oninput="document.getElementById('scale-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
+                           class="w-full accent-purple-600">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between">
+                        <label class="text-xs text-ink-muted uppercase tracking-wider">Rotate</label>
+                        <span id="rotation-val" class="text-xs text-ink-muted">0°</span>
+                    </div>
+                    <input type="range" id="design-rotation" min="-180" max="180" step="1" value="0"
+                           oninput="document.getElementById('rotation-val').textContent=parseInt(this.value)+'°'; syncSelectedLayerFromControls(); renderPreview()"
                            class="w-full accent-purple-600">
                 </div>
             </div>
@@ -362,10 +391,17 @@
                 <div id="canvas-wrapper" style="position:relative;display:inline-block;max-width:100%;line-height:0;">
                     <canvas id="garment-canvas" width="500" height="550"
                             class="max-w-full h-auto rounded-lg" style="max-height:420px;display:block;"></canvas>
-                    <canvas id="design-canvas" style="position:absolute;left:0;top:0;cursor:grab;"></canvas>
+                    <canvas id="design-canvas" style="position:absolute;left:0;top:0;pointer-events:none;"></canvas>
+                    <canvas id="handle-canvas" style="position:absolute;left:0;top:0;cursor:grab;"></canvas>
                 </div>
             </div>
             <div id="printify-spec" class="mt-2 text-xs text-ink-muted text-center"></div>
+
+            <!-- Layers list (visible when multiple layers are added) -->
+            <div id="layers-container" class="hidden mt-3 border border-cream-200 rounded-xl p-3 bg-cream-50">
+                <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted mb-2 font-medium">Layers</p>
+                <div id="layers-list" class="space-y-1.5"></div>
+            </div>
 
             <div class="flex justify-end gap-3 mt-4">
                 <button onclick="downloadPreview()"
@@ -435,8 +471,9 @@
                 </div>
             </div>
 
-        </div>
-    </div>
+            </div><!-- /.editor -->
+        </div><!-- /.two-col -->
+    </div><!-- /.modal-inner -->
 </div>
 
 <script>
@@ -486,6 +523,7 @@
     let isCreatingChat      = false;
     let chats               = [];
     let pendingDeleteId     = null;
+    const savedImgKeys      = new Set(); // fingerprints of already-saved images
 
     const imageInput        = document.getElementById('image-upload');
     const form              = document.getElementById('design-form');
@@ -696,8 +734,15 @@
                 <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
             </div>
             <div class="bg-white border border-cream-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-xs">
-                <div id="${uniqueId}" class="bg-cream-100 p-2.5">
+                <div id="${uniqueId}" class="bg-cream-100 p-2.5 relative">
                     <img src="${imageUrl}" alt="Generated design" class="rounded-xl w-full block" crossorigin="anonymous">
+                    <button type="button" title="Save design"
+                            class="save-design-btn absolute top-2 right-2 w-7 h-7 rounded-full
+                                   bg-white/80 backdrop-blur-sm border border-cream-200 shadow-sm
+                                   flex items-center justify-center transition-all hover:scale-110"
+                            data-image-src="${imageUrl}">
+                        <i class="fas fa-bookmark text-xs text-ink-muted"></i>
+                    </button>
                 </div>
                 <div class="px-3 py-2 border-t border-cream-200 flex items-center gap-1.5 flex-wrap">
                     <span class="text-[9px] text-ink-muted uppercase tracking-wider mr-1">BG</span>
@@ -1034,6 +1079,13 @@
             if (!isNaN(idx) && previewImageStore[idx]) openPreviewModal(previewImageStore[idx]);
         }
 
+        // Save design (bookmark button)
+        const saveBtn = e.target.closest ? e.target.closest('.save-design-btn') : null;
+        if (saveBtn) {
+            const src = saveBtn.getAttribute('data-image-src');
+            if (src) saveDesign(src, saveBtn);
+        }
+
         // Close preview modal on backdrop
         if (e.target.id === 'preview-modal') closePreviewModal();
     });
@@ -1152,25 +1204,155 @@
         },
     };
 
-    let previewDesignSrc = null;
+    let previewLayers    = []; // [{id, src, posX, posY, scale, rotation, imgW, imgH}]
+    let _selectedLayerId = null;
+
+    function getSelectedLayer() {
+        return previewLayers.find(l => l.id === _selectedLayerId) || previewLayers[0] || null;
+    }
+
+    function syncSelectedLayerFromControls() {
+        const layer = getSelectedLayer();
+        if (!layer) return;
+        layer.posX     = parseFloat(document.getElementById('design-pos-x').value);
+        layer.posY     = parseFloat(document.getElementById('design-pos-y').value);
+        layer.scale    = parseFloat(document.getElementById('design-scale').value);
+        layer.rotation = parseFloat(document.getElementById('design-rotation').value);
+    }
+
+    function updateControlsFromSelected() {
+        const layer = getSelectedLayer();
+        if (!layer) {
+            ['design-pos-x','design-pos-y'].forEach(id => document.getElementById(id).value = 0);
+            document.getElementById('design-scale').value    = 1;
+            document.getElementById('design-rotation').value = 0;
+            document.getElementById('pos-x-val').textContent    = '0';
+            document.getElementById('pos-y-val').textContent    = '0';
+            document.getElementById('scale-val').textContent    = '1.00';
+            document.getElementById('rotation-val').textContent = '0°';
+            return;
+        }
+        document.getElementById('design-pos-x').value    = layer.posX;
+        document.getElementById('design-pos-y').value    = layer.posY;
+        document.getElementById('design-scale').value    = layer.scale;
+        document.getElementById('design-rotation').value = layer.rotation || 0;
+        document.getElementById('pos-x-val').textContent    = parseFloat(layer.posX).toFixed(2);
+        document.getElementById('pos-y-val').textContent    = parseFloat(layer.posY).toFixed(2);
+        document.getElementById('scale-val').textContent    = parseFloat(layer.scale).toFixed(2);
+        document.getElementById('rotation-val').textContent = Math.round(layer.rotation || 0) + '°';
+    }
 
     function openPreviewModal(imageSrc) {
-        previewDesignSrc = imageSrc;
-        ['design-pos-x','design-pos-y','design-scale'].forEach((id,i) => {
-            document.getElementById(id).value = i === 2 ? 1 : 0;
+        const id = Date.now();
+        previewLayers    = [{id, src: imageSrc, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null}];
+        _selectedLayerId = id;
+        document.getElementById('pos-x-val').textContent    = '0';
+        document.getElementById('pos-y-val').textContent    = '0';
+        document.getElementById('scale-val').textContent    = '1.00';
+        document.getElementById('rotation-val').textContent = '0°';
+        ['design-pos-x','design-pos-y','design-scale','design-rotation'].forEach((eid,i) => {
+            document.getElementById(eid).value = i === 2 ? 1 : 0;
         });
-        document.getElementById('pos-x-val').textContent  = '0';
-        document.getElementById('pos-y-val').textContent  = '0';
-        document.getElementById('scale-val').textContent  = '1.00';
         document.getElementById('preview-modal').classList.remove('hidden');
         document.getElementById('preview-modal').classList.add('flex');
         initDesignDrag();
         renderPreview();
+        renderLayersList();
+        loadSavedDesigns();
     }
+
     function closePreviewModal() {
         document.getElementById('preview-modal').classList.add('hidden');
         document.getElementById('preview-modal').classList.remove('flex');
-        previewDesignSrc = null;
+        previewLayers    = [];
+        _selectedLayerId = null;
+    }
+
+    function addLayerToCanvas(src) {
+        const id = Date.now();
+        previewLayers.push({id, src, posX: 0, posY: 0, scale: 0.8, rotation: 0, imgW: null, imgH: null});
+        _selectedLayerId = id;
+        updateControlsFromSelected();
+        renderPreview();
+        renderLayersList();
+    }
+
+    function selectLayer(id) {
+        _selectedLayerId = id;
+        updateControlsFromSelected();
+        renderLayersList();
+        renderHandles();
+    }
+
+    function removeLayer(id) {
+        previewLayers = previewLayers.filter(l => l.id !== id);
+        if (_selectedLayerId === id) {
+            _selectedLayerId = previewLayers.length > 0 ? previewLayers[previewLayers.length - 1].id : null;
+        }
+        updateControlsFromSelected();
+        renderPreview();
+        renderLayersList();
+    }
+
+    function renderLayersList() {
+        const container = document.getElementById('layers-list');
+        const wrapper   = document.getElementById('layers-container');
+        if (!container || !wrapper) return;
+        if (previewLayers.length <= 1) { wrapper.classList.add('hidden'); return; }
+        wrapper.classList.remove('hidden');
+        container.innerHTML = '';
+        previewLayers.forEach((layer, idx) => {
+            const isSelected = layer.id === _selectedLayerId;
+            const item = document.createElement('div');
+            item.className = 'flex items-center gap-2 p-1.5 rounded-lg cursor-pointer border transition-all ' +
+                (isSelected ? 'border-purple-400 bg-purple-50' : 'border-cream-200 hover:border-cream-400');
+            const thumb = document.createElement('img');
+            thumb.src = layer.src; thumb.alt = '';
+            thumb.className = 'w-8 h-8 rounded object-contain bg-cream-100 flex-shrink-0';
+            const label = document.createElement('span');
+            label.className = 'text-xs text-ink flex-1 min-w-0 truncate';
+            label.textContent = 'Layer ' + (idx + 1);
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'w-5 h-5 text-red-400 hover:text-red-600 flex items-center justify-center flex-shrink-0 text-xs';
+            del.innerHTML = '<i class="fas fa-times"></i>';
+            del.onclick = (e) => { e.stopPropagation(); removeLayer(layer.id); };
+            item.appendChild(thumb); item.appendChild(label); item.appendChild(del);
+            item.onclick = () => selectLayer(layer.id);
+            container.appendChild(item);
+        });
+    }
+
+    async function getFlattenedSrc() {
+        if (!previewLayers.length) return null;
+        // Single non-rotated layer: return raw src, Printify handles positioning itself
+        if (previewLayers.length === 1 && !previewLayers[0].rotation) return previewLayers[0].src;
+        const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const flat = document.createElement('canvas');
+        flat.width = pa.w; flat.height = pa.h;
+        const ctx = flat.getContext('2d');
+        for (const layer of previewLayers) {
+            await new Promise(resolve => {
+                const img = new Image(); img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const ir = img.width/img.height; const pr = pa.w/pa.h;
+                    let dw, dh;
+                    if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
+                    dw *= layer.scale; dh *= layer.scale;
+                    const cx = pa.w/2 + layer.posX*(pa.w/2);
+                    const cy = pa.h/2 + layer.posY*(pa.h/2);
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+                    ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
+                    ctx.restore();
+                    resolve();
+                };
+                img.onerror = () => resolve();
+                img.src = layer.src;
+            });
+        }
+        return flat.toDataURL('image/png');
     }
 
     function renderGarment() {
@@ -1198,29 +1380,46 @@
     function positionDesignCanvas() {
         const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
         const dc = document.getElementById('design-canvas');
+        const hc = document.getElementById('handle-canvas');
         dc.width = pa.w; dc.height = pa.h;
         dc.style.left   = (pa.x/500*100)+'%'; dc.style.top    = (pa.y/550*100)+'%';
         dc.style.width  = (pa.w/500*100)+'%'; dc.style.height = (pa.h/550*100)+'%';
+        if (hc) {
+            hc.width = pa.w; hc.height = pa.h;
+            hc.style.left   = (pa.x/500*100)+'%'; hc.style.top    = (pa.y/550*100)+'%';
+            hc.style.width  = (pa.w/500*100)+'%'; hc.style.height = (pa.h/550*100)+'%';
+        }
     }
 
     function renderDesign() {
-        if (!previewDesignSrc) return;
+        if (!previewLayers.length) return;
         const dc  = document.getElementById('design-canvas');
         const ctx = dc.getContext('2d');
         const pa  = GARMENTS[document.getElementById('garment-select').value].printArea;
         ctx.clearRect(0, 0, dc.width, dc.height);
-        const img = new Image(); img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            const posX = parseFloat(document.getElementById('design-pos-x').value);
-            const posY = parseFloat(document.getElementById('design-pos-y').value);
-            const sc   = parseFloat(document.getElementById('design-scale').value);
-            const ir = img.width/img.height; const pr = pa.w/pa.h;
-            let dw, dh;
-            if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
-            dw *= sc; dh *= sc;
-            ctx.drawImage(img, (pa.w-dw)/2+posX*(pa.w/2), (pa.h-dh)/2+posY*(pa.h/2), dw, dh);
-        };
-        img.src = previewDesignSrc;
+        const drawLayer = (layer) => new Promise(resolve => {
+            const img = new Image(); img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                layer.imgW = img.width; layer.imgH = img.height;
+                const ir = img.width/img.height; const pr = pa.w/pa.h;
+                let dw, dh;
+                if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
+                dw *= layer.scale; dh *= layer.scale;
+                const cx = pa.w/2 + layer.posX*(pa.w/2);
+                const cy = pa.h/2 + layer.posY*(pa.h/2);
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+                ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
+                ctx.restore();
+                resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = layer.src;
+        });
+        // Draw layers sequentially to maintain z-order, then update handles
+        previewLayers.reduce((p, layer) => p.then(() => drawLayer(layer)), Promise.resolve())
+            .then(() => renderHandles());
     }
 
     function renderPreview() { renderGarment(); positionDesignCanvas(); renderDesign(); }
@@ -1237,33 +1436,172 @@
         link.download = 'garment-preview.png'; link.href = tmp.toDataURL('image/png'); link.click();
     }
 
+    const ROTATE_HANDLE_OFFSET = 22;
+    const ROTATE_HANDLE_RADIUS = 6;
+
+    function getLayerHandlePos(layer) {
+        const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const ir = (layer.imgW && layer.imgH) ? layer.imgW / layer.imgH : 1;
+        const pr = pa.w / pa.h;
+        let dw, dh;
+        if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
+        dw *= layer.scale; dh *= layer.scale;
+        const cx  = pa.w/2 + layer.posX*(pa.w/2);
+        const cy  = pa.h/2 + layer.posY*(pa.h/2);
+        const rot = (layer.rotation || 0) * Math.PI / 180;
+        const dist = dh/2 + ROTATE_HANDLE_OFFSET;
+        // Rotate local (0, -dist) by rot around (cx, cy)
+        const hx = cx + dist * Math.sin(rot);
+        const hy = cy - dist * Math.cos(rot);
+        return { cx, cy, dw, dh, rot, hx, hy };
+    }
+
+    function renderHandles() {
+        const hc  = document.getElementById('handle-canvas');
+        if (!hc) return;
+        const ctx = hc.getContext('2d');
+        ctx.clearRect(0, 0, hc.width, hc.height);
+        const layer = getSelectedLayer();
+        if (!layer || !layer.imgW) return;
+
+        const { cx, cy, dw, dh, rot, hx, hy } = getLayerHandlePos(layer);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+
+        // Dashed bounding box
+        ctx.strokeStyle = 'rgba(124,60,160,0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 3]);
+        ctx.strokeRect(-dw/2, -dh/2, dw, dh);
+        ctx.setLineDash([]);
+
+        // Corner handles
+        [[-dw/2,-dh/2],[dw/2,-dh/2],[dw/2,dh/2],[-dw/2,dh/2]].forEach(([x,y]) => {
+            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2);
+            ctx.fillStyle = '#fff'; ctx.fill();
+            ctx.strokeStyle = '#7c3ca0'; ctx.lineWidth = 1.5; ctx.stroke();
+        });
+
+        // Stem line to rotation handle
+        ctx.strokeStyle = 'rgba(124,60,160,0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -dh/2);
+        ctx.lineTo(0, -dh/2 - ROTATE_HANDLE_OFFSET);
+        ctx.stroke();
+
+        // Rotation handle circle
+        ctx.beginPath();
+        ctx.arc(0, -dh/2 - ROTATE_HANDLE_OFFSET, ROTATE_HANDLE_RADIUS, 0, Math.PI*2);
+        ctx.fillStyle = '#7c3ca0'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+        // Rotation arrow inside circle
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(0, -dh/2 - ROTATE_HANDLE_OFFSET, 3.2, -2.3, 0.9);
+        ctx.stroke();
+        // Small arrowhead at arc end
+        const ae = 0.9;
+        const ax = 3.2 * Math.cos(ae), ay = (-dh/2 - ROTATE_HANDLE_OFFSET) + 3.2 * Math.sin(ae);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax + 2.5*Math.cos(ae + Math.PI*0.55), ay + 2.5*Math.sin(ae + Math.PI*0.55));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax + 2.5*Math.cos(ae - Math.PI*0.55), ay + 2.5*Math.sin(ae - Math.PI*0.55));
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
     let _dragInitialized = false;
     function initDesignDrag() {
         if (_dragInitialized) return; _dragInitialized = true;
-        const dc = document.getElementById('design-canvas');
-        let isDragging=false, lastX=0, lastY=0;
-        const dragStart = (cx,cy) => { isDragging=true; lastX=cx; lastY=cy; dc.style.cursor='grabbing'; };
-        const dragMove  = (cx,cy) => {
-            if (!isDragging) return;
-            const rect = dc.getBoundingClientRect();
+        const hc = document.getElementById('handle-canvas');
+        if (!hc) return;
+
+        let mode          = null; // 'drag' | 'rotate'
+        let lastX = 0, lastY = 0;
+        let rotStartAngle = 0, rotStartRot = 0;
+
+        function getCanvasPt(clientX, clientY) {
             const pa   = GARMENTS[document.getElementById('garment-select').value].printArea;
-            const sx = pa.w/rect.width; const sy = pa.h/rect.height;
-            const dx = (cx-lastX)*sx; const dy = (cy-lastY)*sy; lastX=cx; lastY=cy;
-            const slX = document.getElementById('design-pos-x');
-            const slY = document.getElementById('design-pos-y');
-            slX.value = Math.max(-1,Math.min(1,parseFloat(slX.value)+dx*2/pa.w));
-            slY.value = Math.max(-1,Math.min(1,parseFloat(slY.value)+dy*2/pa.h));
-            document.getElementById('pos-x-val').textContent = parseFloat(slX.value).toFixed(2);
-            document.getElementById('pos-y-val').textContent = parseFloat(slY.value).toFixed(2);
+            const rect = hc.getBoundingClientRect();
+            return {
+                x: (clientX - rect.left) * (pa.w / rect.width),
+                y: (clientY - rect.top)  * (pa.h / rect.height),
+            };
+        }
+
+        function nearRotHandle(mx, my) {
+            const layer = getSelectedLayer();
+            if (!layer || !layer.imgW) return false;
+            const { hx, hy } = getLayerHandlePos(layer);
+            return Math.sqrt((mx - hx)**2 + (my - hy)**2) <= ROTATE_HANDLE_RADIUS + 6;
+        }
+
+        const onStart = (clientX, clientY) => {
+            const {x, y} = getCanvasPt(clientX, clientY);
+            const layer = getSelectedLayer();
+            if (!layer) return;
+            if (nearRotHandle(x, y)) {
+                mode = 'rotate';
+                const { cx, cy } = getLayerHandlePos(layer);
+                rotStartAngle = Math.atan2(y - cy, x - cx);
+                rotStartRot   = layer.rotation || 0;
+                hc.style.cursor = 'crosshair';
+            } else {
+                mode = 'drag';
+                lastX = clientX; lastY = clientY;
+                hc.style.cursor = 'grabbing';
+            }
+        };
+
+        const onMove = (clientX, clientY) => {
+            const {x, y} = getCanvasPt(clientX, clientY);
+            if (!mode) {
+                hc.style.cursor = nearRotHandle(x, y) ? 'crosshair' : 'grab';
+                return;
+            }
+            const layer = getSelectedLayer();
+            if (!layer) return;
+
+            if (mode === 'drag') {
+                const pa   = GARMENTS[document.getElementById('garment-select').value].printArea;
+                const rect = hc.getBoundingClientRect();
+                const sx = pa.w / rect.width; const sy = pa.h / rect.height;
+                const dx = (clientX - lastX) * sx; const dy = (clientY - lastY) * sy;
+                lastX = clientX; lastY = clientY;
+                layer.posX = Math.max(-1, Math.min(1, layer.posX + dx * 2 / pa.w));
+                layer.posY = Math.max(-1, Math.min(1, layer.posY + dy * 2 / pa.h));
+                document.getElementById('design-pos-x').value = layer.posX;
+                document.getElementById('design-pos-y').value = layer.posY;
+                document.getElementById('pos-x-val').textContent = parseFloat(layer.posX).toFixed(2);
+                document.getElementById('pos-y-val').textContent = parseFloat(layer.posY).toFixed(2);
+            } else if (mode === 'rotate') {
+                const { cx, cy } = getLayerHandlePos(layer);
+                const angle = Math.atan2(y - cy, x - cx);
+                const delta = angle - rotStartAngle;
+                layer.rotation = rotStartRot + delta * 180 / Math.PI;
+                document.getElementById('design-rotation').value = Math.round(layer.rotation);
+                document.getElementById('rotation-val').textContent = Math.round(layer.rotation) + '°';
+            }
             renderDesign();
         };
-        const dragEnd = () => { isDragging=false; dc.style.cursor='grab'; };
-        dc.addEventListener('mousedown',  e => { e.preventDefault(); dragStart(e.clientX,e.clientY); });
-        document.addEventListener('mousemove', e => dragMove(e.clientX,e.clientY));
-        document.addEventListener('mouseup',   () => dragEnd());
-        dc.addEventListener('touchstart', e => { e.preventDefault(); dragStart(e.touches[0].clientX,e.touches[0].clientY); }, {passive:false});
-        document.addEventListener('touchmove', e => { if (isDragging) { e.preventDefault(); dragMove(e.touches[0].clientX,e.touches[0].clientY); } }, {passive:false});
-        document.addEventListener('touchend', () => dragEnd());
+
+        const onEnd = () => { mode = null; hc.style.cursor = 'grab'; };
+
+        hc.addEventListener('mousedown',  e => { e.preventDefault(); onStart(e.clientX, e.clientY); });
+        document.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+        document.addEventListener('mouseup',   () => onEnd());
+        hc.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+        document.addEventListener('touchmove', e => { if (mode) { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); } }, {passive:false});
+        document.addEventListener('touchend', () => onEnd());
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1328,22 +1666,28 @@
         const title  = document.getElementById('printify-title').value.trim();
         const type   = document.getElementById('garment-select').value;
         const btn    = document.getElementById('printify-send-btn');
-        if (!shopId)           { showPrintifyFeedback('Please select a Printify shop.'); return; }
-        if (!title)            { showPrintifyFeedback('Please enter a product name.'); return; }
-        if (!previewDesignSrc) { showPrintifyFeedback('No design loaded in preview.'); return; }
-        const posX = parseFloat(document.getElementById('design-pos-x').value);
-        const posY = parseFloat(document.getElementById('design-pos-y').value);
-        const sc   = parseFloat(document.getElementById('design-scale').value);
-        btn.disabled = true; btn.textContent = 'Creating product…'; resetPrintifyFeedback();
+        if (!shopId)               { showPrintifyFeedback('Please select a Printify shop.'); return; }
+        if (!title)                { showPrintifyFeedback('Please enter a product name.'); return; }
+        if (!previewLayers.length) { showPrintifyFeedback('No design loaded in preview.'); return; }
+        const sel    = getSelectedLayer();
+        const posX   = sel ? sel.posX  : 0;
+        const posY   = sel ? sel.posY  : 0;
+        const sc     = sel ? sel.scale : 1;
+        const isBaked = previewLayers.length > 1 || !!(sel?.rotation);
+        btn.disabled = true; btn.textContent = 'Preparing…'; resetPrintifyFeedback();
         try {
+            const imageSrc = await getFlattenedSrc();
+            btn.textContent = 'Creating product…';
             const csrf = document.querySelector('meta[name="csrf-token"]').content;
             const res  = await fetch('/printify/products', {
                 method:'POST',
                 headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json' },
                 body: JSON.stringify({
-                    shop_id:parseInt(shopId), garment_type:type, image_source:previewDesignSrc, title,
+                    shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc, title,
                     color:hexToColorName(document.getElementById('printify-color-hex').value),
-                    pos_x:0.5+posX*0.5, pos_y:0.5+posY*0.5, design_scale:sc,
+                    pos_x:        isBaked ? 0.5 : 0.5+posX*0.5,
+                    pos_y:        isBaked ? 0.5 : 0.5+posY*0.5,
+                    design_scale: isBaked ? 1   : sc,
                 }),
             });
             const data = await res.json();
@@ -1361,18 +1705,21 @@
         const title  = document.getElementById('printify-title').value.trim();
         const btn    = document.getElementById('printify-bulk-btn');
         const send   = document.getElementById('printify-send-btn');
-        if (!shopId || !title || !previewDesignSrc) {
+        if (!shopId || !title || !previewLayers.length) {
             showPrintifyFeedback('Please fill in all fields and load a design.'); return;
         }
-        const posX = parseFloat(document.getElementById('design-pos-x').value);
-        const posY = parseFloat(document.getElementById('design-pos-y').value);
-        const sc   = parseFloat(document.getElementById('design-scale').value);
         const garments = [
             {type:'tshirt',label:'T-Shirt'},{type:'hoodie',label:'Hoodie'},
             {type:'tanktop',label:'Tank Top'},{type:'longsleeve',label:'Long Sleeve'},
             {type:'sweatshirt',label:'Sweatshirt'},
         ];
         btn.disabled = true; send.disabled = true; resetPrintifyFeedback();
+        const imageSrc = await getFlattenedSrc();
+        const sel     = getSelectedLayer();
+        const isBaked = previewLayers.length > 1 || !!(sel?.rotation);
+        const posX    = !isBaked ? (sel?.posX  ?? 0) : 0;
+        const posY    = !isBaked ? (sel?.posY  ?? 0) : 0;
+        const sc      = !isBaked ? (sel?.scale ?? 1) : 1;
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         const resultLines = [];
         const renderProgress = (cur, curLabel) => {
@@ -1395,7 +1742,7 @@
                     method:'POST',
                     headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json'},
                     body: JSON.stringify({
-                        shop_id:parseInt(shopId), garment_type:type, image_source:previewDesignSrc,
+                        shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc,
                         title:title+' — '+label,
                         color:hexToColorName(document.getElementById('printify-color-hex').value),
                         pos_x:0.5+posX*0.5, pos_y:0.5+posY*0.5, design_scale:sc,
@@ -1450,6 +1797,137 @@
         const panel = document.getElementById('printify-panel');
         if (panel.classList.contains('hidden')) togglePrintifyPanel();
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    //  SAVED DESIGNS
+    // ═══════════════════════════════════════════════════════════════
+    let _selectedSavedDesign = null;
+
+    async function loadSavedDesigns() {
+        const list = document.getElementById('saved-designs-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed">Loading…</p>';
+        try {
+            const res  = await fetch('/designs/saved', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            renderSavedDesignsList(Array.isArray(data) ? data : []);
+        } catch (e) {
+            list.innerHTML = '<p class="text-[10px] text-red-500 text-center py-4">Error loading</p>';
+        }
+    }
+
+    function renderSavedDesignsList(designs) {
+        const list   = document.getElementById('saved-designs-list');
+        const addBtn = document.getElementById('add-to-canvas-btn');
+        _selectedSavedDesign = null;
+        if (addBtn) addBtn.disabled = true;
+        if (!designs.length) {
+            list.innerHTML = '<p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed px-2">No saved designs yet.<br>Tap <i class=\'fas fa-bookmark\'></i> on a design to save it.</p>';
+            return;
+        }
+        list.innerHTML = '';
+        designs.forEach(d => {
+            const item = document.createElement('div');
+            item.className = 'saved-design-item group relative rounded-lg overflow-hidden cursor-pointer ' +
+                'border-2 border-transparent hover:border-[#7c3ca0] transition-all';
+            item.dataset.id = d.id;
+            const img = document.createElement('img');
+            img.src = d.image_data; img.alt = d.title || 'Design';
+            img.className = 'w-full h-20 object-contain bg-cream-100 block';
+            const del = document.createElement('button');
+            del.type = 'button'; del.title = 'Remove';
+            del.className = 'absolute top-0.5 right-0.5 w-5 h-5 bg-red-500/90 text-white rounded-full ' +
+                'hidden group-hover:flex items-center justify-center text-xs leading-none';
+            del.innerHTML = '×';
+            del.onclick = async (e) => { e.stopPropagation(); await deleteSavedDesign(d.id); };
+            item.appendChild(img); item.appendChild(del);
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.saved-design-item').forEach(el => {
+                    el.classList.remove('border-[#7c3ca0]');
+                    el.classList.add('border-transparent');
+                });
+                item.classList.add('border-[#7c3ca0]');
+                item.classList.remove('border-transparent');
+                _selectedSavedDesign = { id: d.id, src: d.image_data };
+                if (addBtn) addBtn.disabled = false;
+            });
+            list.appendChild(item);
+        });
+    }
+
+    function imgKey(src) { return src.slice(0, 120); }
+
+    async function saveDesign(imageSrc, btn) {
+        const key = imgKey(imageSrc);
+        if (savedImgKeys.has(key)) {
+            showToast('Already saved', 'info');
+            return;
+        }
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        try {
+            const res = await fetch('/designs/saved', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                body: JSON.stringify({ image_data: imageSrc }),
+            });
+            if (!res.ok) throw new Error('Failed to save');
+            savedImgKeys.add(key);
+            // Mark all save buttons for this image as saved (purple)
+            document.querySelectorAll('.save-design-btn').forEach(b => {
+                if (imgKey(b.getAttribute('data-image-src') || '') === key) {
+                    b.style.background = '#7c3ca0';
+                    b.style.borderColor = '#7c3ca0';
+                    const icon = b.querySelector('i');
+                    if (icon) { icon.style.color = '#ffffff'; }
+                    b.title = 'Already saved';
+                }
+            });
+            showToast('Design saved! ✓');
+        } catch (e) {
+            showToast('Could not save design', 'error');
+        }
+    }
+
+    async function deleteSavedDesign(id) {
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        try {
+            await fetch(`/designs/saved/${id}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            });
+            if (_selectedSavedDesign?.id === id) {
+                _selectedSavedDesign = null;
+                const addBtn = document.getElementById('add-to-canvas-btn');
+                if (addBtn) addBtn.disabled = true;
+            }
+            await loadSavedDesigns();
+        } catch (e) { /* silent */ }
+    }
+
+    function addSelectedToCanvas() {
+        if (!_selectedSavedDesign) return;
+        addLayerToCanvas(_selectedSavedDesign.src);
+        // Deselect in panel
+        document.querySelectorAll('.saved-design-item').forEach(el => {
+            el.classList.remove('border-[#7c3ca0]'); el.classList.add('border-transparent');
+        });
+        _selectedSavedDesign = null;
+        const addBtn = document.getElementById('add-to-canvas-btn');
+        if (addBtn) addBtn.disabled = true;
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = 'fixed bottom-6 right-6 z-[100] px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg ' +
+            (type === 'error' ? 'bg-red-600 text-white' : type === 'info' ? 'bg-[#7c3ca0] text-white' : 'bg-ink text-white');
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => {
+            t.style.transition = 'opacity 0.3s';
+            t.style.opacity = '0';
+            setTimeout(() => t.remove(), 300);
+        }, 2200);
+    }
 </script>
 
 </body>

@@ -10,6 +10,7 @@ use App\Jobs\GenerateDesignJob;
 use App\Models\ApiUsageLog;
 use Illuminate\Http\Request;
 use App\Models\Chat;
+use App\Models\SavedDesign;
 
 use Illuminate\Support\Str;
 
@@ -364,7 +365,63 @@ if ($isEdit) {
    }
 }
 
-/**
+// ─── Saved Designs ──────────────────────────────────────────────────────────
+
+    /**
+     * GET /designs/saved  — list the current user's saved designs.
+     */
+    public function savedDesigns()
+    {
+        $designs = SavedDesign::where('user_id', auth()->id())
+            ->latest()
+            ->select(['id', 'image_data', 'title', 'created_at'])
+            ->get();
+
+        return response()->json($designs);
+    }
+
+    /**
+     * POST /designs/saved  — save a design image for the current user.
+     */
+    public function saveDesign(\Illuminate\Http\Request $request)
+    {
+        $data = $request->validate([
+            'image_data' => ['required', 'string'],
+            'title'      => ['nullable', 'string', 'max:120'],
+        ]);
+
+        // Limit to 50 saved designs per user
+        $count = SavedDesign::where('user_id', auth()->id())->count();
+        if ($count >= 50) {
+            return response()->json(['error' => 'Maximum 50 saved designs reached.'], 422);
+        }
+
+        $design = SavedDesign::create([
+            'user_id'    => auth()->id(),
+            'image_data' => $data['image_data'],
+            'title'      => $data['title'] ?? null,
+        ]);
+
+        return response()->json(['success' => true, 'id' => $design->id], 201);
+    }
+
+    /**
+     * DELETE /designs/saved/{savedDesign}  — remove a saved design.
+     */
+    public function deleteSavedDesign(SavedDesign $savedDesign)
+    {
+        if ($savedDesign->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $savedDesign->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
  * Resize a base64 image to max 1024px on the longest side, JPEG quality 85.
  * This keeps payloads under ~300 KB which all AI backends accept.
  * Returns base64 string without data URI prefix.
