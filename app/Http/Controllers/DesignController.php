@@ -74,22 +74,23 @@ class DesignController extends Controller
     $provider = $validated['provider'] ?? 'gemini';
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
+    // Diffusion models (Chutes/Together) use CLIP with ~77 token limit (~350 chars).
+    // Truncate the user prompt before adding the boilerplate prefix.
+    $userPromptForDiffusion = mb_substr($userPrompt, 0, 270); // 270 + ~80 prefix ≈ 350 total
+
     if ($hasReferenceImage) {
-        // When the user uploads a reference image, pass the prompt as-is so the model
-        // can actually follow the instruction about what to DO with that image.
-        // Prepending a graphic-design boilerplate would override the user's image and intent.
         $prompt = $userPrompt;
     } elseif ($provider === 'chutes') {
         // Text-to-image: add graphic design boilerplate so diffusion models output clean prints
         $prompt = "print-ready graphic design, centered on white background, "
                 . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
                 . "no text unless specified, high contrast, isolated subject, "
-                . $userPrompt;
+                . $userPromptForDiffusion;
     } elseif ($provider === 'together') {
         $prompt = "print-ready graphic design, centered on white background, "
                 . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
                 . "no text unless specified, high contrast, isolated subject, "
-                . $userPrompt;
+                . $userPromptForDiffusion;
     } else {
         // Gemini (LLM): entiende instrucciones en lenguaje natural
         $systemPrompt = "You are a professional fashion and apparel designer.\nCreate a print-ready, high-quality design suitable for clothing.\n\nDesign requirements:\n\nCentered composition\nPlain color background (no shadows)\nNo use of gradients\nBackground must be a color you haven't used for the design\nClean vector style with crisp, well-defined lines\nScalable without loss of quality\nDo not create any text unless the user specifies so. Create only the words the user has mentioned\n\n";

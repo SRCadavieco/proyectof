@@ -27,13 +27,11 @@ class TogetherService
 
     public function generateDesignWithContext(string $prompt, array $context = [], ?string $backgroundColor = null, string $model = 'flux_dev'): array
     {
-        $fullPrompt = $prompt;
-        if (!empty($context)) {
-            $history    = implode("\n", array_map(fn($m) => "- {$m}", $context));
-            $fullPrompt = "Previous context:\n{$history}\n\nNew request: {$prompt}";
-        }
+        // Diffusion models (FLUX) use a CLIP encoder with ~77 token limit.
+        // Conversation history makes prompts too long — ignore context and truncate.
+        $truncated = mb_substr($prompt, 0, 350);
 
-        return $this->generate($fullPrompt, $model);
+        return $this->generate($truncated, $model);
     }
 
     /**

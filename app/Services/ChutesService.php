@@ -126,13 +126,12 @@ class ChutesService
         ?string $backgroundColor = null,
         string $model = 'z_image_turbo'
     ): array {
-        $fullPrompt = $prompt;
-        if (!empty($context)) {
-            $history    = implode("\n", array_map(fn($m) => "- {$m}", $context));
-            $fullPrompt = "Historial previo de la conversación:\n{$history}\n\nNueva solicitud: {$prompt}";
-        }
+        // Diffusion models (FLUX, Z-Image) use a CLIP encoder with ~77 token limit.
+        // Conversation history makes prompts too long and causes API errors — ignore it.
+        // Truncate to 350 chars to stay safely under the token limit.
+        $truncated = mb_substr($prompt, 0, 350);
 
-        return $this->generateDesign($fullPrompt, $backgroundColor, $model);
+        return $this->generateDesign($truncated, $backgroundColor, $model);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -270,6 +270,7 @@
                     <textarea
                         id="prompt"
                         rows="1"
+                        maxlength="270"
                         placeholder="Describe your idea…"
                         class="flex-1 bg-cream-100 border border-cream-300 rounded-xl
                                px-4 py-2.5 text-sm resize-none text-ink
@@ -286,6 +287,9 @@
                     </button>
                 </div>
             </form>
+        </div>
+            <!-- Char counter (only visible when near/at limit) -->
+            <div id="char-counter" class="hidden text-right text-[10px] pr-1 mt-0.5" style="color:#8a8a8a"></div>
         </div>
 
     </main>
@@ -618,15 +622,42 @@
                 btn.style.background = '#1a1a1a'; btn.style.color = '#fff';
                 providerHidden.value = btn.dataset.provider;
                 syncModelOptions(btn.dataset.provider);
+                syncPromptLimit(btn.dataset.provider);
             });
         });
         syncModelOptions('chutes');
+        syncPromptLimit('chutes');
+    }
+
+    // ─── Char counter & dynamic maxlength ───────────────────────────
+    const LIMIT_DIFFUSION = 270;
+    const charCounter = document.getElementById('char-counter');
+
+    function updateCharCounter() {
+        const max = parseInt(promptInput.getAttribute('maxlength') || LIMIT_DIFFUSION);
+        const len = promptInput.value.length;
+        const remaining = max - len;
+        if (remaining <= 60) {
+            charCounter.textContent = remaining + ' left';
+            charCounter.style.color = remaining <= 20 ? '#ef4444' : '#8a8a8a';
+            charCounter.classList.remove('hidden');
+        } else {
+            charCounter.classList.add('hidden');
+        }
+    }
+
+    function syncPromptLimit(provider) {
+        // Gemini is an LLM and handles long prompts; diffusion models need short ones
+        const max = (provider === 'gemini') ? 1500 : LIMIT_DIFFUSION;
+        promptInput.setAttribute('maxlength', max);
+        updateCharCounter();
     }
 
     // ─── Textarea auto-resize ─────────────────────────────────────────
     promptInput.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        updateCharCounter();
     });
     promptInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
