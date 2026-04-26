@@ -56,7 +56,7 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
-           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_schnell,flux_dev'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_dev'],
            'provider' => ['nullable', 'string', 'in:gemini,chutes,together'],
            'is_edit' => ['nullable', 'boolean'],
        ]);

@@ -99,20 +99,8 @@
             background-position: center;
         }
 
-        /* ── Provider / Model pills ── */
-        .provider-btn, .model-pill {
-            flex: 1;
-            padding: 5px 4px;
-            font-size: 9px;
-            font-weight: 500;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            text-align: center;
-            cursor: pointer;
-            border: none;
-            outline: none;
-            transition: background 0.15s, color 0.15s;
-        }
+
+        @media (min-width: 768px) { #sidebar-toggle-btn { display: none; } }
     </style>
 </head>
 <body class="bg-cream-100 text-ink h-[100dvh] overflow-hidden font-sans antialiased">
@@ -152,22 +140,6 @@
         <!-- Footer -->
         <div class="border-t border-cream-300 p-4 space-y-3">
 
-            <!-- AI Engine selector -->
-            <div>
-                <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted mb-1.5">AI Engine</p>
-                <div class="flex border border-cream-300 rounded-lg overflow-hidden">
-                    <button type="button" id="provider-btn-chutes" data-provider="chutes"
-                            class="provider-btn"
-                            style="background:#1a1a1a;color:#fff;">Chutes</button>
-                    <button type="button" id="provider-btn-together" data-provider="together"
-                            class="provider-btn"
-                            style="background:transparent;color:#8a8a8a;border-left:1px solid #e8e3d9;">Together</button>
-                </div>
-                <div id="model-pills" class="flex border border-cream-300 rounded-lg overflow-hidden mt-1"></div>
-                <input type="hidden" id="ai-provider" value="chutes">
-                <input type="hidden" id="ai-model"    value="z_image_turbo">
-            </div>
-
             <!-- Design credits -->
             <div class="flex items-center justify-between px-3 py-2.5 bg-cream-100 border border-cream-300 rounded-xl">
                 <span class="text-xs text-ink-muted tracking-wide">Design Credits</span>
@@ -197,20 +169,19 @@
         <!-- Header -->
         <header class="bg-white/80 backdrop-blur-sm border-b border-cream-300
                        px-4 py-3 flex items-center gap-3 z-10 relative shrink-0">
-            <button onclick="toggleSidebar()"
+            <button id="sidebar-toggle-btn" onclick="toggleSidebar()"
                     class="md:hidden icon-btn shrink-0" aria-label="Open menu">
                 <i class="fas fa-bars text-base"></i>
             </button>
             <h1 id="chat-title"
-                class="font-medium text-sm text-ink truncate flex-1 text-center md:text-left">
+                class="font-medium text-sm text-ink truncate flex-1 text-left">
                 New Design
             </h1>
-            <div class="w-8 shrink-0 md:hidden"></div>
         </header>
 
         <!-- Chat area -->
         <div id="chat-container" class="flex-1 overflow-y-auto">
-            <div class="max-w-3xl mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto px-4 py-8">
 
                 <!-- Welcome screen (hidden once messages exist) -->
                 <div id="welcome-screen" class="flex flex-col items-center py-10 text-center">
@@ -245,7 +216,7 @@
                 </div>
                 <span id="loader-text">Creating your design…</span>
             </div>
-            <form id="design-form" class="max-w-3xl mx-auto">
+            <form id="design-form" class="max-w-4xl mx-auto">
                 <!-- Edit mode banner -->
                 <div id="edit-banner"
                      class="hidden mb-2 items-center gap-2 px-3 py-1.5
@@ -286,10 +257,9 @@
                         <i class="fas fa-arrow-up text-sm"></i>
                     </button>
                 </div>
+                <!-- Char counter -->
+                <div id="char-counter" class="flex justify-end text-[10px] pr-1 mt-1" style="color:#8a8a8a">0 / 270</div>
             </form>
-        </div>
-            <!-- Char counter (only visible when near/at limit) -->
-            <div id="char-counter" class="hidden text-right text-[10px] pr-1 mt-0.5" style="color:#8a8a8a"></div>
         </div>
 
     </main>
@@ -527,13 +497,7 @@
     const chatContainer     = document.getElementById('chat-container');
     const previewImageStore = [];
 
-    const MODEL_OPTIONS = {
-        chutes:   [{ value:'z_image_turbo', label:'Z-Image Turbo' }, { value:'flux_schnell', label:'FLUX Schnell' }],
-        together: [{ value:'flux_dev', label:'FLUX.2 Dev' }],
-    };
-    const providerHidden = document.getElementById('ai-provider');
-    const modelHidden    = document.getElementById('ai-model');
-    const modelPillsEl   = document.getElementById('model-pills');
+
 
     // ─── Helpers ─────────────────────────────────────────────────────
     function escapeHtml(text) {
@@ -594,40 +558,7 @@
         if (e.target === this) { hideDeleteModal(); pendingDeleteId = null; }
     });
 
-    // ─── AI Engine / Model ────────────────────────────────────────────
-    function syncModelOptions(provider) {
-        const options = MODEL_OPTIONS[provider] ?? MODEL_OPTIONS.gemini;
-        modelPillsEl.innerHTML = options.map((m, i) => {
-            const bl    = i > 0 ? 'border-left:1px solid #e8e3d9;' : '';
-            const style = i === 0 ? 'background:#5a2275;color:#fff;' + bl : 'background:transparent;color:#8a8a8a;' + bl;
-            return `<button type="button" data-model="${m.value}" class="model-pill" style="${style}">${m.label}</button>`;
-        }).join('');
-        modelHidden.value = options[0].value;
-        modelPillsEl.querySelectorAll('.model-pill').forEach(btn => {
-            btn.addEventListener('click', () => {
-                modelPillsEl.querySelectorAll('.model-pill').forEach(b => {
-                    b.style.background = 'transparent'; b.style.color = '#8a8a8a';
-                });
-                btn.style.background = '#5a2275'; btn.style.color = '#fff';
-                modelHidden.value = btn.dataset.model;
-            });
-        });
-    }
-    function initProviderButtons() {
-        document.querySelectorAll('.provider-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.provider-btn').forEach(b => {
-                    b.style.background = 'transparent'; b.style.color = '#8a8a8a';
-                });
-                btn.style.background = '#1a1a1a'; btn.style.color = '#fff';
-                providerHidden.value = btn.dataset.provider;
-                syncModelOptions(btn.dataset.provider);
-                syncPromptLimit(btn.dataset.provider);
-            });
-        });
-        syncModelOptions('chutes');
-        syncPromptLimit('chutes');
-    }
+
 
     // ─── Char counter & dynamic maxlength ───────────────────────────
     const LIMIT_DIFFUSION = 270;
@@ -637,19 +568,12 @@
         const max = parseInt(promptInput.getAttribute('maxlength') || LIMIT_DIFFUSION);
         const len = promptInput.value.length;
         const remaining = max - len;
-        if (remaining <= 60) {
-            charCounter.textContent = remaining + ' left';
-            charCounter.style.color = remaining <= 20 ? '#ef4444' : '#8a8a8a';
-            charCounter.classList.remove('hidden');
-        } else {
-            charCounter.classList.add('hidden');
-        }
+        charCounter.textContent = len + ' / ' + max;
+        charCounter.style.color = remaining <= 20 ? '#ef4444' : remaining <= 60 ? '#f59e0b' : '#8a8a8a';
     }
 
-    function syncPromptLimit(provider) {
-        // Gemini is an LLM and handles long prompts; diffusion models need short ones
-        const max = (provider === 'gemini') ? 1500 : LIMIT_DIFFUSION;
-        promptInput.setAttribute('maxlength', max);
+    function syncPromptLimit() {
+        promptInput.setAttribute('maxlength', LIMIT_DIFFUSION);
         updateCharCounter();
     }
 
@@ -1028,7 +952,8 @@
                 body: JSON.stringify({
                     prompt, chat_id: currentChatId,
                     imageBase64: snapshotImage, mimeType: snapshotMime,
-                    model: modelHidden.value, provider: providerHidden.value,
+                    model: (snapshotImage || isEditMode) ? 'flux_dev' : 'z_image_turbo',
+                    provider: (snapshotImage || isEditMode) ? 'together' : 'chutes',
                     is_edit: isEditMode,
                 }),
             });
@@ -1061,7 +986,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         TokenManager.init();
         await TokenManager.sync();
-        initProviderButtons();
+        syncPromptLimit();
         await loadChats();
         const res  = await fetch('/chats');
         const list = await res.json();
