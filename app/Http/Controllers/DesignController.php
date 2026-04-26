@@ -273,6 +273,10 @@ if ($isEdit) {
             if ($noBg) {
                 $processed = $backgrounds->convertToWebp($noBg) ?? $noBg;
             } else {
+                \Illuminate\Support\Facades\Log::warning('DesignController: removeBackground failed, serving raw image', [
+                    'provider' => $provider,
+                    'model'    => $model,
+                ]);
                 $processed = null;
             }
 
