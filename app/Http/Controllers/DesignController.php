@@ -48,6 +48,7 @@ class DesignController extends Controller
     BackgroundRemovalService $backgrounds
 ) {
    set_time_limit(300); // Chutes models can take up to ~3 min on cold start
+   ini_set('memory_limit', '256M'); // large base64 images need more than the 128M default
    try {
        $validated = $request->validate([
            'prompt' => ['required', 'string'],
@@ -179,15 +180,21 @@ if ($isEdit) {
         ], 422);
     }
 
-    // Limpiar prefijo data URI si lo tiene
+    // Limpiar prefijo data URI si lo tiene, guardando el mimeType real
     $cleanBase64 = $lastImage;
+    $detectedMime = 'image/jpeg'; // default
     if (str_starts_with($cleanBase64, 'data:image')) {
-        $cleanBase64 = preg_replace('/^data:image\/(png|jpeg|jpg|webp);base64,/i', '', $cleanBase64);
+        if (preg_match('/^data:(image\/[a-z+]+);base64,/i', $cleanBase64, $m)) {
+            $detectedMime = strtolower($m[1]);
+        }
+        $cleanBase64 = preg_replace('/^data:image\/[^;]+;base64,/i', '', $cleanBase64);
     }
 
-    // Resize stored image before sending — previous AI output can be large webp
-    $cleanBase64 = $this->resizeImageForAI($cleanBase64);
-    $editMimeType = 'image/jpeg'; // resizeImageForAI always outputs JPEG
+    // Resize stored image before sending (resizeImageForAI always outputs JPEG when successful)
+    $resized = $this->resizeImageForAI($cleanBase64);
+    // If resize succeeded the output is JPEG; if it returned the same string it failed → keep real mime
+    $editMimeType = ($resized !== $cleanBase64) ? 'image/jpeg' : $detectedMime;
+    $cleanBase64  = $resized;
 
     $result = $ai->generateFromReference(
         $prompt,
@@ -334,10 +341,14 @@ if ($isEdit) {
            'message' => $e->getMessage(),
            'file'    => $e->getFile(),
            'line'    => $e->getLine(),
+           'trace'   => substr($e->getTraceAsString(), 0, 500),
        ]);
+       $msg = app()->environment('production')
+           ? 'Ocurrió un error inesperado. Por favor inténtalo de nuevo.'
+           : $e->getMessage();
        return response()->json([
            'success' => false,
-           'error'   => 'Ocurrió un error inesperado. Por favor inténtalo de nuevo.',
+           'error'   => $msg,
        ], 500);
    }
 }
@@ -358,6 +369,8 @@ private function resizeImageForAI(string $base64): string
     $binary = base64_decode($raw);
     if (!$binary) return $raw;
 
+    // GD en producción compila con --with-webp, por lo que imagecreatefromstring
+    // soporta JPEG, PNG y WebP nativamente.
     $src = @imagecreatefromstring($binary);
     if (!$src) return $raw;
 
