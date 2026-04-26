@@ -286,6 +286,12 @@ if ($isEdit) {
                 $base64 = $processed;
             }
 
+            // Ensure stored value always has a data URI prefix so the browser
+            // can use it directly as <img src> on reload without treating it as a URL.
+            if (!str_starts_with($base64, 'data:')) {
+                $base64 = 'data:image/png;base64,' . $base64;
+            }
+
             session(['last_image' => $base64]);
             $imageValue = $base64;
         } elseif ($imageUrl) {

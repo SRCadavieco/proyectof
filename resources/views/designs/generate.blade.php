@@ -822,8 +822,12 @@
             const thumb = document.createElement('div');
             thumb.className = 'chat-thumb';
             if (chat.thumbnail) {
+                let thumbSrc = chat.thumbnail;
+                if (!thumbSrc.startsWith('data:') && !thumbSrc.startsWith('http')) {
+                    thumbSrc = 'data:image/png;base64,' + thumbSrc;
+                }
                 const img = document.createElement('img');
-                img.src = chat.thumbnail; img.alt = '';
+                img.src = thumbSrc; img.alt = '';
                 thumb.appendChild(img);
             } else {
                 thumb.innerHTML = '<i class="fas fa-image"></i>';
@@ -950,9 +954,18 @@
         messagesContainer.innerHTML = '';
         document.getElementById('chat-title').textContent = data.chat?.title || 'New Design';
         data.messages.forEach(msg => {
-            if (msg.role === 'user')  addUserMessage(msg.content);
-            else if (msg.image)       addBotResponse(msg.image);
-            else if (msg.content)     addBotError(msg.content);
+            if (msg.role === 'user') {
+                addUserMessage(msg.content);
+            } else if (msg.image) {
+                // Normalise: ensure it has a data URI prefix (old rows may be raw base64)
+                let imgSrc = msg.image;
+                if (imgSrc && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
+                    imgSrc = 'data:image/png;base64,' + imgSrc;
+                }
+                addBotResponse(imgSrc);
+            } else if (msg.content) {
+                addBotError(msg.content);
+            }
         });
         updateWelcomeScreen();
         await loadChats();
