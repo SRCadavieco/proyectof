@@ -341,6 +341,8 @@ if ($isEdit) {
        ], 500);
    }
 }
+
+/**
  * Resize a base64 image to max 1024px on the longest side, JPEG quality 85.
  * This keeps payloads under ~300 KB which all AI backends accept.
  * Returns base64 string without data URI prefix.
