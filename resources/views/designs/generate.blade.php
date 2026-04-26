@@ -216,7 +216,7 @@
 
         <!-- Chat area -->
         <div id="chat-container" class="flex-1 overflow-y-auto">
-            <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="max-w-2xl mx-auto px-4 py-8">
 
                 <!-- Welcome screen (hidden once messages exist) -->
                 <div id="welcome-screen" class="flex flex-col items-center py-10 text-center">
@@ -251,7 +251,7 @@
                 </div>
                 <span id="loader-text">Creating your design…</span>
             </div>
-            <form id="design-form" class="max-w-4xl mx-auto">
+            <form id="design-form" class="max-w-2xl mx-auto">
                 <!-- Edit mode banner -->
                 <div id="edit-banner"
                      class="hidden mb-2 items-center gap-2 px-3 py-1.5
@@ -334,6 +334,34 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- ═══════════ IMAGE LIGHTBOX ═══════════ -->
+<div id="lightbox-modal"
+     class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+     onclick="closeLightbox()">
+    <button onclick="closeLightbox()" aria-label="Close"
+            class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full
+                   bg-white/10 hover:bg-white/20 text-white transition-colors">
+        <i class="fas fa-times"></i>
+    </button>
+    <img id="lightbox-img" src="" alt=""
+         class="max-w-full max-h-[90dvh] rounded-2xl shadow-2xl object-contain"
+         onclick="event.stopPropagation()">
+</div>
+
+<!-- ═══════════ IMAGE LIGHTBOX ═══════════ -->
+<div id="lightbox-modal"
+     class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+     onclick="closeLightbox()">
+    <button onclick="closeLightbox()" aria-label="Close"
+            class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full
+                   bg-white/10 hover:bg-white/20 text-white transition-colors">
+        <i class="fas fa-times"></i>
+    </button>
+    <img id="lightbox-img" src="" alt=""
+         class="max-w-full max-h-[90dvh] rounded-2xl shadow-2xl object-contain"
+         onclick="event.stopPropagation()">
 </div>
 
 <div id="delete-modal"
@@ -772,7 +800,7 @@
             imgDiv.className = 'mb-1.5 flex flex-row-reverse items-end gap-3';
             imgDiv.innerHTML = `<div class="w-8 h-8 flex-shrink-0"></div>
                 <img src="${imageBase64}" alt="Attached"
-                     class="rounded-xl max-w-48 max-h-48 object-cover shadow-sm border border-cream-300">`;
+                     class="rounded-xl max-w-48 max-h-48 object-cover shadow-sm border border-cream-300 cursor-zoom-in chat-lightbox-img">`;
             messagesContainer.appendChild(imgDiv);
         }
 
@@ -799,9 +827,9 @@
                         flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5">
                 <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
             </div>
-            <div class="bg-white border border-cream-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-xs">
+            <div class="bg-white border border-cream-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-sm">
                 <div id="${uniqueId}" class="bg-cream-100 p-2.5 relative">
-                    <img src="${imageUrl}" alt="Generated design" class="rounded-xl w-full block" crossorigin="anonymous">
+                    <img src="${imageUrl}" alt="Generated design" class="rounded-xl w-full block cursor-zoom-in chat-lightbox-img" crossorigin="anonymous">
                     <button type="button" title="Save design"
                             class="save-design-btn absolute top-2 right-2 w-7 h-7 rounded-full
                                    bg-white/80 backdrop-blur-sm border border-cream-200 shadow-sm
@@ -862,6 +890,29 @@
         updateWelcomeScreen();
         scrollToBottom();
     }
+
+    // ─── Image lightbox ───────────────────────────────────────────────
+    function openLightbox(src) {
+        const modal = document.getElementById('lightbox-modal');
+        document.getElementById('lightbox-img').src = src;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function closeLightbox() {
+        const modal = document.getElementById('lightbox-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.getElementById('lightbox-img').src = '';
+    }
+    // Delegate click on any .chat-lightbox-img inside the messages container
+    document.addEventListener('click', e => {
+        if (e.target.classList.contains('chat-lightbox-img')) {
+            openLightbox(e.target.src);
+        }
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeLightbox();
+    });
 
     window.changeBg = function (bgId, color) {
         const el = document.getElementById(bgId);
