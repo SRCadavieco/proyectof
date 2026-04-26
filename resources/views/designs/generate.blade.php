@@ -124,16 +124,18 @@
                     <span class="text-[9px] tracking-[0.22em] uppercase" style="color:#7c3ca0">atelier</span>
                 </div>
             </a>
-            <button onclick="newChat()" title="New design session"
-                    class="w-8 h-8 flex items-center justify-center bg-ink text-white
-                           hover:bg-[#7c3ca0] transition-colors rounded-full shrink-0 ml-2">
-                <i class="fas fa-plus text-xs"></i>
-            </button>
         </div>
 
         <!-- Design sessions list -->
         <div class="flex-1 overflow-y-auto py-3 scrollbar-hide">
-            <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted px-4 mb-2">My Designs</p>
+            <div class="flex items-center justify-between px-4 mb-2">
+                <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted">My Designs</p>
+                <button onclick="newChat()" title="New design session"
+                        class="w-5 h-5 flex items-center justify-center bg-ink text-white
+                               hover:bg-[#7c3ca0] transition-colors rounded-full shrink-0">
+                    <i class="fas fa-plus" style="font-size:8px"></i>
+                </button>
+            </div>
             <div id="chat-list" class="space-y-0.5 px-2"></div>
         </div>
 
@@ -149,15 +151,48 @@
                 </div>
             </div>
 
-            <!-- User + logout -->
-            <div class="flex items-center justify-between">
-                <span class="text-xs text-ink-muted truncate pr-2">{{ Auth::user()->name }}</span>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" title="Log out" class="icon-btn danger">
-                        <i class="fas fa-sign-out-alt"></i>
+            <!-- User menu -->
+            <div class="relative" id="user-menu-wrapper">
+                <button onclick="toggleUserMenu()"
+                        class="flex items-center gap-2 w-full px-3 py-2 rounded-xl hover:bg-cream-100 transition-colors text-left">
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                         style="background:#7c3ca0">
+                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                    </div>
+                    <span class="text-xs text-ink truncate flex-1">{{ Auth::user()->name }}</span>
+                    <i class="fas fa-chevron-up text-ink-muted shrink-0 transition-transform duration-200" id="user-menu-chevron" style="font-size:9px"></i>
+                </button>
+
+                <!-- Dropdown (opens upward) -->
+                <div id="user-menu-dropdown"
+                     class="hidden absolute bottom-full left-0 right-0 mb-1 bg-white border border-cream-300 rounded-xl shadow-lg overflow-hidden z-50">
+                    <a href="/profile"
+                       class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink hover:bg-cream-100 transition-colors">
+                        <i class="fas fa-user text-ink-muted w-4 text-center" style="font-size:11px"></i>
+                        Profile
+                    </a>
+                    @if(Auth::user()->is_admin)
+                    <a href="/admin"
+                       class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink hover:bg-cream-100 transition-colors">
+                        <i class="fas fa-shield-alt text-ink-muted w-4 text-center" style="font-size:11px"></i>
+                        Admin Panel
+                    </a>
+                    @endif
+                    <button onclick="openMyDesignsModal(); closeUserMenu()"
+                            class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink hover:bg-cream-100 transition-colors w-full text-left">
+                        <i class="fas fa-bookmark text-ink-muted w-4 text-center" style="font-size:11px"></i>
+                        My Saved Designs
                     </button>
-                </form>
+                    <div class="border-t border-cream-200 mx-2"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left">
+                            <i class="fas fa-sign-out-alt w-4 text-center" style="font-size:11px"></i>
+                            Log out
+                        </button>
+                    </form>
+                </div>
             </div>
 
         </div>
@@ -270,6 +305,37 @@
 <div id="debug-info" class="hidden"></div>
 
 <!-- ═══════════ DELETE CONFIRMATION MODAL ═══════════ -->
+<!-- ═══════════ MY SAVED DESIGNS MODAL ═══════════ -->
+<div id="my-designs-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-3xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300 flex-shrink-0">
+            <div>
+                <h2 class="text-base font-semibold text-ink">My Saved Designs</h2>
+                <p class="text-xs text-ink-muted mt-0.5">Click a design to use it in a new session</p>
+            </div>
+            <button onclick="closeMyDesignsModal()" class="icon-btn">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+            <div id="my-designs-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <!-- populated by JS -->
+            </div>
+            <div id="my-designs-empty" class="hidden flex-col items-center justify-center py-16 text-center">
+                <div class="w-14 h-14 rounded-full bg-cream-100 flex items-center justify-center mb-4">
+                    <i class="fas fa-bookmark text-ink-muted text-xl"></i>
+                </div>
+                <p class="text-sm text-ink-muted">No saved designs yet.</p>
+                <p class="text-xs text-cream-400 mt-1">Bookmark a generated image to save it here.</p>
+            </div>
+            <div id="my-designs-loading" class="flex items-center justify-center py-16">
+                <i class="fas fa-spinner fa-spin text-ink-muted text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="delete-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm p-4">
     <div class="bg-white border border-cream-300 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
@@ -1090,6 +1156,188 @@
         if (e.target.id === 'preview-modal') closePreviewModal();
     });
 
+    // ─── User menu dropdown ───────────────────────────────────────────
+    function toggleUserMenu() {
+        const dd = document.getElementById('user-menu-dropdown');
+        const chevron = document.getElementById('user-menu-chevron');
+        const isOpen = !dd.classList.contains('hidden');
+        if (isOpen) {
+            closeUserMenu();
+        } else {
+            dd.classList.remove('hidden');
+            dd.classList.add('flex', 'flex-col');
+            chevron.style.transform = 'rotate(180deg)';
+            // close on outside click
+            setTimeout(() => document.addEventListener('click', _closeUserMenuOutside), 0);
+        }
+    }
+    function closeUserMenu() {
+        const dd = document.getElementById('user-menu-dropdown');
+        const chevron = document.getElementById('user-menu-chevron');
+        dd.classList.add('hidden');
+        dd.classList.remove('flex', 'flex-col');
+        chevron.style.transform = '';
+        document.removeEventListener('click', _closeUserMenuOutside);
+    }
+    function _closeUserMenuOutside(e) {
+        const wrapper = document.getElementById('user-menu-wrapper');
+        if (!wrapper.contains(e.target)) closeUserMenu();
+    }
+
+    // ─── My Saved Designs modal ───────────────────────────────────────
+    function openMyDesignsModal() {
+        const modal = document.getElementById('my-designs-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        _loadMyDesigns();
+    }
+    function closeMyDesignsModal() {
+        const modal = document.getElementById('my-designs-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    async function _loadMyDesigns() {
+        const grid    = document.getElementById('my-designs-grid');
+        const empty   = document.getElementById('my-designs-empty');
+        const loading = document.getElementById('my-designs-loading');
+        grid.innerHTML = '';
+        empty.classList.add('hidden');   empty.classList.remove('flex');
+        loading.classList.remove('hidden');
+
+        try {
+            const res  = await fetch('/designs/saved');
+            const data = await res.json();
+            loading.classList.add('hidden');
+            if (!data.length) {
+                empty.classList.remove('hidden');
+                empty.classList.add('flex');
+                return;
+            }
+            data.forEach(d => {
+                const wrap = document.createElement('div');
+                wrap.dataset.designId = d.id;
+                wrap.className = 'group relative rounded-xl overflow-hidden border border-cream-300 bg-cream-50 hover:border-[#7c3ca0] transition-colors';
+
+                // Bottom bar: inline editable title + action buttons
+                wrap.innerHTML = `
+                    <img src="${d.image_data}" alt="${d.title || 'design'}"
+                         class="w-full aspect-square object-contain bg-white cursor-pointer" loading="lazy">
+                    <div class="px-2 py-1.5 flex items-center gap-1">
+                        <span class="design-title-label flex-1 text-[10px] text-ink-muted truncate cursor-text"
+                              title="Click to rename">${d.title || 'Design'}</span>
+                        <input type="text" value="${(d.title || 'Design').replace(/"/g,'&quot;')}"
+                               class="design-title-input hidden flex-1 text-[10px] text-ink bg-white border border-[#7c3ca0] rounded px-1 py-0.5 outline-none min-w-0">
+                        <button class="rename-btn text-cream-400 hover:text-[#7c3ca0] transition-colors shrink-0" title="Rename">
+                            <i class="fas fa-pencil-alt" style="font-size:9px"></i>
+                        </button>
+                        <button class="delete-btn text-cream-400 hover:text-red-400 transition-colors shrink-0" title="Delete">
+                            <i class="fas fa-trash" style="font-size:10px"></i>
+                        </button>
+                    </div>
+                    <!-- inline confirm bar (hidden by default) -->
+                    <div class="confirm-bar hidden items-center justify-between px-2 py-1.5 bg-red-50 border-t border-red-200 text-[10px]">
+                        <span class="text-red-500">Delete?</span>
+                        <div class="flex gap-1">
+                            <button class="confirm-yes px-2 py-0.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">Yes</button>
+                            <button class="confirm-no px-2 py-0.5 border border-cream-300 text-ink rounded-md hover:bg-cream-100 transition-colors">No</button>
+                        </div>
+                    </div>`;
+
+                // Use design image → open in garment preview
+                wrap.querySelector('img').addEventListener('click', () => {
+                    _useDesignFromModal(d.image_data);
+                });
+
+                // Delete: show inline confirm bar instead of browser confirm()
+                wrap.querySelector('.delete-btn').addEventListener('click', e => {
+                    e.stopPropagation();
+                    const bar = wrap.querySelector('.confirm-bar');
+                    bar.classList.remove('hidden');
+                    bar.classList.add('flex');
+                });
+                wrap.querySelector('.confirm-no').addEventListener('click', e => {
+                    e.stopPropagation();
+                    const bar = wrap.querySelector('.confirm-bar');
+                    bar.classList.add('hidden');
+                    bar.classList.remove('flex');
+                });
+                wrap.querySelector('.confirm-yes').addEventListener('click', e => {
+                    e.stopPropagation();
+                    _deleteSavedDesign(d.id, wrap);
+                });
+
+                // Rename: toggle label ↔ input
+                const label  = wrap.querySelector('.design-title-label');
+                const input  = wrap.querySelector('.design-title-input');
+                const renBtn = wrap.querySelector('.rename-btn');
+                const startRename = () => {
+                    label.classList.add('hidden');
+                    input.classList.remove('hidden');
+                    renBtn.querySelector('i').className = 'fas fa-check';
+                    input.focus(); input.select();
+                };
+                const commitRename = () => {
+                    const newTitle = input.value.trim() || label.textContent;
+                    label.textContent = newTitle;
+                    label.classList.remove('hidden');
+                    input.classList.add('hidden');
+                    renBtn.querySelector('i').className = 'fas fa-pencil-alt';
+                    _renameSavedDesign(d.id, newTitle, label);
+                };
+                label.addEventListener('click', startRename);
+                renBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    if (!input.classList.contains('hidden')) { commitRename(); } else { startRename(); }
+                });
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                    if (e.key === 'Escape') { input.value = label.textContent; commitRename(); }
+                });
+                input.addEventListener('blur', commitRename);
+
+                grid.appendChild(wrap);
+            });
+        } catch(e) {
+            loading.classList.add('hidden');
+            grid.innerHTML = '<p class="col-span-4 text-sm text-red-400 text-center py-8">Could not load designs.</p>';
+        }
+    }
+    function _useDesignFromModal(src) {
+        closeMyDesignsModal();
+        // Open preview modal with this design pre-loaded
+        openPreviewModal(src);
+    }
+    async function _deleteSavedDesign(id, card) {
+        try {
+            const res = await fetch(`/designs/saved/${id}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+            });
+            if (res.ok) {
+                card.remove();
+                const grid = document.getElementById('my-designs-grid');
+                if (!grid.children.length) {
+                    const empty = document.getElementById('my-designs-empty');
+                    empty.classList.remove('hidden');
+                    empty.classList.add('flex');
+                }
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function _renameSavedDesign(id, title, labelEl) {
+        try {
+            await fetch(`/designs/saved/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: JSON.stringify({ title })
+            });
+        } catch(e) { console.error(e); }
+    }
+
     // ─── Mobile sidebar ───────────────────────────────────────────────
     function toggleSidebar() {
         const sidebar  = document.getElementById('sidebar');
@@ -1206,6 +1454,18 @@
 
     let previewLayers    = []; // [{id, src, posX, posY, scale, rotation, imgW, imgH}]
     let _selectedLayerId = null;
+    const _imgCache      = new Map(); // src → HTMLImageElement (already loaded)
+
+    function _getOrLoadImage(src) {
+        if (_imgCache.has(src)) return Promise.resolve(_imgCache.get(src));
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload  = () => { _imgCache.set(src, img); resolve(img); };
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
 
     function getSelectedLayer() {
         return previewLayers.find(l => l.id === _selectedLayerId) || previewLayers[0] || null;
@@ -1396,12 +1656,15 @@
         const dc  = document.getElementById('design-canvas');
         const ctx = dc.getContext('2d');
         const pa  = GARMENTS[document.getElementById('garment-select').value].printArea;
-        ctx.clearRect(0, 0, dc.width, dc.height);
-        const drawLayer = (layer) => new Promise(resolve => {
-            const img = new Image(); img.crossOrigin = 'anonymous';
-            img.onload = () => {
+
+        // If all images are already cached, draw synchronously (no flicker during drag)
+        const allCached = previewLayers.every(l => _imgCache.has(l.src));
+        if (allCached) {
+            ctx.clearRect(0, 0, dc.width, dc.height);
+            previewLayers.forEach(layer => {
+                const img = _imgCache.get(layer.src);
                 layer.imgW = img.width; layer.imgH = img.height;
-                const ir = img.width/img.height; const pr = pa.w/pa.h;
+                const ir = img.width / img.height; const pr = pa.w / pa.h;
                 let dw, dh;
                 if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
                 dw *= layer.scale; dh *= layer.scale;
@@ -1412,12 +1675,27 @@
                 ctx.rotate((layer.rotation || 0) * Math.PI / 180);
                 ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
                 ctx.restore();
-                resolve();
-            };
-            img.onerror = () => resolve();
-            img.src = layer.src;
+            });
+            renderHandles();
+            return;
+        }
+
+        // First render or new layer: load uncached images then redraw
+        const drawLayer = (layer) => _getOrLoadImage(layer.src).then(img => {
+            layer.imgW = img.width; layer.imgH = img.height;
+            const ir = img.width/img.height; const pr = pa.w/pa.h;
+            let dw, dh;
+            if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
+            dw *= layer.scale; dh *= layer.scale;
+            const cx = pa.w/2 + layer.posX*(pa.w/2);
+            const cy = pa.h/2 + layer.posY*(pa.h/2);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+            ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
+            ctx.restore();
         });
-        // Draw layers sequentially to maintain z-order, then update handles
+        ctx.clearRect(0, 0, dc.width, dc.height);
         previewLayers.reduce((p, layer) => p.then(() => drawLayer(layer)), Promise.resolve())
             .then(() => renderHandles());
     }
@@ -1528,6 +1806,7 @@
         let mode          = null; // 'drag' | 'rotate'
         let lastX = 0, lastY = 0;
         let rotStartAngle = 0, rotStartRot = 0;
+        let _rafPending   = false;
 
         function getCanvasPt(clientX, clientY) {
             const pa   = GARMENTS[document.getElementById('garment-select').value].printArea;
@@ -1591,7 +1870,10 @@
                 document.getElementById('design-rotation').value = Math.round(layer.rotation);
                 document.getElementById('rotation-val').textContent = Math.round(layer.rotation) + '°';
             }
-            renderDesign();
+            if (!_rafPending) {
+                _rafPending = true;
+                requestAnimationFrame(() => { _rafPending = false; renderDesign(); });
+            }
         };
 
         const onEnd = () => { mode = null; hc.style.cursor = 'grab'; };

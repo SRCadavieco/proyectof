@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     // Saved designs
     Route::get('/designs/saved',                  [DesignController::class, 'savedDesigns'])->name('designs.saved.index');
     Route::post('/designs/saved',                 [DesignController::class, 'saveDesign'])->name('designs.saved.store');
+    Route::patch('/designs/saved/{savedDesign}',  [DesignController::class, 'renameSavedDesign'])->name('designs.saved.rename');
     Route::delete('/designs/saved/{savedDesign}', [DesignController::class, 'deleteSavedDesign'])->name('designs.saved.destroy');
 
     // Token API

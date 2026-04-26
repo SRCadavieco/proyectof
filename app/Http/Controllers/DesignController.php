@@ -406,6 +406,21 @@ if ($isEdit) {
     }
 
     /**
+     * PATCH /designs/saved/{savedDesign}  — rename a saved design.
+     */
+    public function renameSavedDesign(Request $request, SavedDesign $savedDesign)
+    {
+        if ($savedDesign->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $request->validate(['title' => 'required|string|max:120']);
+        $savedDesign->update(['title' => $request->title]);
+
+        return response()->json(['success' => true, 'title' => $savedDesign->title]);
+    }
+
+    /**
      * DELETE /designs/saved/{savedDesign}  — remove a saved design.
      */
     public function deleteSavedDesign(SavedDesign $savedDesign)
