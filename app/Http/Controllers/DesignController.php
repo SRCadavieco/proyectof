@@ -67,6 +67,8 @@ class DesignController extends Controller
        ], 422);
    }
 
+   try {
+
     $userPrompt = trim($validated['prompt']);
     $provider = $validated['provider'] ?? 'gemini';
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
@@ -236,7 +238,11 @@ if ($isEdit) {
         !empty($result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null)
         || !empty($result['imageUrl'] ?? $result['image_url'] ?? $result['url'] ?? null)
     );
-    ApiUsageLog::record($provider, $model, $isEdit ? 'img2img' : 'generate', $user->id, $aiSuccess);
+    try {
+        ApiUsageLog::record($provider, $model, $isEdit ? 'img2img' : 'generate', $user->id, $aiSuccess);
+    } catch (\Throwable $logEx) {
+        \Illuminate\Support\Facades\Log::warning('ApiUsageLog::record failed', ['error' => $logEx->getMessage()]);
+    }
 
     // Procesar imagen
     $imageValue = null;
@@ -256,7 +262,7 @@ if ($isEdit) {
 
         if ($base64) {
             $noBg = $backgrounds->removeBackground($base64);
-            ApiUsageLog::record('rnbulktools', 'remove_bg', 'remove_bg', $user->id, $noBg !== null);
+            try { ApiUsageLog::record('rnbulktools', 'remove_bg', 'remove_bg', $user->id, $noBg !== null); } catch (\Throwable $logEx) { \Illuminate\Support\Facades\Log::warning('ApiUsageLog::record failed', ['error' => $logEx->getMessage()]); }
             if ($noBg) {
                 $processed = $backgrounds->convertToWebp($noBg) ?? $noBg;
             } else {
@@ -322,9 +328,19 @@ if ($isEdit) {
     }
 
     return response()->json($result, $status);
-}
 
-/**
+   } catch (\Throwable $e) {
+       \Illuminate\Support\Facades\Log::error('DesignController::generate unhandled exception', [
+           'message' => $e->getMessage(),
+           'file'    => $e->getFile(),
+           'line'    => $e->getLine(),
+       ]);
+       return response()->json([
+           'success' => false,
+           'error'   => 'Ocurrió un error inesperado. Por favor inténtalo de nuevo.',
+       ], 500);
+   }
+}
  * Resize a base64 image to max 1024px on the longest side, JPEG quality 85.
  * This keeps payloads under ~300 KB which all AI backends accept.
  * Returns base64 string without data URI prefix.

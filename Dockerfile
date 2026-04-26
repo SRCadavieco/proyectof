@@ -57,7 +57,8 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
 
 # Subir límites de ejecución PHP para modelos de IA lentos (Chutes cold start ~2-3 min)
 RUN echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/laravel.ini \
-    && echo "max_input_time = 300"  >> /usr/local/etc/php/conf.d/laravel.ini
+    && echo "max_input_time = 300"  >> /usr/local/etc/php/conf.d/laravel.ini \
+    && echo "memory_limit = 256M"   >> /usr/local/etc/php/conf.d/laravel.ini
 
 # Script de arranque que ajusta el puerto y cachea configuración
 COPY docker/start.sh /start.sh

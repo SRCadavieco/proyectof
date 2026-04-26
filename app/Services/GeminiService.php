@@ -69,6 +69,10 @@ class GeminiService
             ]);
 
             if ($response->failed()) {
+                \Log::error('Gemini generateFromReference failed', [
+                    'status' => $response->status(),
+                    'body'   => substr($response->body(), 0, 500),
+                ]);
                 return [
                     'success' => false,
                     'error' => $response->body(),
