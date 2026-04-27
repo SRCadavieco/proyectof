@@ -273,7 +273,7 @@ if ($isEdit) {
             $noBg = $backgrounds->removeBackground($base64);
             try { ApiUsageLog::record('rnbulktools', 'remove_bg', 'remove_bg', $user->id, $noBg !== null); } catch (\Throwable $logEx) { \Illuminate\Support\Facades\Log::warning('ApiUsageLog::record failed', ['error' => $logEx->getMessage()]); }
             if ($noBg) {
-                $processed = $backgrounds->convertToWebp($noBg) ?? $noBg;
+                $processed = $noBg; // Keep as PNG — converting to WebP and back degrades quality
             } else {
                 \Illuminate\Support\Facades\Log::warning('DesignController: removeBackground failed, serving raw image', [
                     'provider' => $provider,

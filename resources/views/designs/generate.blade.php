@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" href="/images/logo.png" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -99,6 +100,17 @@
             background-position: center;
         }
 
+
+        /* ── Saved designs panel list: horizontal on mobile, vertical on desktop ── */
+        #saved-designs-list {
+            max-height: 110px;
+        }
+        @media (min-width: 640px) {
+            #saved-designs-list {
+                max-height: none;
+                flex: 1;
+            }
+        }
 
         @media (min-width: 768px) { #sidebar-toggle-btn { display: none; } }
     </style>
@@ -391,25 +403,35 @@
 
 <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
 <div id="preview-modal"
-     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col" style="max-height:95dvh;">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300 flex-shrink-0">
-            <h2 class="text-base font-semibold text-ink">Preview on Garment</h2>
+     class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
+    <div class="bg-white border-t sm:border border-cream-300 shadow-2xl w-full sm:max-w-4xl rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col" style="max-height:97dvh;">
+        <div class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-cream-300 flex-shrink-0">
+            <h2 class="text-sm sm:text-base font-semibold text-ink">Preview on Garment</h2>
             <button onclick="closePreviewModal()" class="icon-btn">
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="flex flex-1 min-h-0 overflow-hidden">
+        <div class="flex flex-col sm:flex-row flex-1 min-h-0 overflow-hidden">
 
             <!-- ── Saved Designs panel ── -->
-            <div id="saved-designs-panel" class="w-44 flex-shrink-0 border-r border-cream-300 flex flex-col bg-cream-50">
-                <div class="px-3 py-2.5 border-b border-cream-200">
+            <!-- Mobile: horizontal scrollable strip at top; Desktop: vertical left sidebar -->
+            <div id="saved-designs-panel" class="flex-shrink-0 border-b sm:border-b-0 sm:border-r border-cream-300 bg-cream-50 flex flex-col sm:w-44">
+                <div class="px-3 py-2 border-b border-cream-200 flex items-center justify-between">
                     <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted font-medium">Saved Designs</p>
+                    <!-- Mobile: Add button inline -->
+                    <button id="add-to-canvas-btn-mobile" disabled onclick="addSelectedToCanvas()"
+                            class="sm:hidden px-3 py-1 bg-[#5a2275] text-white text-[9px] font-medium uppercase tracking-widest
+                                   rounded-lg hover:bg-[#7c3ca0] transition-colors disabled:opacity-40">
+                        + Add
+                    </button>
                 </div>
-                <div id="saved-designs-list" class="flex-1 overflow-y-auto p-2 space-y-2">
-                    <p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed">Loading…</p>
+                <!-- Mobile: horizontal scroll; Desktop: vertical scroll -->
+                <div id="saved-designs-list"
+                     class="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-x-hidden overflow-y-hidden sm:overflow-y-auto
+                            p-2 flex-row">
+                    <p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed whitespace-nowrap sm:whitespace-normal">Loading…</p>
                 </div>
-                <div class="p-2 border-t border-cream-200 flex-shrink-0">
+                <div class="p-2 border-t border-cream-200 flex-shrink-0 hidden sm:block">
                     <button id="add-to-canvas-btn" disabled onclick="addSelectedToCanvas()"
                             class="w-full py-2 bg-[#5a2275] text-white text-[10px] font-medium uppercase tracking-widest
                                    rounded-lg hover:bg-[#7c3ca0] transition-colors disabled:opacity-40">
@@ -419,13 +441,13 @@
             </div>
 
             <!-- ── Editor ── -->
-            <div class="flex-1 p-5 overflow-y-auto min-w-0">
-            <div class="flex gap-4 mb-4 flex-wrap items-end">
-                <div class="flex flex-col gap-1">
+            <div class="flex-1 p-3 sm:p-5 overflow-y-auto min-w-0">
+            <div class="flex gap-3 mb-3 flex-wrap items-end">
+                <div class="flex flex-col gap-1 flex-1 min-w-0">
                     <label class="text-xs text-ink-muted uppercase tracking-wider">Garment</label>
                     <select id="garment-select" onchange="renderPreview()"
-                            class="bg-cream-100 border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                   focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                            class="bg-cream-100 border border-cream-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm text-ink
+                                   focus:outline-none focus:border-[#7c3ca0] transition-colors w-full">
                         <option value="tshirt">Gildan 5000 — T-Shirt</option>
                         <option value="hoodie">Gildan 18500 — Hoodie</option>
                         <option value="tanktop">Bella+Canvas 3480 — Tank Top</option>
@@ -433,11 +455,11 @@
                         <option value="sweatshirt">Gildan 18000 — Sweatshirt</option>
                     </select>
                 </div>
-                <div class="flex flex-col gap-1">
+                <div class="flex flex-col gap-1 flex-shrink-0">
                     <label class="text-xs text-ink-muted uppercase tracking-wider">Color</label>
                     <input type="color" id="garment-color" value="#ffffff"
                            oninput="renderPreview()"
-                           class="w-10 h-10 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
+                           class="w-9 h-9 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
                 </div>
             </div>
 
@@ -481,10 +503,10 @@
                 </div>
             </div>
 
-            <div class="flex justify-center bg-cream-100 rounded-xl p-4">
+            <div class="flex justify-center bg-cream-100 rounded-xl p-2 sm:p-4">
                 <div id="canvas-wrapper" style="position:relative;display:inline-block;max-width:100%;line-height:0;">
                     <canvas id="garment-canvas" width="500" height="550"
-                            class="max-w-full h-auto rounded-lg" style="max-height:420px;display:block;"></canvas>
+                            class="max-w-full h-auto rounded-lg" style="max-height:clamp(320px,55dvh,520px);display:block;"></canvas>
                     <canvas id="design-canvas" style="position:absolute;left:0;top:0;pointer-events:none;"></canvas>
                     <canvas id="handle-canvas" style="position:absolute;left:0;top:0;cursor:grab;"></canvas>
                 </div>
@@ -497,14 +519,14 @@
                 <div id="layers-list" class="space-y-1.5"></div>
             </div>
 
-            <div class="flex justify-end gap-3 mt-4">
+            <div class="flex flex-wrap justify-end gap-2 mt-3">
                 <button onclick="downloadPreview()"
-                        class="px-4 py-2 bg-ink text-white text-xs font-medium tracking-wide uppercase
+                        class="px-3 sm:px-4 py-2 bg-ink text-white text-xs font-medium tracking-wide uppercase
                                rounded-lg hover:bg-ink-light transition-colors">
-                    Download Preview
+                    Download
                 </button>
                 <button onclick="togglePrintifyPanel()"
-                        class="px-4 py-2 border border-[#7c3ca0] text-[#7c3ca0] text-xs font-medium
+                        class="px-3 sm:px-4 py-2 border border-[#7c3ca0] text-[#7c3ca0] text-xs font-medium
                                tracking-wide uppercase rounded-lg hover:bg-[#7c3ca0] hover:text-white transition-colors">
                     Send to Printify
                 </button>
@@ -618,6 +640,7 @@
     let chats               = [];
     let pendingDeleteId     = null;
     const savedImgKeys      = new Set(); // fingerprints of already-saved images
+    const savedImgIds       = new Map(); // fingerprint → DB id (for unsaving)
 
     const imageInput        = document.getElementById('image-upload');
     const form              = document.getElementById('design-form');
@@ -1416,10 +1439,17 @@
         return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
     }
 
+    // Returns the print area rectangle (canvas pixels) for the given garment.
+    function _computePrintArea(garmentKey) {
+        return GARMENTS[garmentKey].printArea;
+    }
+
     const GARMENTS = {
         tshirt: {
             name:'T-Shirt', ref:'Gildan 5000', printPx:'3951 × 4919', printInches:'13.17" × 16.40"', dpi:300,
-            printArea:{ x:184, y:178, w:132, h:193 },
+            printW:3951, printH:4919,
+            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.803)
+            printArea:{ x:162, y:185, w:175, h:218 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(195,148); ctx.lineTo(108,170); ctx.lineTo(62,218);
@@ -1434,7 +1464,9 @@
         },
         hoodie: {
             name:'Hoodie', ref:'Gildan 18500', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
-            printArea:{ x:191, y:175, w:118, h:186 },
+            printW:3543, printH:4724,
+            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.750)
+            printArea:{ x:176, y:205, w:148, h:197 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(175,155); ctx.quadraticCurveTo(155,65,250,55);
@@ -1457,7 +1489,9 @@
         },
         tanktop: {
             name:'Tank Top', ref:'Bella+Canvas 3480', printPx:'3000 × 4200', printInches:'10.00" × 14.00"', dpi:300,
-            printArea:{ x:190, y:162, w:120, h:193 },
+            printW:3000, printH:4200,
+            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.714)
+            printArea:{ x:170, y:200, w:160, h:224 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(210,130); ctx.lineTo(180,130); ctx.lineTo(148,195);
@@ -1469,7 +1503,9 @@
         },
         longsleeve: {
             name:'Long Sleeve', ref:'Gildan 5400', printPx:'3951 × 4919', printInches:'13.17" × 16.40"', dpi:300,
-            printArea:{ x:184, y:178, w:132, h:193 },
+            printW:3951, printH:4919,
+            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.803)
+            printArea:{ x:162, y:185, w:175, h:218 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(195,148); ctx.lineTo(108,170); ctx.lineTo(42,380); ctx.lineTo(78,390);
@@ -1485,7 +1521,9 @@
         },
         sweatshirt: {
             name:'Sweatshirt', ref:'Gildan 18000', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
-            printArea:{ x:194, y:178, w:113, h:186 },
+            printW:3543, printH:4724,
+            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.750)
+            printArea:{ x:172, y:200, w:155, h:207 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(190,155); ctx.lineTo(105,175); ctx.lineTo(48,345); ctx.lineTo(85,355);
@@ -1638,20 +1676,21 @@
         if (!previewLayers.length) return null;
         // Single non-rotated layer: return raw src, Printify handles positioning itself
         if (previewLayers.length === 1 && !previewLayers[0].rotation) return previewLayers[0].src;
-        const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const garment = GARMENTS[document.getElementById('garment-select').value];
+        const pw = garment.printW; const ph = garment.printH;
         const flat = document.createElement('canvas');
-        flat.width = pa.w; flat.height = pa.h;
+        flat.width = pw; flat.height = ph;
         const ctx = flat.getContext('2d');
         for (const layer of previewLayers) {
             await new Promise(resolve => {
                 const img = new Image(); img.crossOrigin = 'anonymous';
                 img.onload = () => {
-                    const ir = img.width/img.height; const pr = pa.w/pa.h;
+                    const ir = img.width/img.height; const pr = pw/ph;
                     let dw, dh;
-                    if (ir > pr) { dw = pa.w; dh = pa.w/ir; } else { dh = pa.h; dw = pa.h*ir; }
+                    if (ir > pr) { dw = pw; dh = pw/ir; } else { dh = ph; dw = ph*ir; }
                     dw *= layer.scale; dh *= layer.scale;
-                    const cx = pa.w/2 + layer.posX*(pa.w/2);
-                    const cy = pa.h/2 + layer.posY*(pa.h/2);
+                    const cx = pw/2 + layer.posX*(pw/2);
+                    const cy = ph/2 + layer.posY*(ph/2);
                     ctx.save();
                     ctx.translate(cx, cy);
                     ctx.rotate((layer.rotation || 0) * Math.PI / 180);
@@ -1667,11 +1706,11 @@
     }
 
     function renderGarment() {
-        const canvas  = document.getElementById('garment-canvas');
-        const ctx     = canvas.getContext('2d');
-        const garment = GARMENTS[document.getElementById('garment-select').value];
-        const color   = document.getElementById('garment-color').value;
-        const pa      = garment.printArea;
+        const canvas     = document.getElementById('garment-canvas');
+        const ctx        = canvas.getContext('2d');
+        const garmentKey = document.getElementById('garment-select').value;
+        const garment    = GARMENTS[garmentKey];
+        const color      = document.getElementById('garment-color').value;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const sz = 15;
         for (let y = 0; y < canvas.height; y += sz)
@@ -1680,25 +1719,33 @@
                 ctx.fillRect(x, y, sz, sz);
             }
         garment.draw(ctx, color);
-        ctx.setLineDash([6,4]); ctx.strokeStyle='rgba(168,85,247,0.45)'; ctx.lineWidth=1;
+        // Print area overlay
+        const pa = _computePrintArea(garmentKey);
+        ctx.setLineDash([6,4]); ctx.strokeStyle='rgba(168,85,247,0.7)'; ctx.lineWidth=1.5;
         ctx.strokeRect(pa.x, pa.y, pa.w, pa.h); ctx.setLineDash([]);
-        ctx.font='9px sans-serif'; ctx.fillStyle='rgba(168,85,247,0.55)';
+        ctx.font='9px sans-serif'; ctx.fillStyle='rgba(168,85,247,0.8)';
         ctx.fillText('Print area', pa.x+2, pa.y-3);
         const specEl = document.getElementById('printify-spec');
         if (specEl) specEl.innerHTML = `<span class="text-purple-400 font-medium">${garment.ref}</span> — ${garment.printPx} px · ${garment.printInches} · ${garment.dpi} DPI`;
     }
 
     function positionDesignCanvas() {
-        const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const garmentKey = document.getElementById('garment-select').value;
+        const canvas     = document.getElementById('garment-canvas');
+        const pa = _computePrintArea(garmentKey);
         const dc = document.getElementById('design-canvas');
         const hc = document.getElementById('handle-canvas');
         dc.width = pa.w; dc.height = pa.h;
-        dc.style.left   = (pa.x/500*100)+'%'; dc.style.top    = (pa.y/550*100)+'%';
-        dc.style.width  = (pa.w/500*100)+'%'; dc.style.height = (pa.h/550*100)+'%';
+        dc.style.left   = (pa.x / canvas.width  * 100) + '%';
+        dc.style.top    = (pa.y / canvas.height * 100) + '%';
+        dc.style.width  = (pa.w / canvas.width  * 100) + '%';
+        dc.style.height = (pa.h / canvas.height * 100) + '%';
         if (hc) {
             hc.width = pa.w; hc.height = pa.h;
-            hc.style.left   = (pa.x/500*100)+'%'; hc.style.top    = (pa.y/550*100)+'%';
-            hc.style.width  = (pa.w/500*100)+'%'; hc.style.height = (pa.h/550*100)+'%';
+            hc.style.left   = (pa.x / canvas.width  * 100) + '%';
+            hc.style.top    = (pa.y / canvas.height * 100) + '%';
+            hc.style.width  = (pa.w / canvas.width  * 100) + '%';
+            hc.style.height = (pa.h / canvas.height * 100) + '%';
         }
     }
 
@@ -1706,7 +1753,7 @@
         if (!previewLayers.length) return;
         const dc  = document.getElementById('design-canvas');
         const ctx = dc.getContext('2d');
-        const pa  = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const pa  = _computePrintArea(document.getElementById('garment-select').value);
 
         // If all images are already cached, draw synchronously (no flicker during drag)
         const allCached = previewLayers.every(l => _imgCache.has(l.src));
@@ -1756,11 +1803,12 @@
     function downloadPreview() {
         const gc = document.getElementById('garment-canvas');
         const dc = document.getElementById('design-canvas');
-        const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const pa = _computePrintArea(document.getElementById('garment-select').value);
         const tmp = document.createElement('canvas');
         tmp.width = gc.width; tmp.height = gc.height;
         const ctx = tmp.getContext('2d');
-        ctx.drawImage(gc, 0, 0); ctx.drawImage(dc, pa.x, pa.y, pa.w, pa.h);
+        try { ctx.drawImage(gc, 0, 0); } catch(e) { /* tainted canvas: skip garment */ }
+        ctx.drawImage(dc, pa.x, pa.y, pa.w, pa.h);
         const link = document.createElement('a');
         link.download = 'garment-preview.png'; link.href = tmp.toDataURL('image/png'); link.click();
     }
@@ -2149,11 +2197,17 @@
         }
     }
 
+    function _setAddBtnState(enabled) {
+        ['add-to-canvas-btn', 'add-to-canvas-btn-mobile'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = !enabled;
+        });
+    }
+
     function renderSavedDesignsList(designs) {
         const list   = document.getElementById('saved-designs-list');
-        const addBtn = document.getElementById('add-to-canvas-btn');
         _selectedSavedDesign = null;
-        if (addBtn) addBtn.disabled = true;
+        _setAddBtnState(false);
         if (!designs.length) {
             list.innerHTML = '<p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed px-2">No saved designs yet.<br>Tap <i class=\'fas fa-bookmark\'></i> on a design to save it.</p>';
             return;
@@ -2162,11 +2216,11 @@
         designs.forEach(d => {
             const item = document.createElement('div');
             item.className = 'saved-design-item group relative rounded-lg overflow-hidden cursor-pointer ' +
-                'border-2 border-transparent hover:border-[#7c3ca0] transition-all';
+                'border-2 border-transparent hover:border-[#7c3ca0] transition-all flex-shrink-0 w-16 sm:w-auto';
             item.dataset.id = d.id;
             const img = document.createElement('img');
             img.src = d.image_data; img.alt = d.title || 'Design';
-            img.className = 'w-full h-20 object-contain bg-cream-100 block';
+            img.className = 'w-full h-16 sm:h-20 object-contain bg-cream-100 block';
             const del = document.createElement('button');
             del.type = 'button'; del.title = 'Remove';
             del.className = 'absolute top-0.5 right-0.5 w-5 h-5 bg-red-500/90 text-white rounded-full ' +
@@ -2182,7 +2236,7 @@
                 item.classList.add('border-[#7c3ca0]');
                 item.classList.remove('border-transparent');
                 _selectedSavedDesign = { id: d.id, src: d.image_data };
-                if (addBtn) addBtn.disabled = false;
+                _setAddBtnState(true);
             });
             list.appendChild(item);
         });
@@ -2191,12 +2245,39 @@
     function imgKey(src) { return src.slice(0, 120); }
 
     async function saveDesign(imageSrc, btn) {
-        const key = imgKey(imageSrc);
+        const key  = imgKey(imageSrc);
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+        // ── Already saved → unsave ──
         if (savedImgKeys.has(key)) {
-            showToast('Already saved', 'info');
+            const id = savedImgIds.get(key);
+            if (!id) return;
+            try {
+                const res = await fetch(`/designs/saved/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                });
+                if (!res.ok) throw new Error();
+                savedImgKeys.delete(key);
+                savedImgIds.delete(key);
+                // Reset all matching buttons
+                document.querySelectorAll('.save-design-btn').forEach(b => {
+                    if (imgKey(b.getAttribute('data-image-src') || '') === key) {
+                        b.style.background = '';
+                        b.style.borderColor = '';
+                        const icon = b.querySelector('i');
+                        if (icon) { icon.style.color = ''; }
+                        b.title = 'Save design';
+                    }
+                });
+                showToast('Design removed');
+            } catch(e) {
+                showToast('Could not remove design', 'error');
+            }
             return;
         }
-        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+        // ── Not saved → save ──
         try {
             const res = await fetch('/designs/saved', {
                 method: 'POST',
@@ -2204,15 +2285,17 @@
                 body: JSON.stringify({ image_data: imageSrc }),
             });
             if (!res.ok) throw new Error('Failed to save');
+            const data = await res.json();
             savedImgKeys.add(key);
-            // Mark all save buttons for this image as saved (purple)
+            savedImgIds.set(key, data.id);
+            // Mark all matching buttons as saved (purple)
             document.querySelectorAll('.save-design-btn').forEach(b => {
                 if (imgKey(b.getAttribute('data-image-src') || '') === key) {
                     b.style.background = '#7c3ca0';
                     b.style.borderColor = '#7c3ca0';
                     const icon = b.querySelector('i');
                     if (icon) { icon.style.color = '#ffffff'; }
-                    b.title = 'Already saved';
+                    b.title = 'Remove from saved';
                 }
             });
             showToast('Design saved! ✓');
@@ -2230,8 +2313,7 @@
             });
             if (_selectedSavedDesign?.id === id) {
                 _selectedSavedDesign = null;
-                const addBtn = document.getElementById('add-to-canvas-btn');
-                if (addBtn) addBtn.disabled = true;
+                _setAddBtnState(false);
             }
             await loadSavedDesigns();
         } catch (e) { /* silent */ }
@@ -2240,13 +2322,11 @@
     function addSelectedToCanvas() {
         if (!_selectedSavedDesign) return;
         addLayerToCanvas(_selectedSavedDesign.src);
-        // Deselect in panel
         document.querySelectorAll('.saved-design-item').forEach(el => {
             el.classList.remove('border-[#7c3ca0]'); el.classList.add('border-transparent');
         });
         _selectedSavedDesign = null;
-        const addBtn = document.getElementById('add-to-canvas-btn');
-        if (addBtn) addBtn.disabled = true;
+        _setAddBtnState(false);
     }
 
     function showToast(msg, type = 'success') {

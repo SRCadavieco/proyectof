@@ -46,7 +46,8 @@ Route::middleware('auth')->group(function () {
     // Printify
     Route::post('/printify/connect',    [PrintifyController::class, 'connect'])->name('printify.connect');
     Route::delete('/printify/disconnect', [PrintifyController::class, 'disconnect'])->name('printify.disconnect');
-    Route::get('/printify/status',      [PrintifyController::class, 'status'])->name('printify.status');
+    Route::get('/printify/garments',       [PrintifyController::class, 'garments'])->name('printify.garments');
+    Route::get('/printify/status',         [PrintifyController::class, 'status'])->name('printify.status');
     Route::get('/printify/shops',       [PrintifyController::class, 'shops'])->name('printify.shops');
     Route::post('/printify/products',      [PrintifyController::class, 'createProduct'])->name('printify.products');
     Route::post('/printify/products/bulk', [PrintifyController::class, 'createProductBulk'])->name('printify.products.bulk');

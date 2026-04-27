@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PrintifyConnection;
 use App\Services\PrintifyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class PrintifyController extends Controller
 {
@@ -79,9 +80,49 @@ class PrintifyController extends Controller
         }
     }
 
-    // POST /printify/products
-    public function createProduct(Request $request)
+    // GET /printify/garments  — returns local URLs for cached blueprint images
+    // Images are downloaded once from Printify CDN and stored in public/images/garments/
+    public function garments()
     {
+        $conn = auth()->user()->printifyConnection;
+        if (!$conn) {
+            return response()->json([]);
+        }
+
+        $dir    = public_path('images/garments');
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $result = [];
+        foreach (PrintifyService::BLUEPRINT_MAP as $type => $blueprintId) {
+            $localFile = "{$dir}/{$type}.jpg";
+
+            if (!file_exists($localFile)) {
+                try {
+                    $blueprint = $this->printify->getBlueprint($conn->api_token, $blueprintId);
+                    $imageUrl  = $blueprint['images'][0] ?? null;
+                    if ($imageUrl) {
+                        $content = Http::timeout(15)->get($imageUrl)->body();
+                        file_put_contents($localFile, $content);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning("Could not fetch blueprint image for {$type}: " . $e->getMessage());
+                    $result[$type] = null;
+                    continue;
+                }
+            }
+
+            $result[$type] = file_exists($localFile)
+                ? asset("images/garments/{$type}.jpg") . '?v=' . filemtime($localFile)
+                : null;
+        }
+
+        return response()->json($result);
+    }
+
+    // POST /printify/products
+    public function createProduct(Request $request)    {
         $conn = auth()->user()->printifyConnection;
         if (!$conn) {
             return response()->json(['error' => 'Printify not connected'], 401);

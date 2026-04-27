@@ -89,6 +89,13 @@ class PrintifyService
         return base64_encode($pngBinary);
     }
 
+    public function getBlueprint(string $token, int $blueprintId): array
+    {
+        $response = $this->http($token)->get(self::BASE_URL . "/catalog/blueprints/{$blueprintId}.json");
+        $response->throw();
+        return $response->json();
+    }
+
     public function getPrintProviders(string $token, int $blueprintId): array
     {
         $response = $this->http($token)->get(self::BASE_URL . "/catalog/blueprints/{$blueprintId}/print_providers.json");
