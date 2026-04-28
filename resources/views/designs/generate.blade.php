@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="icon" href="/images/logo.png" type="image/png">
@@ -350,30 +350,41 @@
 
 <!-- ═══════════ IMAGE LIGHTBOX ═══════════ -->
 <div id="lightbox-modal"
-     class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+     class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 backdrop-blur-2xl p-6"
      onclick="closeLightbox()">
-    <button onclick="closeLightbox()" aria-label="Close"
-            class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full
-                   bg-white/10 hover:bg-white/20 text-white transition-colors">
-        <i class="fas fa-times"></i>
-    </button>
-    <img id="lightbox-img" src="" alt=""
-         class="max-w-full max-h-[90dvh] rounded-2xl shadow-2xl object-contain"
-         onclick="event.stopPropagation()">
-</div>
 
-<!-- ═══════════ IMAGE LIGHTBOX ═══════════ -->
-<div id="lightbox-modal"
-     class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4"
-     onclick="closeLightbox()">
+    <!-- Close -->
     <button onclick="closeLightbox()" aria-label="Close"
-            class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full
-                   bg-white/10 hover:bg-white/20 text-white transition-colors">
+            class="absolute top-5 right-5 w-9 h-9 flex items-center justify-center rounded-full
+                   bg-white/15 hover:bg-white/30 text-white transition-colors z-10">
         <i class="fas fa-times"></i>
     </button>
-    <img id="lightbox-img" src="" alt=""
-         class="max-w-full max-h-[90dvh] rounded-2xl shadow-2xl object-contain"
-         onclick="event.stopPropagation()">
+
+    <!-- Card -->
+    <div class="flex flex-col items-center gap-5 max-w-xl w-full" onclick="event.stopPropagation()">
+        <img id="lightbox-img" src="" alt=""
+             class="max-w-full bg-white rounded-2xl shadow-2xl object-contain"
+             style="max-height:72dvh;">
+
+        <!-- Action buttons -->
+        <div class="flex flex-wrap justify-center gap-2">
+            <a id="lightbox-download-btn" href="#" download="design.png" target="_blank"
+               class="px-4 py-2 bg-white/15 hover:bg-white/25 text-white text-xs font-medium rounded-xl
+                      transition-colors flex items-center gap-1.5 border border-white/20 backdrop-blur-sm">
+                <i class="fas fa-download text-[10px]"></i> Download
+            </a>
+            <button onclick="_closeLightboxThen(() => openPreviewModal(_lightboxSrc))"
+                    class="px-4 py-2 bg-white/15 hover:bg-white/25 text-white text-xs font-medium rounded-xl
+                           transition-colors flex items-center gap-1.5 border border-white/20 backdrop-blur-sm">
+                <i class="fas fa-tshirt text-[10px]"></i> Preview
+            </button>
+            <button onclick="_closeLightboxThen(() => openBulkUploadModal(_lightboxSrc))"
+                    class="px-4 py-2 bg-[#7c3ca0]/80 hover:bg-[#7c3ca0] text-white text-xs font-medium rounded-xl
+                           transition-colors flex items-center gap-1.5 border border-purple-400/30 backdrop-blur-sm">
+                <i class="fas fa-cloud-upload-alt text-[10px]"></i> Upload to Printify
+            </button>
+        </div>
+    </div>
 </div>
 
 <div id="delete-modal"
@@ -518,164 +529,141 @@
             </div>
 
             <!-- ── Editor ── -->
-            <div class="flex-1 p-3 sm:p-5 overflow-y-auto min-w-0">
-            <div class="flex gap-3 mb-3 flex-wrap items-end">
-                <div class="flex flex-col gap-1 flex-1 min-w-0">
-                    <label class="text-xs text-ink-muted uppercase tracking-wider">Garment</label>
-                    <select id="garment-select" onchange="renderPreview()"
-                            class="bg-cream-100 border border-cream-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm text-ink
-                                   focus:outline-none focus:border-[#7c3ca0] transition-colors w-full">
-                        <option value="tshirt">Gildan 5000 — T-Shirt</option>
-                        <option value="hoodie">Gildan 18500 — Hoodie</option>
-                        <option value="tanktop">Bella+Canvas 3480 — Tank Top</option>
-                        <option value="longsleeve">Gildan 5400 — Long Sleeve</option>
-                        <option value="sweatshirt">Gildan 18000 — Sweatshirt</option>
-                    </select>
-                </div>
-                <div class="flex flex-col gap-1 flex-shrink-0">
-                    <label class="text-xs text-ink-muted uppercase tracking-wider">Color</label>
-                    <input type="color" id="garment-color" value="#ffffff"
-                           oninput="renderPreview()"
-                           class="w-9 h-9 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
+            <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+
+            <!-- ─ Toolbar ─ -->
+            <div class="flex items-center gap-2 px-3 py-2.5 border-b border-cream-200 flex-shrink-0 bg-white">
+                <select id="garment-select" onchange="renderPreview()"
+                        class="flex-1 min-w-0 bg-cream-50 border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs text-ink
+                               focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                    <option value="tshirt">T-Shirt</option>
+                    <option value="hoodie">Hoodie</option>
+                    <option value="tanktop">Tank Top</option>
+                    <option value="longsleeve">Long Sleeve</option>
+                    <option value="sweatshirt">Sweatshirt</option>
+                </select>
+                <input type="color" id="garment-color" value="#ffffff" oninput="renderPreview()"
+                       title="Garment color"
+                       class="w-8 h-8 border border-cream-300 rounded-lg cursor-pointer flex-shrink-0">
+                <div class="flex rounded-lg overflow-hidden border border-cream-300 flex-shrink-0">
+                    <button id="side-front-btn" type="button" onclick="switchSide('front')"
+                            class="px-3 py-1.5 text-[11px] font-medium transition-colors bg-[#7c3ca0] text-white">Front</button>
+                    <button id="side-back-btn" type="button" onclick="switchSide('back')"
+                            class="px-3 py-1.5 text-[11px] font-medium transition-colors bg-white text-ink-muted">Back</button>
                 </div>
             </div>
 
-            <!-- Position controls -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                <div class="flex flex-col gap-1">
-                    <div class="flex justify-between">
-                        <label class="text-xs text-ink-muted uppercase tracking-wider">Pos X</label>
-                        <span id="pos-x-val" class="text-xs text-ink-muted">0</span>
-                    </div>
-                    <input type="range" id="design-pos-x" min="-1" max="1" step="0.01" value="0"
-                           oninput="document.getElementById('pos-x-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
-                           class="w-full accent-purple-600">
-                </div>
-                <div class="flex flex-col gap-1">
-                    <div class="flex justify-between">
-                        <label class="text-xs text-ink-muted uppercase tracking-wider">Pos Y</label>
-                        <span id="pos-y-val" class="text-xs text-ink-muted">0</span>
-                    </div>
-                    <input type="range" id="design-pos-y" min="-1" max="1" step="0.01" value="0"
-                           oninput="document.getElementById('pos-y-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
-                           class="w-full accent-purple-600">
-                </div>
-                <div class="flex flex-col gap-1">
-                    <div class="flex justify-between">
-                        <label class="text-xs text-ink-muted uppercase tracking-wider">Scale</label>
-                        <span id="scale-val" class="text-xs text-ink-muted">1.00</span>
-                    </div>
-                    <input type="range" id="design-scale" min="0.2" max="2" step="0.01" value="1"
-                           oninput="document.getElementById('scale-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
-                           class="w-full accent-purple-600">
-                </div>
-                <div class="flex flex-col gap-1">
-                    <div class="flex justify-between">
-                        <label class="text-xs text-ink-muted uppercase tracking-wider">Rotate</label>
-                        <span id="rotation-val" class="text-xs text-ink-muted">0°</span>
-                    </div>
-                    <input type="range" id="design-rotation" min="-180" max="180" step="1" value="0"
-                           oninput="document.getElementById('rotation-val').textContent=parseInt(this.value)+'°'; syncSelectedLayerFromControls(); renderPreview()"
-                           class="w-full accent-purple-600">
-                </div>
-            </div>
-
-            <!-- Front / Back side toggle -->
-            <div class="flex gap-2 mb-2">
-                <button id="side-front-btn" type="button" onclick="switchSide('front')"
-                        class="flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors bg-[#7c3ca0] text-white border-[#7c3ca0]">
-                    ▶ Front
-                </button>
-                <button id="side-back-btn" type="button" onclick="switchSide('back')"
-                        class="flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors bg-cream-100 text-ink-muted border-cream-300">
-                    ◀ Back
-                </button>
-            </div>
-
-            <div class="flex justify-center bg-cream-100 rounded-xl p-2 sm:p-4">
+            <!-- ─ Canvas ─ -->
+            <div class="flex-1 flex items-center justify-center bg-[#f8f5ef] overflow-hidden">
                 <div id="canvas-wrapper" style="position:relative;display:inline-block;max-width:100%;line-height:0;">
                     <canvas id="garment-canvas" width="500" height="550"
-                            class="max-w-full h-auto rounded-lg" style="max-height:clamp(320px,55dvh,520px);display:block;"></canvas>
+                            class="max-w-full h-auto rounded-xl block"
+                            style="max-height:clamp(260px,46dvh,460px);"></canvas>
                     <canvas id="design-canvas" style="position:absolute;left:0;top:0;pointer-events:none;"></canvas>
                     <canvas id="handle-canvas" style="position:absolute;left:0;top:0;cursor:grab;"></canvas>
                 </div>
             </div>
-            <div id="printify-spec" class="mt-2 text-xs text-ink-muted text-center"></div>
 
-            <!-- Layers list (visible when multiple layers are added) -->
-            <div id="layers-container" class="hidden mt-3 border border-cream-200 rounded-xl p-3 bg-cream-50">
-                <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted mb-2 font-medium">Layers</p>
-                <div id="layers-list" class="space-y-1.5"></div>
-            </div>
+            <!-- ─ Controls + Actions ─ -->
+            <div class="flex-shrink-0 border-t border-cream-200 bg-white px-4 py-3 space-y-3 overflow-y-auto" style="max-height:44dvh;">
 
-            <div class="flex flex-wrap justify-end gap-2 mt-3">
-                <button onclick="downloadPreview()"
-                        class="px-3 sm:px-4 py-2 bg-ink text-white text-xs font-medium tracking-wide uppercase
-                               rounded-lg hover:bg-ink-light transition-colors">
-                    Download
-                </button>
-                <button onclick="togglePrintifyPanel()"
-                        class="px-3 sm:px-4 py-2 border border-[#7c3ca0] text-[#7c3ca0] text-xs font-medium
-                               tracking-wide uppercase rounded-lg hover:bg-[#7c3ca0] hover:text-white transition-colors">
-                    Send to Printify
-                </button>
-            </div>
+                <div id="printify-spec" class="text-[10px] text-ink-muted text-center leading-relaxed empty:hidden"></div>
 
-            <!-- Printify send panel -->
-            <div id="printify-panel" class="hidden mt-4 border border-cream-300 bg-cream-50 rounded-xl p-4 space-y-3">
-                <p class="text-xs font-medium tracking-widest uppercase text-ink-muted">Create product on Printify</p>
-
-                <div id="printify-connect-notice"
-                     class="hidden px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
-                    Your Printify account is not connected yet.
-                    <a href="/profile" target="_blank" rel="noopener" class="underline font-medium">
-                        Go to Profile → Connect Printify
-                    </a>
+                <!-- Sliders -->
+                <div class="grid grid-cols-2 gap-x-5 gap-y-2.5">
+                    <label class="flex items-center gap-2 min-w-0">
+                        <span class="text-[10px] text-ink-muted shrink-0 w-4">X</span>
+                        <input type="range" id="design-pos-x" min="-1" max="1" step="0.01" value="0"
+                               oninput="document.getElementById('pos-x-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
+                               class="flex-1 accent-purple-600 min-w-0">
+                        <span id="pos-x-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">0</span>
+                    </label>
+                    <label class="flex items-center gap-2 min-w-0">
+                        <span class="text-[10px] text-ink-muted shrink-0 w-4">Y</span>
+                        <input type="range" id="design-pos-y" min="-1" max="1" step="0.01" value="0"
+                               oninput="document.getElementById('pos-y-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
+                               class="flex-1 accent-purple-600 min-w-0">
+                        <span id="pos-y-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">0</span>
+                    </label>
+                    <label class="flex items-center gap-2 min-w-0">
+                        <span class="text-[10px] text-ink-muted shrink-0 w-4">⊕</span>
+                        <input type="range" id="design-scale" min="0.2" max="2" step="0.01" value="1"
+                               oninput="document.getElementById('scale-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
+                               class="flex-1 accent-purple-600 min-w-0">
+                        <span id="scale-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">1.00</span>
+                    </label>
+                    <label class="flex items-center gap-2 min-w-0">
+                        <span class="text-[10px] text-ink-muted shrink-0 w-4">↻</span>
+                        <input type="range" id="design-rotation" min="-180" max="180" step="1" value="0"
+                               oninput="document.getElementById('rotation-val').textContent=parseInt(this.value)+'°'; syncSelectedLayerFromControls(); renderPreview()"
+                               class="flex-1 accent-purple-600 min-w-0">
+                        <span id="rotation-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">0°</span>
+                    </label>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs text-ink-muted">Product name</label>
-                    <input id="printify-title" type="text" value=""
-                           class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                  focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                <!-- Layers -->
+                <div id="layers-container" class="hidden border border-cream-200 rounded-xl p-2.5 bg-cream-50">
+                    <p class="text-[9px] uppercase tracking-[0.15em] text-ink-muted mb-2">Layers</p>
+                    <div id="layers-list" class="space-y-1.5"></div>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs text-ink-muted">Printify store</label>
-                    <select id="printify-shop"
-                            class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                   focus:outline-none focus:border-[#7c3ca0]">
-                        <option value="">Loading stores…</option>
-                    </select>
+                <!-- Actions -->
+                <div class="flex gap-2">
+                    <button onclick="downloadPreview()"
+                            class="flex-1 py-2 border border-cream-300 text-ink text-xs font-medium rounded-xl
+                                   hover:bg-cream-100 transition-colors flex items-center justify-center gap-1.5">
+                        <i class="fas fa-download text-[10px]"></i> Download
+                    </button>
+                    <button onclick="togglePrintifyPanel()"
+                            class="flex-1 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl
+                                   hover:bg-[#5a2275] transition-colors flex items-center justify-center gap-1.5">
+                        <i class="fas fa-store text-[10px]"></i> Create Product
+                    </button>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs text-ink-muted">Garment color</label>
-                    <div class="flex items-center gap-3">
-                        <input type="color" id="printify-color-hex" value="#ffffff"
-                               oninput="onPrintifyColorChange(this.value)"
-                               class="w-10 h-10 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
-                        <span id="printify-color-name" class="text-xs text-ink font-medium">White</span>
+                <!-- Printify panel -->
+                <div id="printify-panel" class="hidden border border-cream-200 rounded-xl overflow-hidden">
+                    <div class="px-3 py-2 bg-cream-50 border-b border-cream-200">
+                        <p class="text-[10px] font-medium tracking-widest uppercase text-ink-muted">New Printify product</p>
+                    </div>
+                    <div class="px-3 py-3 space-y-2.5">
+                        <div id="printify-connect-notice"
+                             class="hidden px-3 py-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-xs">
+                            Account not connected.
+                            <a href="/profile" target="_blank" rel="noopener" class="underline font-medium">Connect in Profile →</a>
+                        </div>
+                        <input id="printify-title" type="text" placeholder="Product name"
+                               class="w-full bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
+                                      focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                        <select id="printify-shop"
+                                class="w-full bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
+                                       focus:outline-none focus:border-[#7c3ca0]">
+                            <option value="">Loading stores…</option>
+                        </select>
+                        <div class="flex items-center gap-2.5">
+                            <input type="color" id="printify-color-hex" value="#ffffff"
+                                   oninput="onPrintifyColorChange(this.value)"
+                                   class="w-8 h-8 border border-cream-300 rounded-lg cursor-pointer flex-shrink-0">
+                            <span id="printify-color-name" class="text-xs text-ink">White</span>
+                        </div>
+                        <div id="printify-feedback" class="hidden text-xs py-1"></div>
+                        <div class="flex gap-2">
+                            <button id="printify-send-btn" onclick="sendToPrintify()"
+                                    class="flex-1 py-2.5 bg-ink text-white text-xs font-medium rounded-xl
+                                           hover:bg-ink-light transition-colors disabled:opacity-50">
+                                Create Product
+                            </button>
+                            <button id="printify-bulk-btn" onclick="sendToAllPrintify()"
+                                    title="Upload design to all clothing types at once"
+                                    class="flex-1 py-2.5 bg-[#5a2275] text-white text-xs font-medium rounded-xl
+                                           hover:bg-[#7c3ca0] transition-colors disabled:opacity-50">
+                                Upload to All
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div id="printify-feedback" class="hidden text-sm py-1"></div>
-
-                <div class="flex gap-2">
-                    <button id="printify-send-btn" onclick="sendToPrintify()"
-                            class="flex-1 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase
-                                   rounded-lg hover:bg-ink-light transition-colors disabled:opacity-50">
-                        Create Product
-                    </button>
-                    <button id="printify-bulk-btn" onclick="sendToAllPrintify()"
-                            title="Upload design to all clothing types at once"
-                            class="flex-1 py-2.5 bg-[#5a2275] text-white text-xs font-medium tracking-widest uppercase
-                                   rounded-lg hover:bg-[#7c3ca0] transition-colors disabled:opacity-50">
-                        Upload to All
-                    </button>
-                </div>
-            </div>
-
+            </div><!-- /.controls -->
             </div><!-- /.editor -->
         </div><!-- /.two-col -->
     </div><!-- /.modal-inner -->
