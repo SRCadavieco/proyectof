@@ -60,6 +60,21 @@ return [
             'report' => false,
         ],
 
+        'gcs' => [
+            'driver'          => 'gcs',
+            'key_file_path'   => env('GOOGLE_APPLICATION_CREDENTIALS'),
+            'key_file'        => null,
+            'project_id'      => env('GCS_PROJECT_ID'),
+            'bucket'          => env('GCS_BUCKET'),
+            'path_prefix'     => env('GCS_PATH_PREFIX', ''),
+            'storage_api_uri' => env('GCS_STORAGE_API_URI', 'https://storage.googleapis.com'),
+            'apiEndpoint'     => env('GCS_API_ENDPOINT'),
+            'visibility'      => 'public',
+            'metadata'        => ['cacheControl' => 'public, max-age=86400'],
+            'throw'           => false,
+            'report'          => false,
+        ],
+
     ],
 
     /*

@@ -27,6 +27,14 @@ class SocialiteController extends Controller
                 ], fn($v) => $v !== null)
             );
 
+            // Seed plan/credits for brand-new Google users
+            if ($user->wasRecentlyCreated) {
+                $user->plan            = 'free';
+                $user->tokens          = User::creditsForPlan('free');
+                $user->tokens_reset_at = now()->startOfMonth();
+                $user->saveQuietly();
+            }
+
             // Set password nullable only if user was just created without one
             if (! $user->password) {
                 $user->password = null;

@@ -78,10 +78,9 @@ return [
 
     'stripe' => [
         'prices' => [
-            'pro_monthly' => env('STRIPE_PRO_MONTHLY_PRICE'),
-            'pro_yearly' => env('STRIPE_PRO_YEARLY_PRICE'),
-            'studio_monthly' => env('STRIPE_STUDIO_MONTHLY_PRICE'),
-            'studio_yearly' => env('STRIPE_STUDIO_YEARLY_PRICE'),
+            'starter_monthly'  => env('STRIPE_STARTER_MONTHLY_PRICE'),
+            'pro_monthly'      => env('STRIPE_PRO_MONTHLY_PRICE'),
+            'business_monthly' => env('STRIPE_BUSINESS_MONTHLY_PRICE'),
         ],
         'portal_configuration' => env('STRIPE_PORTAL_CONFIGURATION'),
     ],

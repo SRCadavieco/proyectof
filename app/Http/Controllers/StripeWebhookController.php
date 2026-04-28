@@ -31,8 +31,9 @@ class StripeWebhookController extends CashierWebhookController
 
         if ($stripeSubscription['status'] === 'active' && $plan) {
             $user->update([
-                'plan'   => $plan,
-                'tokens' => SubscriptionController::tokensForPlan($plan),
+                'plan'            => $plan,
+                'tokens'          => SubscriptionController::tokensForPlan($plan),
+                'tokens_reset_at' => now()->startOfMonth(),
             ]);
         }
     }
@@ -56,8 +57,9 @@ class StripeWebhookController extends CashierWebhookController
         }
 
         $user->update([
-            'plan'   => 'free',
-            'tokens' => SubscriptionController::tokensForPlan('free'),
+            'plan'            => 'free',
+            'tokens'          => SubscriptionController::tokensForPlan('free'),
+            'tokens_reset_at' => now()->startOfMonth(),
         ]);
     }
 

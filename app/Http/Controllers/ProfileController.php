@@ -67,17 +67,26 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
             $file = $request->file('avatar');
+            $disk = config('filesystems.default') === 'gcs' ? 'gcs' : 'public';
 
             // Delete old avatar file if it exists
             if ($user->avatar) {
                 $oldPath = ltrim(parse_url($user->avatar, PHP_URL_PATH), '/');
+                // Strip /storage/ prefix for local disk
                 $oldPath = preg_replace('#^storage/#', '', $oldPath);
-                Storage::disk('public')->delete($oldPath);
+                Storage::disk($disk)->delete($oldPath);
             }
 
-            $path = $file->store('avatars', 'public');
-            // Store as relative URL so it works on any domain/protocol
-            $user->avatar = '/storage/' . $path;
+            $path = $file->store('avatars', $disk);
+
+            if ($disk === 'gcs') {
+                $bucket = config('filesystems.disks.gcs.bucket');
+                $prefix = ltrim(config('filesystems.disks.gcs.path_prefix', ''), '/');
+                $filePath = $prefix ? "{$prefix}/{$path}" : $path;
+                $user->avatar = 'https://storage.googleapis.com/' . $bucket . '/' . $filePath;
+            } else {
+                $user->avatar = '/storage/' . $path;
+            }
         }
 
         $user->save();

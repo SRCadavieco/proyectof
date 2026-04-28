@@ -106,8 +106,9 @@ class DesignController extends Controller
         return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
     }
 
-    // Verificar y descontar token del usuario
+    // Verificar y descontar token del usuario (con reset mensual lazy)
     $user = $request->user();
+    $user->refreshCreditsIfNeeded();
     if ($user->tokens <= 0) {
         return response()->json([
             'success' => false,

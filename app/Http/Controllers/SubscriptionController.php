@@ -2,47 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
     /**
-     * Map plan+billing to Stripe price IDs and local plan names.
+     * Resolve the Stripe price ID for a given plan.
      */
-    private function resolvePlan(string $plan, string $billing): array
+    private function resolvePlan(string $plan): array
     {
         $prices = config('services.stripe.prices');
 
         $map = [
-            'pro' => [
-                'monthly' => $prices['pro_monthly'],
-                'yearly'  => $prices['pro_yearly'],
-            ],
-            'studio' => [
-                'monthly' => $prices['studio_monthly'],
-                'yearly'  => $prices['studio_yearly'],
-            ],
+            'starter'  => $prices['starter_monthly'],
+            'pro'      => $prices['pro_monthly'],
+            'business' => $prices['business_monthly'],
         ];
 
-        $priceId = $map[$plan][$billing] ?? null;
+        $priceId = $map[$plan] ?? null;
 
         if (! $priceId) {
-            abort(400, 'Invalid plan or billing period.');
+            abort(400, 'Invalid plan.');
         }
 
         return ['price_id' => $priceId, 'plan' => $plan];
     }
 
     /**
-     * Tokens granted per plan.
+     * Tokens (credits) granted per plan per month.
+     * Single source of truth — delegates to User model.
      */
     public static function tokensForPlan(string $plan): int
     {
-        return match ($plan) {
-            'pro'    => 100,
-            'studio' => 9999,
-            default  => 5,
-        };
+        return User::creditsForPlan($plan);
     }
 
     /**
@@ -51,12 +44,11 @@ class SubscriptionController extends Controller
     public function checkout(Request $request)
     {
         $request->validate([
-            'plan'    => ['required', 'in:pro,studio'],
-            'billing' => ['required', 'in:monthly,yearly'],
+            'plan' => ['required', 'in:starter,pro,business'],
         ]);
 
         $user = $request->user();
-        $resolved = $this->resolvePlan($request->plan, $request->billing);
+        $resolved = $this->resolvePlan($request->plan);
 
         return $user->newSubscription('default', $resolved['price_id'])
             ->checkout([
@@ -75,13 +67,9 @@ class SubscriptionController extends Controller
     {
         $prices = config('services.stripe.prices');
 
-        if (in_array($priceId, [$prices['pro_monthly'], $prices['pro_yearly']])) {
-            return 'pro';
-        }
-
-        if (in_array($priceId, [$prices['studio_monthly'], $prices['studio_yearly']])) {
-            return 'studio';
-        }
+        if ($priceId === $prices['starter_monthly'])  return 'starter';
+        if ($priceId === $prices['pro_monthly'])       return 'pro';
+        if ($priceId === $prices['business_monthly'])  return 'business';
 
         return null;
     }
@@ -103,22 +91,24 @@ class SubscriptionController extends Controller
 
                 if ($plan) {
                     $user->update([
-                        'plan'   => $plan,
-                        'tokens' => self::tokensForPlan($plan),
+                        'plan'            => $plan,
+                        'tokens'          => self::tokensForPlan($plan),
+                        'tokens_reset_at' => now()->startOfMonth(),
                     ]);
                 }
             } else {
                 // Fallback: read session metadata from Stripe
                 $sessionId = $request->get('session_id');
                 if ($sessionId) {
-                    $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+                    $stripe = new \Stripe\StripeClient(config('cashier.secret'));
                     $session = $stripe->checkout->sessions->retrieve($sessionId);
                     $plan = $session->metadata->plan ?? null;
 
                     if ($plan) {
                         $user->update([
-                            'plan'   => $plan,
-                            'tokens' => self::tokensForPlan($plan),
+                            'plan'            => $plan,
+                            'tokens'          => self::tokensForPlan($plan),
+                            'tokens_reset_at' => now()->startOfMonth(),
                         ]);
                     }
                 }
@@ -145,7 +135,11 @@ class SubscriptionController extends Controller
 
         if ($user->subscribed()) {
             $user->subscription()->cancel();
-            $user->update(['plan' => 'free', 'tokens' => self::tokensForPlan('free')]);
+            $user->update([
+                'plan'            => 'free',
+                'tokens'          => self::tokensForPlan('free'),
+                'tokens_reset_at' => now()->startOfMonth(),
+            ]);
         }
 
         return redirect()->route('profile.show')

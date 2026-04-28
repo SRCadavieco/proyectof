@@ -24,6 +24,322 @@
         <p class="text-ink-muted text-lg max-w-xl mx-auto">
             Pick the plan that fits your creative needs. Upgrade or downgrade at any time.
         </p>
+    </div>
+
+    <!-- ================= PLANS ================= -->
+    <div class="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-cream-300 max-w-6xl mx-auto border border-cream-300 mx-6 lg:mx-auto">
+
+        <!-- FREE -->
+        <div class="flex flex-col bg-white p-8 text-left group hover:bg-cream-50 transition-colors duration-500">
+            <p class="text-xs font-medium text-ink-muted uppercase tracking-widest mb-6">Free</p>
+            <div class="mb-4">
+                <span class="font-serif text-5xl">$0</span>
+                <span class="text-ink-muted text-sm ml-1">/ month</span>
+            </div>
+            <p class="text-ink-muted text-sm mb-2 font-medium">5 credits / month</p>
+            <p class="text-ink-muted text-sm mb-8">Perfect to explore FabricAI and test your first ideas.</p>
+
+            <ul class="space-y-3 text-sm text-ink-light mb-10 flex-1">
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    5 designs / month
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    All AI models
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Background removal
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Printify integration
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Design history
+                </li>
+            </ul>
+
+            @auth
+                @if(auth()->user()->plan === 'free')
+                    <span class="block text-center py-3 border border-ink text-sm font-medium text-ink uppercase tracking-wide">
+                        Current plan
+                    </span>
+                @else
+                    <span class="block text-center py-3 border border-cream-300 text-sm font-medium text-ink-muted uppercase tracking-wide">
+                        Free tier
+                    </span>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="btn-outline text-center text-xs">
+                    Get started free
+                </a>
+            @endauth
+        </div>
+
+        <!-- STARTER -->
+        <div class="flex flex-col bg-white p-8 text-left group hover:bg-cream-50 transition-colors duration-500">
+            <p class="text-xs font-medium text-ink-muted uppercase tracking-widest mb-6">Starter</p>
+            <div class="mb-4">
+                <span class="font-serif text-5xl">$5</span>
+                <span class="text-ink-muted text-sm ml-1">/ month</span>
+            </div>
+            <p class="text-ink-muted text-sm mb-2 font-medium">80 credits / month</p>
+            <p class="text-ink-muted text-sm mb-8">For creators getting serious about their designs.</p>
+
+            <ul class="space-y-3 text-sm text-ink-light mb-10 flex-1">
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    80 designs / month
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    All AI models
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Background removal
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Printify integration
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Design history
+                </li>
+            </ul>
+
+            @auth
+                @if(auth()->user()->plan === 'starter')
+                    <span class="block text-center py-3 border border-ink text-sm font-medium text-ink uppercase tracking-wide">
+                        Current plan
+                    </span>
+                @else
+                    <form method="POST" action="{{ route('subscription.checkout') }}">
+                        @csrf
+                        <input type="hidden" name="plan" value="starter">
+                        <button type="submit"
+                           class="w-full block text-center py-3 border border-ink text-sm font-medium text-ink uppercase tracking-wide
+                                  hover:bg-ink hover:text-white transition-colors duration-300 cursor-pointer">
+                            Start with Starter
+                        </button>
+                    </form>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="btn-outline text-center text-xs">
+                    Start with Starter
+                </a>
+            @endauth
+        </div>
+
+        <!-- PRO (highlighted) -->
+        <div class="relative flex flex-col bg-ink text-white p-8 text-left">
+            <div class="absolute -top-px left-0 right-0 h-1 bg-accent"></div>
+            <div class="inline-flex self-start px-3 py-1 bg-accent text-white text-xs font-medium uppercase tracking-widest mb-6">
+                Most popular
+            </div>
+
+            <div class="mb-4">
+                <span class="font-serif text-5xl">$10</span>
+                <span class="text-white/50 text-sm ml-1">/ month</span>
+            </div>
+            <p class="text-white/70 text-sm mb-2 font-medium">200 credits / month</p>
+            <p class="text-white/60 text-sm mb-8">For freelancers and creators who design regularly.</p>
+
+            <ul class="space-y-3 text-sm text-white/80 mb-10 flex-1">
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    200 designs / month
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    All AI models
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    Background removal
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    Printify integration
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    Design history
+                </li>
+            </ul>
+
+            @auth
+                @if(auth()->user()->plan === 'pro')
+                    <span class="block text-center py-3 bg-white text-ink text-sm font-medium uppercase tracking-wide">
+                        Current plan
+                    </span>
+                @else
+                    <form method="POST" action="{{ route('subscription.checkout') }}">
+                        @csrf
+                        <input type="hidden" name="plan" value="pro">
+                        <button type="submit"
+                           class="w-full block text-center py-3 bg-white text-ink text-sm font-medium uppercase tracking-wide
+                                  hover:bg-cream-100 transition-colors duration-300 cursor-pointer">
+                            Start with Pro
+                        </button>
+                    </form>
+                @endif
+            @else
+                <a href="{{ route('login') }}"
+                   class="block text-center py-3 bg-white text-ink text-sm font-medium uppercase tracking-wide
+                          hover:bg-cream-100 transition-colors duration-300">
+                    Start with Pro
+                </a>
+            @endauth
+        </div>
+
+        <!-- BUSINESS -->
+        <div class="flex flex-col bg-white p-8 text-left group hover:bg-cream-50 transition-colors duration-500">
+            <p class="text-xs font-medium text-ink-muted uppercase tracking-widest mb-6">Business</p>
+            <div class="mb-4">
+                <span class="font-serif text-5xl">$20</span>
+                <span class="text-ink-muted text-sm ml-1">/ month</span>
+            </div>
+            <p class="text-ink-muted text-sm mb-2 font-medium">500 credits / month</p>
+            <p class="text-ink-muted text-sm mb-8">For studios and teams with high-volume needs.</p>
+
+            <ul class="space-y-3 text-sm text-ink-light mb-10 flex-1">
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    500 designs / month
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    All AI models
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Background removal
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Printify integration
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Design history
+                </li>
+            </ul>
+
+            @auth
+                @if(auth()->user()->plan === 'business')
+                    <span class="block text-center py-3 border border-ink text-sm font-medium text-ink uppercase tracking-wide">
+                        Current plan
+                    </span>
+                @else
+                    <form method="POST" action="{{ route('subscription.checkout') }}">
+                        @csrf
+                        <input type="hidden" name="plan" value="business">
+                        <button type="submit"
+                           class="w-full block text-center py-3 border border-ink text-sm font-medium text-ink uppercase tracking-wide
+                                  hover:bg-ink hover:text-white transition-colors duration-300 cursor-pointer">
+                            Start with Business
+                        </button>
+                    </form>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="btn-outline text-center text-xs">
+                    Start with Business
+                </a>
+            @endauth
+        </div>
+
+    </div>
+
+    <!-- ================= COMPARISON TABLE ================= -->
+    <div class="mt-28 max-w-5xl mx-auto px-6">
+        <h2 class="font-serif text-3xl sm:text-4xl text-center mb-12">
+            Compare plans
+        </h2>
+
+        <div class="border border-cream-300 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-cream-300 bg-cream-100">
+                        <th class="text-left py-4 px-6 text-ink-muted font-medium text-xs uppercase tracking-wider w-2/5">Feature</th>
+                        <th class="text-center py-4 px-4 text-ink-muted font-medium text-xs uppercase tracking-wider">Free</th>
+                        <th class="text-center py-4 px-4 text-ink-muted font-medium text-xs uppercase tracking-wider">Starter</th>
+                        <th class="text-center py-4 px-4 text-purple-700 font-semibold text-xs uppercase tracking-wider">Pro</th>
+                        <th class="text-center py-4 px-4 text-ink-muted font-medium text-xs uppercase tracking-wider">Business</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-cream-200">
+                    @php
+                    $rows = [
+                        ['Credits / month',        '5',   '80',  '200', '500'],
+                        ['All AI models',           true,  true,  true,  true],
+                        ['Background removal',      true,  true,  true,  true],
+                        ['Printify integration',    true,  true,  true,  true],
+                        ['Design history',          true,  true,  true,  true],
+                    ];
+                    @endphp
+
+                    @foreach($rows as $row)
+                    <tr class="hover:bg-cream-100/50 transition-colors">
+                        <td class="py-4 px-6 text-ink-light">{{ $row[0] }}</td>
+                        @for($i = 1; $i <= 4; $i++)
+                        <td class="py-4 px-4 text-center">
+                            @if(is_bool($row[$i]))
+                                @if($row[$i])
+                                    <svg class="w-4 h-4 text-purple-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                @else
+                                    <span class="text-cream-400">—</span>
+                                @endif
+                            @else
+                                <span class="{{ $i === 3 ? 'text-purple-700 font-medium' : 'text-ink-muted' }}">{{ $row[$i] }}</span>
+                            @endif
+                        </td>
+                        @endfor
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= FAQ TEASER ================= -->
+    <div class="mt-28 max-w-2xl mx-auto px-6 text-center pb-24">
+        <p class="text-ink-muted text-sm">Have questions?</p>
+        <h3 class="font-serif text-2xl mt-2 mb-4">Still not sure which plan is right for you?</h3>
+        <p class="text-ink-muted text-sm mb-8">Check out our FAQ or reach out — we're happy to help you choose.</p>
+        <a href="/faq" class="btn-outline text-xs">
+            View FAQ
+        </a>
+    </div>
+
+</section>
+
+@include('layouts.footer')
+
+</body>
+</html>
+
+
+<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden grain">
+
+@include('layouts.navigation')
+
+<!-- ================= HERO ================= -->
+<section class="pt-36 pb-16 text-center">
+    <div class="max-w-3xl mx-auto px-6">
+        <p class="text-sm font-medium tracking-widest uppercase text-accent mb-4">Pricing</p>
+        <h1 class="font-serif text-5xl sm:text-6xl lg:text-7xl leading-tight mb-6">
+            Simple, transparent<br>
+            <span class="italic text-purple-700">pricing</span>
+        </h1>
+        <div class="w-16 h-px bg-accent mx-auto mt-2 mb-6"></div>
+        <p class="text-ink-muted text-lg max-w-xl mx-auto">
+            Pick the plan that fits your creative needs. Upgrade or downgrade at any time.
+        </p>
 
         <!-- Toggle monthly / yearly -->
         <div
