@@ -401,6 +401,83 @@
     </div>
 </div>
 
+<!-- ═══════════ BULK UPLOAD MODAL ═══════════ -->
+<div id="bulk-upload-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-cream-300">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-cloud-upload-alt text-[#7c3ca0] text-sm"></i>
+                <h2 class="text-sm font-semibold text-ink">Upload to All Garments</h2>
+            </div>
+            <button onclick="closeBulkUploadModal()" id="bulk-modal-close-btn" class="icon-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="px-5 py-4 space-y-4 overflow-y-auto">
+
+            <!-- Form (visible before upload starts) -->
+            <div id="bulk-form-section">
+                <div class="flex flex-col gap-1 mb-3">
+                    <label class="text-xs text-ink-muted">Product name</label>
+                    <input id="bulk-title" type="text" placeholder="FabricAI — My Design"
+                           class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
+                                  focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                </div>
+                <div class="flex flex-col gap-1 mb-3">
+                    <label class="text-xs text-ink-muted">Printify store</label>
+                    <select id="bulk-shop"
+                            class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
+                                   focus:outline-none focus:border-[#7c3ca0]">
+                        <option value="">Loading stores…</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs text-ink-muted">Garment color</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="bulk-color-hex" value="#ffffff"
+                               oninput="document.getElementById('bulk-color-name').textContent=hexToColorName(this.value)"
+                               class="w-10 h-10 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
+                        <span id="bulk-color-name" class="text-xs text-ink font-medium">White</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress section (shown during/after upload) -->
+            <div id="bulk-progress-section" class="hidden space-y-3">
+                <div class="flex justify-between text-xs text-ink-muted mb-1">
+                    <span id="bulk-progress-label">Uploading…</span>
+                    <span id="bulk-progress-count">0/5</span>
+                </div>
+                <div class="w-full bg-cream-200 rounded-full h-2">
+                    <div id="bulk-progress-bar"
+                         class="bg-[#7c3ca0] h-2 rounded-full transition-all duration-300"
+                         style="width:0%"></div>
+                </div>
+                <div id="bulk-progress-results" class="space-y-1 pt-1 text-xs max-h-40 overflow-y-auto"></div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="px-5 py-4 border-t border-cream-300 flex gap-2">
+            <button onclick="closeBulkUploadModal()" id="bulk-cancel-btn"
+                    class="flex-1 py-2.5 border border-cream-300 text-ink text-xs font-medium tracking-wide
+                           uppercase rounded-xl hover:bg-cream-100 transition-colors">
+                Cancel
+            </button>
+            <button onclick="startBulkUpload()" id="bulk-start-btn"
+                    class="flex-1 py-2.5 bg-[#7c3ca0] text-white text-xs font-medium tracking-wide
+                           uppercase rounded-xl hover:bg-[#5a2275] transition-colors disabled:opacity-50">
+                <i class="fas fa-cloud-upload-alt mr-1"></i> Upload All
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
 <div id="preview-modal"
      class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
@@ -898,8 +975,8 @@
                     <button type="button" title="Preview on garment" class="icon-btn preview-btn" data-preview-idx="${idx}">
                         <i class="fas fa-tshirt"></i>
                     </button>
-                    <button type="button" title="Send to Printify" class="icon-btn accent printify-quick-btn" data-image-src="${imageUrl}">
-                        <i class="fas fa-store"></i>
+                    <button type="button" title="Upload to all garments" class="icon-btn accent printify-quick-btn" data-image-src="${imageUrl}">
+                        <i class="fas fa-cloud-upload-alt"></i>
                     </button>
                 </div>
             </div>`;
@@ -2259,6 +2336,148 @@
         btn.disabled = false; send.disabled = false; btn.textContent = 'Upload to All';
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    //  BULK UPLOAD MODAL
+    // ═══════════════════════════════════════════════════════════════
+    let _bulkUploadImageSrc = null;
+    let _bulkShopsLoaded    = false;
+
+    async function openBulkUploadModal(imageSrc) {
+        _bulkUploadImageSrc = imageSrc;
+        // Reset UI to form state
+        document.getElementById('bulk-form-section').classList.remove('hidden');
+        document.getElementById('bulk-progress-section').classList.add('hidden');
+        document.getElementById('bulk-start-btn').disabled = false;
+        document.getElementById('bulk-start-btn').innerHTML = '<i class="fas fa-cloud-upload-alt mr-1"></i> Upload All';
+        document.getElementById('bulk-cancel-btn').textContent = 'Cancel';
+        document.getElementById('bulk-modal-close-btn').disabled = false;
+        document.getElementById('bulk-progress-results').innerHTML = '';
+        document.getElementById('bulk-progress-bar').style.width = '0%';
+
+        // Pre-fill title from current design
+        const existing = document.getElementById('printify-title')?.value;
+        document.getElementById('bulk-title').value = existing || 'FabricAI — My Design';
+
+        // Mirror garment color
+        const hexSrc = document.getElementById('garment-color')?.value || '#ffffff';
+        document.getElementById('bulk-color-hex').value = hexSrc;
+        document.getElementById('bulk-color-name').textContent = hexToColorName(hexSrc);
+
+        // Show modal
+        const modal = document.getElementById('bulk-upload-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Load shops
+        await _loadBulkShops();
+    }
+
+    function closeBulkUploadModal() {
+        const modal = document.getElementById('bulk-upload-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        _bulkUploadImageSrc = null;
+    }
+
+    async function _loadBulkShops() {
+        if (_bulkShopsLoaded) return;
+        const sel = document.getElementById('bulk-shop');
+        sel.innerHTML = '<option value="">Loading…</option>';
+        try {
+            const statusRes = await fetch('/printify/status', { headers: { 'Accept': 'application/json' } });
+            const status    = await statusRes.json();
+            if (!status.connected) {
+                sel.innerHTML = '<option value="">Not connected</option>'; return;
+            }
+            const res   = await fetch('/printify/shops', { headers: { 'Accept': 'application/json' } });
+            const shops = await res.json();
+            if (!res.ok || !Array.isArray(shops) || !shops.length) {
+                sel.innerHTML = '<option value="">No shops found</option>'; return;
+            }
+            sel.innerHTML = shops.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+            _bulkShopsLoaded = true;
+        } catch (err) {
+            sel.innerHTML = `<option value="">Error: ${escapeHtml(err.message)}</option>`;
+        }
+    }
+
+    async function startBulkUpload() {
+        const shopId = document.getElementById('bulk-shop').value;
+        const title  = document.getElementById('bulk-title').value.trim();
+        const color  = hexToColorName(document.getElementById('bulk-color-hex').value);
+        if (!shopId)  { alert('Please select a Printify store.'); return; }
+        if (!title)   { alert('Please enter a product name.'); return; }
+        if (!_bulkUploadImageSrc) { alert('No image selected.'); return; }
+
+        const garments = [
+            {type:'tshirt',label:'T-Shirt'},{type:'hoodie',label:'Hoodie'},
+            {type:'tanktop',label:'Tank Top'},{type:'longsleeve',label:'Long Sleeve'},
+            {type:'sweatshirt',label:'Sweatshirt'},
+        ];
+
+        // Switch to progress view
+        document.getElementById('bulk-form-section').classList.add('hidden');
+        document.getElementById('bulk-progress-section').classList.remove('hidden');
+        document.getElementById('bulk-start-btn').disabled = true;
+        document.getElementById('bulk-cancel-btn').disabled = true;
+        document.getElementById('bulk-modal-close-btn').disabled = true;
+
+        const csrf       = document.querySelector('meta[name="csrf-token"]').content;
+        const resultLines = [];
+
+        const updateProgress = (cur, curLabel) => {
+            const pct   = Math.round((cur / garments.length) * 100);
+            const isDone = cur >= garments.length;
+            document.getElementById('bulk-progress-bar').style.width  = pct + '%';
+            document.getElementById('bulk-progress-count').textContent = `${cur}/${garments.length}`;
+            document.getElementById('bulk-progress-label').textContent =
+                isDone ? 'Done!' : `Uploading ${curLabel}…`;
+            document.getElementById('bulk-progress-results').innerHTML = resultLines.join('');
+        };
+
+        for (let i = 0; i < garments.length; i++) {
+            const {type, label} = garments[i];
+            updateProgress(i, label);
+            try {
+                const res  = await fetch('/printify/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':  'application/json',
+                        'X-CSRF-TOKEN':  csrf,
+                        'Accept':        'application/json',
+                    },
+                    body: JSON.stringify({
+                        shop_id:      parseInt(shopId),
+                        garment_type: type,
+                        image_source: _bulkUploadImageSrc,
+                        title:        title + ' — ' + label,
+                        color:        color,
+                        pos_x:        0.5,
+                        pos_y:        0.5,
+                        design_scale: 1,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                resultLines.push(`<div class="flex items-center gap-1 text-green-700">
+                    <i class="fas fa-check-circle text-xs"></i>
+                    <span>${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></span>
+                </div>`);
+            } catch (err) {
+                resultLines.push(`<div class="flex items-center gap-1 text-red-600">
+                    <i class="fas fa-times-circle text-xs"></i>
+                    <span>${label}: ${escapeHtml(err.message)}</span>
+                </div>`);
+            }
+        }
+        updateProgress(garments.length, '');
+
+        // Re-enable close
+        document.getElementById('bulk-cancel-btn').disabled = false;
+        document.getElementById('bulk-modal-close-btn').disabled = false;
+        document.getElementById('bulk-cancel-btn').textContent = 'Close';
+    }
+
     function switchSide(side) {
         if (_activeSide === side) return;
         _activeSide = side;
@@ -2318,9 +2537,7 @@
         const qb = e.target.closest ? e.target.closest('.printify-quick-btn') : null;
         if (!qb) return;
         const src = qb.getAttribute('data-image-src');
-        if (src) openPreviewModal(src);
-        const panel = document.getElementById('printify-panel');
-        if (panel.classList.contains('hidden')) togglePrintifyPanel();
+        if (src) openBulkUploadModal(src);
     });
 
     // ═══════════════════════════════════════════════════════════════
