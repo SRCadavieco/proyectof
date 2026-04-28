@@ -1444,12 +1444,50 @@
         return GARMENTS[garmentKey].printArea;
     }
 
+    // ── Printify SVG garment system ───────────────────────────────────────────
+    // SVGs fetched once from our server, colored on the fly, drawn on canvas.
+    // Print area coordinates derived from the exact SVG viewBox/translate values
+    // (obtained via Printify API product views endpoint).
+    const _garmentSvgCache = new Map();  // garmentKey → raw SVG text
+    const _garmentImgCache = new Map();  // 'key|#color' → HTMLImageElement
+
+    async function _loadGarmentSvgText(garmentKey) {
+        if (_garmentSvgCache.has(garmentKey)) return _garmentSvgCache.get(garmentKey);
+        const url = GARMENTS[garmentKey] && GARMENTS[garmentKey].svgUrl;
+        if (!url) return null;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) return null;
+            const text = await resp.text();
+            _garmentSvgCache.set(garmentKey, text);
+            return text;
+        } catch(e) { return null; }
+    }
+
+    async function _getColoredGarmentImg(garmentKey, color) {
+        const cKey = garmentKey + '|' + color;
+        if (_garmentImgCache.has(cKey)) return _garmentImgCache.get(cKey);
+        const svgText = await _loadGarmentSvgText(garmentKey);
+        if (!svgText) return null;
+        // Replace the fill of the garment body group (id="color_first" fill="#fff")
+        const colored = svgText.replace(/(id="color_first"[^>]+fill=")[^"]*(")/g, '$1' + color + '$2');
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => { _garmentImgCache.set(cKey, img); resolve(img); };
+            img.onerror = () => resolve(null);
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(colored);
+        });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const GARMENTS = {
         tshirt: {
             name:'T-Shirt', ref:'Gildan 5000', printPx:'3951 × 4919', printInches:'13.17" × 16.40"', dpi:300,
             printW:3951, printH:4919,
-            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.803)
-            printArea:{ x:162, y:185, w:175, h:218 },
+            // SVG from Printify API (viewBox 3527.65×3527.66, translate 1044.01 747.9, rect 1439.64×1823.54)
+            // Canvas 500×550: SVG letterboxed to 500×500 (yOffset=25)
+            svgUrl:'/images/garments/tshirt.svg',
+            printArea:{ x:148, y:131, w:204, h:258 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(195,148); ctx.lineTo(108,170); ctx.lineTo(62,218);
@@ -1465,8 +1503,9 @@
         hoodie: {
             name:'Hoodie', ref:'Gildan 18500', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
             printW:3543, printH:4724,
-            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.750)
-            printArea:{ x:176, y:205, w:148, h:197 },
+            // SVG from Printify API (viewBox 4159.82×4159.82, translate 1468.06 1428.49, rect 1223.69×1035.56)
+            svgUrl:'/images/garments/hoodie.svg',
+            printArea:{ x:176, y:197, w:147, h:124 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(175,155); ctx.quadraticCurveTo(155,65,250,55);
@@ -1490,8 +1529,9 @@
         tanktop: {
             name:'Tank Top', ref:'Bella+Canvas 3480', printPx:'3000 × 4200', printInches:'10.00" × 14.00"', dpi:300,
             printW:3000, printH:4200,
-            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.714)
-            printArea:{ x:170, y:200, w:160, h:224 },
+            // SVG from Printify API (viewBox 3968.84×3968.84, translate 1264.6 1313.37, rect 1439.64×1823.54)
+            svgUrl:'/images/garments/tanktop.svg',
+            printArea:{ x:159, y:190, w:181, h:230 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(210,130); ctx.lineTo(180,130); ctx.lineTo(148,195);
@@ -1504,8 +1544,9 @@
         longsleeve: {
             name:'Long Sleeve', ref:'Gildan 5400', printPx:'3951 × 4919', printInches:'13.17" × 16.40"', dpi:300,
             printW:3951, printH:4919,
-            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.803)
-            printArea:{ x:162, y:185, w:175, h:218 },
+            // SVG from Printify API (viewBox 3570.14×3570.14, translate 1066.94 646.78, rect 1439.64×1823.54)
+            svgUrl:'/images/garments/longsleeve.svg',
+            printArea:{ x:149, y:116, w:202, h:255 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(195,148); ctx.lineTo(108,170); ctx.lineTo(42,380); ctx.lineTo(78,390);
@@ -1522,8 +1563,9 @@
         sweatshirt: {
             name:'Sweatshirt', ref:'Gildan 18000', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
             printW:3543, printH:4724,
-            // print area on the canvas SVG (500×550px) — ratio matches printW/printH (0.750)
-            printArea:{ x:172, y:200, w:155, h:207 },
+            // SVG from Printify API (viewBox 4156.44×4156.44, translate 1161.87 1199.03, rect 1832.61×1889.29)
+            svgUrl:'/images/garments/sweatshirt.svg',
+            printArea:{ x:140, y:169, w:220, h:227 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(190,155); ctx.lineTo(105,175); ctx.lineTo(48,345); ctx.lineTo(85,355);
@@ -1718,8 +1760,21 @@
                 ctx.fillStyle = ((x/sz + y/sz) % 2 === 0) ? '#1e1e2e' : '#252538';
                 ctx.fillRect(x, y, sz, sz);
             }
-        garment.draw(ctx, color);
-        // Print area overlay
+        // Draw garment: Printify SVG (colored) if cached, else vector fallback
+        const cKey = garmentKey + '|' + color;
+        if (_garmentImgCache.has(cKey)) {
+            // SVG is square — letterbox to fit 500×500 centered in 500×550 (yOffset=25)
+            const garmentSz = Math.min(canvas.width, canvas.height);
+            const xOff = Math.round((canvas.width  - garmentSz) / 2);
+            const yOff = Math.round((canvas.height - garmentSz) / 2);
+            ctx.drawImage(_garmentImgCache.get(cKey), xOff, yOff, garmentSz, garmentSz);
+        } else {
+            garment.draw(ctx, color); // vector fallback while SVG loads
+            _getColoredGarmentImg(garmentKey, color).then(img => {
+                if (img) renderGarment(); // re-render with the loaded SVG
+            });
+        }
+        // Print area overlay (coordinates from Printify SVG analysis)
         const pa = _computePrintArea(garmentKey);
         ctx.setLineDash([6,4]); ctx.strokeStyle='rgba(168,85,247,0.7)'; ctx.lineWidth=1.5;
         ctx.strokeRect(pa.x, pa.y, pa.w, pa.h); ctx.setLineDash([]);
@@ -2162,6 +2217,11 @@
         const n=document.getElementById('printify-color-name'); if (n) n.textContent=hexToColorName(hex);
     }
     document.addEventListener('DOMContentLoaded', () => {
+        // Preload garment SVGs in the background so first render is instant
+        const _initialColor = document.getElementById('garment-color')?.value || '#ffffff';
+        Object.keys(GARMENTS).forEach(k => {
+            _getColoredGarmentImg(k, _initialColor); // warm cache
+        });
         const gc=document.getElementById('garment-color');
         if (gc) gc.addEventListener('input', e => {
             const p=document.getElementById('printify-color-hex');

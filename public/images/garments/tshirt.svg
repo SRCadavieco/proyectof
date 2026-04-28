@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 3527.65 3527.66" xmlns:printify="http://printify.com/adjuster"  printify:width="933.36" printify:height="933.36"><defs><image x="0" y="0" width="3527.65" height="3527.66" id="fabric-image"/><path d="M1431.42,275,696.74,546.69h0L6.24,834.62l274.6,717.73,415.9,31.41s-3.63,1413.05-28.48,1669H2859.39c-24.85-255.9-28.48-1668.95-28.48-1668.95l415.9-31.41,274.6-717.73-690.5-287.93h0L2100,275s-134.14,58-331.48,59.37C1564.51,335.7,1431.42,275,1431.42,275Z" id="fabric-0"/><clipPath id="fabric-0-clip"><use href="#fabric-0"/></clipPath><rect id="_front-path" width="1439.64" height="1823.54" fill="none" stroke-miterlimit="10" transform=""/><clipPath><use stroke-width="3.8890000000000002mm" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#_front-path"/></clipPath></defs>
+  <g id="front">
+    <g id="color_first" fill-rule="nonzero" fill="#fff"><use href="#fabric-0"/><use clip-path="url(#fabric-0-clip)" href="#fabric-image"/>
+      
+      
+    <g clip-path="url(#_front-clippath)" transform="translate(1044.01 747.9)"><svg id="placeholder_front" width="1439.64" height="1823.54" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1439.64 1823.54"><use stroke-width="3.8890000000000002mm" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#_front-path" stroke="#ffffff"/><use stroke-width="3.8890000000000002mm" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#_front-path" stroke="#000000" stroke-dasharray="7.7780000000000005mm, 7.7780000000000005mm"/></svg></g></g>
+    <g id="outlines">
+      <g id="outlines_colored">
+        <path id="shadows" d="M2100.15,274.93S1966,333,1768.67,334.3c-204,1.38-337.1-59.37-337.1-59.37S1454,669,1765.34,672.3,2100.15,274.93,2100.15,274.93Z" fill="#231f20" opacity="0.25"/>
+        <path id="stitch" d="M1357.48,317.39,699.56,560.74M2173.73,317.39l657.92,243.35M1442.36,349.52c.28.1,12.06,4.34,12.35,4.43,49.71,16.33,174.57,52.44,309.12,52.44s259.4-36.11,309.11-52.44c.29-.09,12.07-4.33,12.35-4.43M1448.1,374.6l6.48,2c49.63,16.31,174.58,52.48,309.25,52.48s259.61-36.17,309.24-52.48l6.48-2M45.33,818.3l282.06,737.35m-267.33-744L345.17,1557M3482.27,818.3,3200.1,1555.87M3467.54,812,3182.32,1557.1M672.34,3196H2855.2M673.51,3174.84l2180.86-.17" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.49" stroke-dasharray="12.44 6.22 0 0" opacity="0.5"/>
+        <path id="collar" d="M2086.9,341.59l-14.05,4.84c-49.77,16.34-174.56,52.41-309,52.41s-259.26-36.07-309-52.41l-14-4.84m9.4,41c.38.12,4.47,1.56,4.86,1.69,49.91,16.37,174.54,52.34,308.82,52.34s258.9-36,308.81-52.34c.39-.13,4.48-1.57,4.86-1.69" fill="none" stroke="#000" stroke-linejoin="round" stroke-width="3.73"/>
+        <path id="detail" d="M2100,274.93s-23.47,400.71-334.81,397.38-333.78-397.38-333.78-397.38M696.72,1583.76c144-354.58,0-1037.09,0-1037.09m2134.21,0s-144,682.51,0,1037.09M1356.12,302.8s.23,3.89,1,10.95c7.11,68.43,61.48,434.15,410.38,434.15h0c384.92,0,407.5-445.1,407.5-445.1" fill="none" stroke="#000" stroke-linejoin="round" stroke-width="6.22"/>
+        <path id="contour" d="M1431.41,274.93,696.72,546.67h0L6.22,834.6l274.6,717.75,415.9,31.41s-3.63,1413.07-28.47,1669H2859.4c-24.84-255.9-28.47-1669-28.47-1669l415.9-31.41,274.6-717.75-690.5-287.93h0L2100,274.93s-134.14,58-331.48,59.37C1564.51,335.68,1431.41,274.93,1431.41,274.93Z" fill="none" stroke="#000" stroke-linejoin="round" stroke-width="12.44"/>
+      </g>
+    </g>
+  </g>
+</svg>
