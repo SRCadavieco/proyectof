@@ -112,13 +112,20 @@ class PrintifyService
         return $response->json();
     }
 
-    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = ''): array
+    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = '', ?string $backImageUrl = null, float $backPosX = 0.5, float $backPosY = 0.5, float $backScale = 1.0): array
     {
         $blueprintId = self::BLUEPRINT_MAP[$garmentType] ?? self::BLUEPRINT_MAP['tshirt'];
 
         // 1. Upload the design image
         $upload  = $this->uploadImage($token, $imageUrl);
         $imageId = $upload['id'];
+
+        // 1b. Upload back image if provided
+        $backImageId = null;
+        if ($backImageUrl) {
+            $backUpload  = $this->uploadImage($token, $backImageUrl);
+            $backImageId = $backUpload['id'];
+        }
 
         // 2. Pick first print provider for this blueprint
         $providers = $this->getPrintProviders($token, $blueprintId);
@@ -141,7 +148,37 @@ class PrintifyService
 
         $variantIds = array_column($variants, 'id');
 
-        // 4. Build product payload
+        // 4. Build placeholders (front always, back only if image provided)
+        $placeholders = [
+            [
+                'position' => 'front',
+                'images'   => [
+                    [
+                        'id'    => $imageId,
+                        'x'     => $posX,
+                        'y'     => $posY,
+                        'scale' => $scale,
+                        'angle' => 0,
+                    ],
+                ],
+            ],
+        ];
+        if ($backImageId) {
+            $placeholders[] = [
+                'position' => 'back',
+                'images'   => [
+                    [
+                        'id'    => $backImageId,
+                        'x'     => $backPosX,
+                        'y'     => $backPosY,
+                        'scale' => $backScale,
+                        'angle' => 0,
+                    ],
+                ],
+            ];
+        }
+
+        // 5. Build product payload
         $payload = [
             'title'             => $title,
             'blueprint_id'      => $blueprintId,
@@ -154,20 +191,7 @@ class PrintifyService
             'print_areas' => [
                 [
                     'variant_ids'  => $variantIds,
-                    'placeholders' => [
-                        [
-                            'position' => 'front',
-                            'images'   => [
-                                [
-                                    'id'    => $imageId,
-                                    'x'     => $posX,
-                                    'y'     => $posY,
-                                    'scale' => $scale,
-                                    'angle' => 0,
-                                ],
-                            ],
-                        ],
-                    ],
+                    'placeholders' => $placeholders,
                 ],
             ],
         ];

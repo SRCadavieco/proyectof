@@ -503,6 +503,18 @@
                 </div>
             </div>
 
+            <!-- Front / Back side toggle -->
+            <div class="flex gap-2 mb-2">
+                <button id="side-front-btn" type="button" onclick="switchSide('front')"
+                        class="flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors bg-[#7c3ca0] text-white border-[#7c3ca0]">
+                    ▶ Front
+                </button>
+                <button id="side-back-btn" type="button" onclick="switchSide('back')"
+                        class="flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors bg-cream-100 text-ink-muted border-cream-300">
+                    ◀ Back
+                </button>
+            </div>
+
             <div class="flex justify-center bg-cream-100 rounded-xl p-2 sm:p-4">
                 <div id="canvas-wrapper" style="position:relative;display:inline-block;max-width:100%;line-height:0;">
                     <canvas id="garment-canvas" width="500" height="550"
@@ -1441,7 +1453,8 @@
 
     // Returns the print area rectangle (canvas pixels) for the given garment.
     function _computePrintArea(garmentKey) {
-        return GARMENTS[garmentKey].printArea;
+        const g = GARMENTS[garmentKey];
+        return (_activeSide === 'back' && g.printAreaBack) ? g.printAreaBack : g.printArea;
     }
 
     // ── Printify SVG garment system ───────────────────────────────────────────
@@ -1451,23 +1464,24 @@
     const _garmentSvgCache = new Map();  // garmentKey → raw SVG text
     const _garmentImgCache = new Map();  // 'key|#color' → HTMLImageElement
 
-    async function _loadGarmentSvgText(garmentKey) {
-        if (_garmentSvgCache.has(garmentKey)) return _garmentSvgCache.get(garmentKey);
-        const url = GARMENTS[garmentKey] && GARMENTS[garmentKey].svgUrl;
+    async function _loadGarmentSvgText(garmentKey, side = 'front') {
+        const cKey = garmentKey + '|' + side;
+        if (_garmentSvgCache.has(cKey)) return _garmentSvgCache.get(cKey);
+        const url = side === 'back' ? GARMENTS[garmentKey]?.svgUrlBack : GARMENTS[garmentKey]?.svgUrl;
         if (!url) return null;
         try {
             const resp = await fetch(url);
             if (!resp.ok) return null;
             const text = await resp.text();
-            _garmentSvgCache.set(garmentKey, text);
+            _garmentSvgCache.set(cKey, text);
             return text;
         } catch(e) { return null; }
     }
 
-    async function _getColoredGarmentImg(garmentKey, color) {
-        const cKey = garmentKey + '|' + color;
+    async function _getColoredGarmentImg(garmentKey, color, side = 'front') {
+        const cKey = garmentKey + '|' + side + '|' + color;
         if (_garmentImgCache.has(cKey)) return _garmentImgCache.get(cKey);
-        const svgText = await _loadGarmentSvgText(garmentKey);
+        const svgText = await _loadGarmentSvgText(garmentKey, side);
         if (!svgText) return null;
         // Replace the fill of the garment body group (id="color_first" fill="#fff")
         const colored = svgText.replace(/(id="color_first"[^>]+fill=")[^"]*(")/g, '$1' + color + '$2');
@@ -1488,6 +1502,8 @@
             // Canvas 500×550: SVG letterboxed to 500×500 (yOffset=25)
             svgUrl:'/images/garments/tshirt.svg',
             printArea:{ x:148, y:131, w:204, h:258 },
+            svgUrlBack:'/images/garments/tshirt-back.svg',
+            printAreaBack:{ x:155, y:84, w:190, h:218 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(195,148); ctx.lineTo(108,170); ctx.lineTo(62,218);
@@ -1506,6 +1522,8 @@
             // SVG from Printify API (viewBox 4159.82×4159.82, translate 1468.06 1428.49, rect 1223.69×1035.56)
             svgUrl:'/images/garments/hoodie.svg',
             printArea:{ x:176, y:197, w:147, h:124 },
+            svgUrlBack:'/images/garments/hoodie-back.svg',
+            printAreaBack:{ x:165, y:182, w:170, h:185 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(175,155); ctx.quadraticCurveTo(155,65,250,55);
@@ -1532,6 +1550,8 @@
             // SVG from Printify API (viewBox 3968.84×3968.84, translate 1264.6 1313.37, rect 1439.64×1823.54)
             svgUrl:'/images/garments/tanktop.svg',
             printArea:{ x:159, y:190, w:181, h:230 },
+            svgUrlBack:'/images/garments/tanktop-back.svg',
+            printAreaBack:{ x:159, y:135, w:181, h:230 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(210,130); ctx.lineTo(180,130); ctx.lineTo(148,195);
@@ -1547,6 +1567,8 @@
             // SVG from Printify API (viewBox 3570.14×3570.14, translate 1066.94 646.78, rect 1439.64×1823.54)
             svgUrl:'/images/garments/longsleeve.svg',
             printArea:{ x:149, y:116, w:202, h:255 },
+            svgUrlBack:'/images/garments/longsleeve-back.svg',
+            printAreaBack:{ x:149, y:82, w:202, h:255 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(195,148); ctx.lineTo(108,170); ctx.lineTo(42,380); ctx.lineTo(78,390);
@@ -1566,6 +1588,8 @@
             // SVG from Printify API (viewBox 4156.44×4156.44, translate 1161.87 1199.03, rect 1832.61×1889.29)
             svgUrl:'/images/garments/sweatshirt.svg',
             printArea:{ x:140, y:169, w:220, h:227 },
+            svgUrlBack:'/images/garments/sweatshirt-back.svg',
+            printAreaBack:{ x:139, y:131, w:223, h:264 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color; ctx.beginPath();
                 ctx.moveTo(190,155); ctx.lineTo(105,175); ctx.lineTo(48,345); ctx.lineTo(85,355);
@@ -1583,7 +1607,8 @@
         },
     };
 
-    let previewLayers    = []; // [{id, src, posX, posY, scale, rotation, imgW, imgH}]
+    const _layers        = { front: [], back: [] }; // {side: [{id, src, posX, posY, scale, rotation, imgW, imgH}]}
+    let _activeSide      = 'front';
     let _selectedLayerId = null;
     const _imgCache      = new Map(); // src → HTMLImageElement (already loaded)
 
@@ -1599,7 +1624,8 @@
     }
 
     function getSelectedLayer() {
-        return previewLayers.find(l => l.id === _selectedLayerId) || previewLayers[0] || null;
+        const layers = _layers[_activeSide];
+        return layers.find(l => l.id === _selectedLayerId) || layers[0] || null;
     }
 
     function syncSelectedLayerFromControls() {
@@ -1635,7 +1661,9 @@
 
     function openPreviewModal(imageSrc) {
         const id = Date.now();
-        previewLayers    = [{id, src: imageSrc, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null}];
+        _activeSide      = 'front';
+        _layers.front    = [{id, src: imageSrc, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null}];
+        _layers.back     = [];
         _selectedLayerId = id;
         document.getElementById('pos-x-val').textContent    = '0';
         document.getElementById('pos-y-val').textContent    = '0';
@@ -1655,13 +1683,15 @@
     function closePreviewModal() {
         document.getElementById('preview-modal').classList.add('hidden');
         document.getElementById('preview-modal').classList.remove('flex');
-        previewLayers    = [];
+        _layers.front    = [];
+        _layers.back     = [];
+        _activeSide      = 'front';
         _selectedLayerId = null;
     }
 
     function addLayerToCanvas(src) {
         const id = Date.now();
-        previewLayers.push({id, src, posX: 0, posY: 0, scale: 0.8, rotation: 0, imgW: null, imgH: null});
+        _layers[_activeSide].push({id, src, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null});
         _selectedLayerId = id;
         updateControlsFromSelected();
         renderPreview();
@@ -1676,9 +1706,10 @@
     }
 
     function removeLayer(id) {
-        previewLayers = previewLayers.filter(l => l.id !== id);
+        _layers[_activeSide] = _layers[_activeSide].filter(l => l.id !== id);
         if (_selectedLayerId === id) {
-            _selectedLayerId = previewLayers.length > 0 ? previewLayers[previewLayers.length - 1].id : null;
+            const al = _layers[_activeSide];
+            _selectedLayerId = al.length > 0 ? al[al.length - 1].id : null;
         }
         updateControlsFromSelected();
         renderPreview();
@@ -1689,10 +1720,11 @@
         const container = document.getElementById('layers-list');
         const wrapper   = document.getElementById('layers-container');
         if (!container || !wrapper) return;
-        if (previewLayers.length <= 1) { wrapper.classList.add('hidden'); return; }
+        const layers = _layers[_activeSide];
+        if (layers.length <= 1) { wrapper.classList.add('hidden'); return; }
         wrapper.classList.remove('hidden');
         container.innerHTML = '';
-        previewLayers.forEach((layer, idx) => {
+        layers.forEach((layer, idx) => {
             const isSelected = layer.id === _selectedLayerId;
             const item = document.createElement('div');
             item.className = 'flex items-center gap-2 p-1.5 rounded-lg cursor-pointer border transition-all ' +
@@ -1714,16 +1746,17 @@
         });
     }
 
-    async function getFlattenedSrc() {
-        if (!previewLayers.length) return null;
+    async function getFlattenedSrc(layers) {
+        layers = layers ?? _layers[_activeSide];
+        if (!layers.length) return null;
         // Single non-rotated layer: return raw src, Printify handles positioning itself
-        if (previewLayers.length === 1 && !previewLayers[0].rotation) return previewLayers[0].src;
+        if (layers.length === 1 && !layers[0].rotation) return layers[0].src;
         const garment = GARMENTS[document.getElementById('garment-select').value];
         const pw = garment.printW; const ph = garment.printH;
         const flat = document.createElement('canvas');
         flat.width = pw; flat.height = ph;
         const ctx = flat.getContext('2d');
-        for (const layer of previewLayers) {
+        for (const layer of layers) {
             await new Promise(resolve => {
                 const img = new Image(); img.crossOrigin = 'anonymous';
                 img.onload = () => {
@@ -1761,7 +1794,7 @@
                 ctx.fillRect(x, y, sz, sz);
             }
         // Draw garment: Printify SVG (colored) if cached, else vector fallback
-        const cKey = garmentKey + '|' + color;
+        const cKey = garmentKey + '|' + _activeSide + '|' + color;
         if (_garmentImgCache.has(cKey)) {
             // SVG is square — letterbox to fit 500×500 centered in 500×550 (yOffset=25)
             const garmentSz = Math.min(canvas.width, canvas.height);
@@ -1770,7 +1803,7 @@
             ctx.drawImage(_garmentImgCache.get(cKey), xOff, yOff, garmentSz, garmentSz);
         } else {
             garment.draw(ctx, color); // vector fallback while SVG loads
-            _getColoredGarmentImg(garmentKey, color).then(img => {
+            _getColoredGarmentImg(garmentKey, color, _activeSide).then(img => {
                 if (img) renderGarment(); // re-render with the loaded SVG
             });
         }
@@ -1805,16 +1838,17 @@
     }
 
     function renderDesign() {
-        if (!previewLayers.length) return;
+        const layers = _layers[_activeSide];
+        if (!layers.length) return;
         const dc  = document.getElementById('design-canvas');
         const ctx = dc.getContext('2d');
         const pa  = _computePrintArea(document.getElementById('garment-select').value);
 
         // If all images are already cached, draw synchronously (no flicker during drag)
-        const allCached = previewLayers.every(l => _imgCache.has(l.src));
+        const allCached = layers.every(l => _imgCache.has(l.src));
         if (allCached) {
             ctx.clearRect(0, 0, dc.width, dc.height);
-            previewLayers.forEach(layer => {
+            layers.forEach(layer => {
                 const img = _imgCache.get(layer.src);
                 layer.imgW = img.width; layer.imgH = img.height;
                 const ir = img.width / img.height; const pr = pa.w / pa.h;
@@ -1849,7 +1883,7 @@
             ctx.restore();
         });
         ctx.clearRect(0, 0, dc.width, dc.height);
-        previewLayers.reduce((p, layer) => p.then(() => drawLayer(layer)), Promise.resolve())
+        layers.reduce((p, layer) => p.then(() => drawLayer(layer)), Promise.resolve())
             .then(() => renderHandles());
     }
 
@@ -1872,7 +1906,7 @@
     const ROTATE_HANDLE_RADIUS = 6;
 
     function getLayerHandlePos(layer) {
-        const pa = GARMENTS[document.getElementById('garment-select').value].printArea;
+        const pa = _computePrintArea(document.getElementById('garment-select').value);
         const ir = (layer.imgW && layer.imgH) ? layer.imgW / layer.imgH : 1;
         const pr = pa.w / pa.h;
         let dw, dh;
@@ -1963,7 +1997,7 @@
         let _rafPending   = false;
 
         function getCanvasPt(clientX, clientY) {
-            const pa   = GARMENTS[document.getElementById('garment-select').value].printArea;
+            const pa   = _computePrintArea(document.getElementById('garment-select').value);
             const rect = hc.getBoundingClientRect();
             return {
                 x: (clientX - rect.left) * (pa.w / rect.width),
@@ -2005,7 +2039,7 @@
             if (!layer) return;
 
             if (mode === 'drag') {
-                const pa   = GARMENTS[document.getElementById('garment-select').value].printArea;
+                const pa   = _computePrintArea(document.getElementById('garment-select').value);
                 const rect = hc.getBoundingClientRect();
                 const sx = pa.w / rect.width; const sy = pa.h / rect.height;
                 const dx = (clientX - lastX) * sx; const dy = (clientY - lastY) * sy;
@@ -2104,27 +2138,42 @@
         const btn    = document.getElementById('printify-send-btn');
         if (!shopId)               { showPrintifyFeedback('Please select a Printify shop.'); return; }
         if (!title)                { showPrintifyFeedback('Please enter a product name.'); return; }
-        if (!previewLayers.length) { showPrintifyFeedback('No design loaded in preview.'); return; }
-        const sel    = getSelectedLayer();
-        const posX   = sel ? sel.posX  : 0;
-        const posY   = sel ? sel.posY  : 0;
-        const sc     = sel ? sel.scale : 1;
-        const isBaked = previewLayers.length > 1 || !!(sel?.rotation);
+        if (!_layers.front.length) { showPrintifyFeedback('No design loaded in preview.'); return; }
+        const frontLayers  = _layers.front;
+        const backLayers   = _layers.back;
+        const selFront     = frontLayers[0] || null;
+        const isBakedFront = frontLayers.length > 1 || !!(selFront?.rotation);
+        const posX = selFront?.posX  ?? 0;
+        const posY = selFront?.posY  ?? 0;
+        const sc   = selFront?.scale ?? 1;
         btn.disabled = true; btn.textContent = 'Preparing…'; resetPrintifyFeedback();
         try {
-            const imageSrc = await getFlattenedSrc();
+            const imageSrc     = await getFlattenedSrc(frontLayers);
+            const backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
+            const selBack      = backLayers[0] || null;
+            const isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
+            const bPosX = selBack?.posX  ?? 0;
+            const bPosY = selBack?.posY  ?? 0;
+            const bSc   = selBack?.scale ?? 1;
             btn.textContent = 'Creating product…';
             const csrf = document.querySelector('meta[name="csrf-token"]').content;
+            const payload = {
+                shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc, title,
+                color:hexToColorName(document.getElementById('printify-color-hex').value),
+                pos_x:        isBakedFront ? 0.5 : 0.5+posX*0.5,
+                pos_y:        isBakedFront ? 0.5 : 0.5+posY*0.5,
+                design_scale: isBakedFront ? 1   : sc,
+            };
+            if (backImageSrc) {
+                payload.back_image_source = backImageSrc;
+                payload.back_pos_x        = isBakedBack ? 0.5 : 0.5+bPosX*0.5;
+                payload.back_pos_y        = isBakedBack ? 0.5 : 0.5+bPosY*0.5;
+                payload.back_design_scale = isBakedBack ? 1   : bSc;
+            }
             const res  = await fetch('/printify/products', {
                 method:'POST',
                 headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json' },
-                body: JSON.stringify({
-                    shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc, title,
-                    color:hexToColorName(document.getElementById('printify-color-hex').value),
-                    pos_x:        isBaked ? 0.5 : 0.5+posX*0.5,
-                    pos_y:        isBaked ? 0.5 : 0.5+posY*0.5,
-                    design_scale: isBaked ? 1   : sc,
-                }),
+                body: JSON.stringify(payload),
             });
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
@@ -2141,7 +2190,7 @@
         const title  = document.getElementById('printify-title').value.trim();
         const btn    = document.getElementById('printify-bulk-btn');
         const send   = document.getElementById('printify-send-btn');
-        if (!shopId || !title || !previewLayers.length) {
+        if (!shopId || !title || !_layers.front.length) {
             showPrintifyFeedback('Please fill in all fields and load a design.'); return;
         }
         const garments = [
@@ -2150,12 +2199,20 @@
             {type:'sweatshirt',label:'Sweatshirt'},
         ];
         btn.disabled = true; send.disabled = true; resetPrintifyFeedback();
-        const imageSrc = await getFlattenedSrc();
-        const sel     = getSelectedLayer();
-        const isBaked = previewLayers.length > 1 || !!(sel?.rotation);
-        const posX    = !isBaked ? (sel?.posX  ?? 0) : 0;
-        const posY    = !isBaked ? (sel?.posY  ?? 0) : 0;
-        const sc      = !isBaked ? (sel?.scale ?? 1) : 1;
+        const frontLayers  = _layers.front;
+        const backLayers   = _layers.back;
+        const imageSrc     = await getFlattenedSrc(frontLayers);
+        const backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
+        const selFront     = frontLayers[0] || null;
+        const isBakedFront = frontLayers.length > 1 || !!(selFront?.rotation);
+        const posX = !isBakedFront ? (selFront?.posX  ?? 0) : 0;
+        const posY = !isBakedFront ? (selFront?.posY  ?? 0) : 0;
+        const sc   = !isBakedFront ? (selFront?.scale ?? 1) : 1;
+        const selBack      = backLayers[0] || null;
+        const isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
+        const bPosX = !isBakedBack ? (selBack?.posX  ?? 0) : 0;
+        const bPosY = !isBakedBack ? (selBack?.posY  ?? 0) : 0;
+        const bSc   = !isBakedBack ? (selBack?.scale ?? 1) : 1;
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         const resultLines = [];
         const renderProgress = (cur, curLabel) => {
@@ -2174,15 +2231,22 @@
             const {type,label} = garments[i];
             renderProgress(i, label);
             try {
+                const payload = {
+                    shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc,
+                    title:title+' — '+label,
+                    color:hexToColorName(document.getElementById('printify-color-hex').value),
+                    pos_x:0.5+posX*0.5, pos_y:0.5+posY*0.5, design_scale:sc,
+                };
+                if (backImageSrc) {
+                    payload.back_image_source = backImageSrc;
+                    payload.back_pos_x        = 0.5+bPosX*0.5;
+                    payload.back_pos_y        = 0.5+bPosY*0.5;
+                    payload.back_design_scale = bSc;
+                }
                 const res  = await fetch('/printify/products', {
                     method:'POST',
                     headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json'},
-                    body: JSON.stringify({
-                        shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc,
-                        title:title+' — '+label,
-                        color:hexToColorName(document.getElementById('printify-color-hex').value),
-                        pos_x:0.5+posX*0.5, pos_y:0.5+posY*0.5, design_scale:sc,
-                    }),
+                    body: JSON.stringify(payload),
                 });
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
@@ -2193,6 +2257,25 @@
         }
         renderProgress(garments.length, '');
         btn.disabled = false; send.disabled = false; btn.textContent = 'Upload to All';
+    }
+
+    function switchSide(side) {
+        if (_activeSide === side) return;
+        _activeSide = side;
+        _selectedLayerId = null;
+        // Update tab button styles
+        const frontBtn = document.getElementById('side-front-btn');
+        const backBtn  = document.getElementById('side-back-btn');
+        [frontBtn, backBtn].forEach((btn, i) => {
+            if (!btn) return;
+            const isActive = (i === 0 && side === 'front') || (i === 1 && side === 'back');
+            btn.className = `flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                isActive ? 'bg-[#7c3ca0] text-white border-[#7c3ca0]' : 'bg-cream-100 text-ink-muted border-cream-300'
+            }`;
+        });
+        updateControlsFromSelected();
+        renderPreview();
+        renderLayersList();
     }
 
     const PRINTIFY_PALETTE = [
@@ -2220,7 +2303,8 @@
         // Preload garment SVGs in the background so first render is instant
         const _initialColor = document.getElementById('garment-color')?.value || '#ffffff';
         Object.keys(GARMENTS).forEach(k => {
-            _getColoredGarmentImg(k, _initialColor); // warm cache
+            _getColoredGarmentImg(k, _initialColor);          // warm front cache
+            _getColoredGarmentImg(k, _initialColor, 'back');  // warm back cache
         });
         const gc=document.getElementById('garment-color');
         if (gc) gc.addEventListener('input', e => {

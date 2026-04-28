@@ -129,14 +129,18 @@ class PrintifyController extends Controller
         }
 
         $data = $request->validate([
-            'shop_id'      => 'required|integer',
-            'garment_type' => 'required|string|in:tshirt,hoodie,tanktop,longsleeve,sweatshirt',
-            'image_source' => 'required|string',
-            'title'        => 'required|string|max:140',
-            'color'        => 'nullable|string|max:50',
-            'pos_x'        => 'nullable|numeric|min:0|max:1',
-            'pos_y'        => 'nullable|numeric|min:0|max:1',
-            'design_scale' => 'nullable|numeric|min:0.1|max:3',
+            'shop_id'           => 'required|integer',
+            'garment_type'      => 'required|string|in:tshirt,hoodie,tanktop,longsleeve,sweatshirt',
+            'image_source'      => 'required|string',
+            'title'             => 'required|string|max:140',
+            'color'             => 'nullable|string|max:50',
+            'pos_x'             => 'nullable|numeric|min:0|max:1',
+            'pos_y'             => 'nullable|numeric|min:0|max:1',
+            'design_scale'      => 'nullable|numeric|min:0.1|max:3',
+            'back_image_source' => 'nullable|string',
+            'back_pos_x'        => 'nullable|numeric|min:0|max:1',
+            'back_pos_y'        => 'nullable|numeric|min:0|max:1',
+            'back_design_scale' => 'nullable|numeric|min:0.1|max:3',
         ]);
 
         try {
@@ -146,10 +150,14 @@ class PrintifyController extends Controller
                 $data['title'],
                 $data['garment_type'],
                 $data['image_source'],
-                (float) ($data['pos_x']        ?? 0.5),
-                (float) ($data['pos_y']        ?? 0.5),
-                (float) ($data['design_scale'] ?? 1.0),
-                $data['color']                 ?? ''
+                (float) ($data['pos_x']             ?? 0.5),
+                (float) ($data['pos_y']             ?? 0.5),
+                (float) ($data['design_scale']      ?? 1.0),
+                $data['color']                      ?? '',
+                $data['back_image_source']          ?? null,
+                (float) ($data['back_pos_x']        ?? 0.5),
+                (float) ($data['back_pos_y']        ?? 0.5),
+                (float) ($data['back_design_scale'] ?? 1.0)
             );
 
             $shopId    = $data['shop_id'];

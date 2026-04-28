@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 3527.61 3527.66" xmlns:printify="http://printify.com/adjuster"  printify:width="933.345" printify:height="933.36"><defs><image x="0" y="0" width="3527.61" height="3527.66" id="fabric-image"/><path d="M3246.79,1552.35l274.59-717.73L2830.89,546.69h0L2191,309.17,2098.93,275s-162.48,60.56-335.79,60.56S1430.35,275,1430.35,275l-2.1.77-91.66,34.07c0-.24-639.88,236.9-639.88,236.9h0L6.22,834.62l274.6,717.73,415.89,31.41h0s-3.63,1413.05-28.47,1669H2859.37c-24.85-255.9-28.48-1668.95-28.48-1668.95h0ZM1763.14,448.87h0Z" id="fabric-0"/><clipPath id="fabric-0-clip"><use href="#fabric-0"/></clipPath><rect id="_back-path" width="1343.66" height="1535.62" fill="none" stroke-miterlimit="10" transform=""/><clipPath><use stroke-width="3.8889375mm" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#_back-path"/></clipPath></defs>
+  <g id="back">
+    <g id="color_first" fill-rule="nonzero" fill="#fff"><use href="#fabric-0"/><use clip-path="url(#fabric-0-clip)" href="#fabric-image"/>
+      
+      
+    <g clip-path="url(#_back-clippath)" transform="translate(1091.3 417.86)"><svg id="placeholder_back" width="1343.66" height="1535.62" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1343.66 1535.62"><use stroke-width="3.8889375mm" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#_back-path" stroke="#ffffff"/><use stroke-width="3.8889375mm" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#_back-path" stroke="#000000" stroke-dasharray="7.777875mm, 7.777875mm"/></svg></g></g>
+    <g id="outlines">
+      <g id="outlines_colored">
+        <path id="stitch" d="M45.32,818.31l280.84,734m-263.53-734,280.84,734m3138.76-734-280.84,734m263.53-734-280.84,734M672.25,3196H2854.58m-2181-21,2180-.34M1350.8,304.51c36.16,24,160,83.12,413,83.12s376.85-59.08,413-83.12M1322.4,315s98.41,102.87,441.4,102.87S2205.21,315,2205.21,315" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.49" stroke-dasharray="12.44 6.22 0 0" opacity="0.5"/>
+        <path id="detail" d="M696.71,546.69s144,682.49,0,1037.07M2830.89,546.69s-144,682.49,0,1037.07m-1494.3-1274s99.08,92.95,416.93,92.95S2191,309.17,2191,309.17" fill="none" stroke="#231f20" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.23"/>
+        <path id="contour" d="M2830.89,546.69,2098.93,275s-143.51,60.56-335.79,60.56-334.89-59.79-334.89-59.79l-731.54,271L6.22,834.62l274.6,717.73,415.89,31.41h0s-3.63,1413.05-28.47,1669H2859.37c-24.85-255.9-28.48-1668.95-28.48-1668.95h0l415.9-31.41,274.59-717.73L2830.89,546.69" fill="none" stroke="#000" stroke-linejoin="round" stroke-width="12.44"/>
+      </g>
+    </g>
+  </g>
+</svg>
