@@ -2410,17 +2410,17 @@
         document.getElementById('bulk-cancel-btn').disabled = true;
         document.getElementById('bulk-modal-close-btn').disabled = true;
 
-        const csrf       = document.querySelector('meta[name="csrf-token"]').content;
-        const resultLines = [];
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        let successCount = 0;
+        let errorCount   = 0;
 
         const updateProgress = (cur, curLabel) => {
-            const pct   = Math.round((cur / garments.length) * 100);
+            const pct    = Math.round((cur / garments.length) * 100);
             const isDone = cur >= garments.length;
-            document.getElementById('bulk-progress-bar').style.width  = pct + '%';
+            document.getElementById('bulk-progress-bar').style.width   = pct + '%';
             document.getElementById('bulk-progress-count').textContent = `${cur}/${garments.length}`;
             document.getElementById('bulk-progress-label').textContent =
                 isDone ? 'Done!' : `Uploading ${curLabel}…`;
-            document.getElementById('bulk-progress-results').innerHTML = resultLines.join('');
         };
 
         for (let i = 0; i < garments.length; i++) {
@@ -2447,18 +2447,30 @@
                 });
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-                resultLines.push(`<div class="flex items-center gap-1 text-green-700">
-                    <i class="fas fa-check-circle text-xs"></i>
-                    <span>${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></span>
-                </div>`);
+                successCount++;
             } catch (err) {
-                resultLines.push(`<div class="flex items-center gap-1 text-red-600">
-                    <i class="fas fa-times-circle text-xs"></i>
-                    <span>${label}: ${escapeHtml(err.message)}</span>
-                </div>`);
+                errorCount++;
             }
         }
         updateProgress(garments.length, '');
+
+        // Show summary
+        const resultsEl = document.getElementById('bulk-progress-results');
+        if (successCount > 0) {
+            resultsEl.innerHTML = `
+                <div class="flex flex-col items-center gap-2 pt-2 text-center">
+                    <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
+                        <i class="fas fa-check-circle"></i>
+                        <span>${successCount} product${successCount > 1 ? 's' : ''} created${errorCount > 0 ? ` (${errorCount} failed)` : ''}</span>
+                    </div>
+                    <a href="https://printify.com/app/store/products" target="_blank" rel="noopener noreferrer"
+                       class="px-4 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl hover:bg-[#5a2275] transition-colors flex items-center gap-1.5">
+                        <i class="fas fa-external-link-alt text-[10px]"></i> View in Printify
+                    </a>
+                </div>`;
+        } else {
+            resultsEl.innerHTML = `<p class="text-xs text-red-600 text-center pt-2">All uploads failed. Please try again.</p>`;
+        }
 
         // Re-enable close
         document.getElementById('bulk-cancel-btn').disabled = false;
