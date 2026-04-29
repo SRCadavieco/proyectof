@@ -31,7 +31,6 @@ steps:
         php artisan cache:clear
         php artisan view:clear
         echo "APP_URL: $(php -r 'echo env(\"APP_URL\");')"
-
   # Limpiar y construir assets frontend
   - name: node:20
     entrypoint: bash
