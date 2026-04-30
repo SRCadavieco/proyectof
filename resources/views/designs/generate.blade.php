@@ -276,6 +276,23 @@
         <div class="bg-white/90 backdrop-blur-sm border-t border-cream-300
                     px-4 py-3 relative z-10 shrink-0">
             <div id="error" class="hidden text-red-500 text-xs mb-2 px-1"></div>
+            <!-- No credits banner -->
+            <div id="no-credits-banner" class="hidden mb-3">
+                <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
+                     style="background:rgba(124,60,160,0.08);border:1px solid rgba(124,60,160,0.25);">
+                    <div class="flex items-center gap-2">
+                        <span style="color:#7c3ca0;font-size:16px;">⚡</span>
+                        <span class="text-sm font-medium" style="color:#5a2275;">You've used all your design credits</span>
+                    </div>
+                    <a href="/pricing"
+                       class="shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold text-white transition-colors"
+                       style="background:#7c3ca0;"
+                       onmouseover="this.style.background='#5a2275'"
+                       onmouseout="this.style.background='#7c3ca0'">
+                        Get more credits
+                    </a>
+                </div>
+            </div>
             <div id="loader" class="hidden items-center gap-2 text-xs mb-2 px-1"
                  style="color:#7c3ca0">
                 <div class="flex gap-1 items-end">
@@ -823,11 +840,17 @@
             } catch (e) { /* silent */ }
         },
         _render(n) {
-            const countEl = document.getElementById('token-count');
-            const iconEl  = document.getElementById('token-icon');
+            const countEl  = document.getElementById('token-count');
+            const iconEl   = document.getElementById('token-icon');
+            const banner   = document.getElementById('no-credits-banner');
+            const textarea = document.getElementById('prompt');
+            const sendBtn  = document.getElementById('submit-btn');
             if (!countEl) return;
             countEl.textContent = n;
             if (iconEl) iconEl.textContent = '⚡';
+            if (banner) banner.classList.toggle('hidden', n > 0);
+            if (textarea) textarea.disabled = n <= 0;
+            if (sendBtn)  sendBtn.disabled  = n <= 0;
         },
         init() { this._render(this.get()); }
     };
@@ -1366,6 +1389,7 @@
         if (isSubmitting) return;
         const prompt = promptInput.value.trim();
         if (!prompt) { showError('Please enter a prompt'); return; }
+        if (TokenManager.get() <= 0) { window.location.href = '/pricing'; return; }
 
         isSubmitting = true;
         if (!currentChatId) currentChatId = await newChat();
