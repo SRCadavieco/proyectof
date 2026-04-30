@@ -1139,17 +1139,6 @@
                         <span style="font-size:36px;color:rgba(124,60,160,0.6);">✎</span>
                     </div>
                 </div>
-                <!-- Progress bar -->
-                <div style="padding:10px 12px 12px;border-top:1px solid #e8e3d9;">
-                    <p style="font-size:10px;color:#8a8a8a;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:8px;">Generating…</p>
-                    <div style="position:relative;height:5px;background:rgba(124,60,160,0.1);border-radius:99px;overflow:visible;">
-                        <div class="gen-bar-fill" style="position:absolute;left:0;top:0;height:100%;
-                             background:linear-gradient(90deg,#7c3ca0,#c084fc);
-                             border-radius:99px;width:6%;"></div>
-                        <span class="gen-pen-icon" style="position:absolute;top:-9px;
-                             font-size:16px;color:#7c3ca0;left:6%;">✎</span>
-                    </div>
-                </div>
             </div>`;
         messagesContainer.appendChild(div);
         updateWelcomeScreen();
