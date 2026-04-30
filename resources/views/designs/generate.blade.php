@@ -89,7 +89,29 @@
         }
         .chat-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-     
+        /* ── Generating placeholder animations ── */
+        @keyframes gen-pulse {
+            0%,100% { opacity: 0.45; }
+            50%      { opacity: 1; }
+        }
+        @keyframes gen-bar {
+            0%   { width: 6%; }
+            80%  { width: 92%; }
+            100% { width: 92%; }
+        }
+        @keyframes gen-pen {
+            0%   { left: 6%; }
+            80%  { left: 90%; }
+            100% { left: 90%; }
+        }
+        .gen-placeholder { animation: gen-pulse 2s ease-in-out infinite; }
+        .gen-bar-fill    { animation: gen-bar 20s cubic-bezier(0.1,0.4,0.3,1) forwards; }
+        .gen-pen-icon    { animation: gen-pen 20s cubic-bezier(0.1,0.4,0.3,1) forwards; }
+        @keyframes shimmer {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(250%); }
+        }
+        .gen-shimmer { animation: shimmer 1.6s linear infinite; }
 
         /* ── Chat area background ── */
         #chat-container {
@@ -228,7 +250,7 @@
 
         <!-- Chat area -->
         <div id="chat-container" class="flex-1 overflow-y-auto">
-            <div class="max-w-2xl mx-auto px-4 py-8">
+            <div class="max-w-2xl mx-auto px-4 pb-8 pt-2">
 
                 <!-- Welcome screen (hidden once messages exist) -->
                 <div id="welcome-screen" class="flex flex-col items-center py-10 text-center">
@@ -1082,6 +1104,59 @@
         scrollToBottom();
     }
 
+    function addGeneratingPlaceholder() {
+        const id  = 'ph-' + Date.now();
+        const div = document.createElement('div');
+        div.id        = id;
+        div.className = 'flex items-start gap-3 msg-enter';
+        div.innerHTML = `
+            <div style="width:32px;height:32px;border-radius:50%;background:white;border:1px solid #e8e3d9;
+                        box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:center;
+                        justify-content:center;flex-shrink:0;overflow:hidden;padding:4px;margin-top:2px;">
+                <img src="/images/logo.png" alt="FabricAI" style="width:100%;height:100%;object-fit:contain;">
+            </div>
+            <div style="background:white;border:1px solid #e8e3d9;border-radius:0 16px 16px 16px;
+                        box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;width:260px;">
+                <!-- Animated image area -->
+                <div style="position:relative;width:260px;height:260px;background:#f5f1ea;
+                            border-radius:0 12px 0 0;overflow:hidden;">
+                    <!-- Grid overlay -->
+                    <div style="position:absolute;inset:0;
+                         background-image:linear-gradient(rgba(124,60,160,0.08) 1px,transparent 1px),
+                                          linear-gradient(90deg,rgba(124,60,160,0.08) 1px,transparent 1px);
+                         background-size:28px 28px;"></div>
+                    <!-- Shimmer sweep -->
+                    <div class="gen-shimmer" style="position:absolute;inset:0;width:40%;
+                         background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent);
+                         pointer-events:none;"></div>
+                    <!-- Purple orb -->
+                    <div style="position:absolute;width:160px;height:160px;border-radius:50%;
+                         background:radial-gradient(circle,rgba(124,60,160,0.2) 0%,transparent 70%);
+                         filter:blur(24px);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+                    <!-- Pencil -->
+                    <div class="gen-placeholder" style="position:absolute;inset:0;display:flex;
+                         align-items:center;justify-content:center;">
+                        <span style="font-size:36px;color:rgba(124,60,160,0.6);">✎</span>
+                    </div>
+                </div>
+                <!-- Progress bar -->
+                <div style="padding:10px 12px 12px;border-top:1px solid #e8e3d9;">
+                    <p style="font-size:10px;color:#8a8a8a;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:8px;">Generating…</p>
+                    <div style="position:relative;height:5px;background:rgba(124,60,160,0.1);border-radius:99px;overflow:visible;">
+                        <div class="gen-bar-fill" style="position:absolute;left:0;top:0;height:100%;
+                             background:linear-gradient(90deg,#7c3ca0,#c084fc);
+                             border-radius:99px;width:6%;"></div>
+                        <span class="gen-pen-icon" style="position:absolute;top:-9px;
+                             font-size:16px;color:#7c3ca0;left:6%;">✎</span>
+                    </div>
+                </div>
+            </div>`;
+        messagesContainer.appendChild(div);
+        updateWelcomeScreen();
+        scrollToBottom();
+        return id;
+    }
+
     function addBotError(msg) {
         const div = document.createElement('div');
         div.className = 'flex items-start gap-3 msg-enter';
@@ -1314,6 +1389,8 @@
         clearImagePreview();
         setLoading(true);
 
+        const placeholderId = addGeneratingPlaceholder();
+
         try {
             const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const res  = await fetch('/designs/generate', {
@@ -1334,14 +1411,17 @@
             const base64   = data.imageBase64 || data.image_base64 || data.base64;
 
             if (imageUrl) {
+                const ph = document.getElementById(placeholderId); if (ph) ph.remove();
                 addBotResponse(imageUrl); TokenManager.deduct();
             } else if (base64) {
+                const ph = document.getElementById(placeholderId); if (ph) ph.remove();
                 addBotResponse(base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64);
                 TokenManager.deduct();
             } else {
                 throw new Error('No image in response');
             }
         } catch (err) {
+            const ph = document.getElementById(placeholderId); if (ph) ph.remove();
             addBotError(err.message || 'Could not generate the image. Please check your prompt and try again.');
             await TokenManager.sync();
         } finally {

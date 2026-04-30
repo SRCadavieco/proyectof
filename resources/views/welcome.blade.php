@@ -5,235 +5,565 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FabricAI — AI Clothing Design Platform</title>
-    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* ── Keyframes ── */
+        @keyframes float-a {
+            0%,100% { transform: translateY(0)    rotate(0deg); }
+            40%     { transform: translateY(-22px) rotate(1.5deg); }
+            70%     { transform: translateY(-10px) rotate(-1deg); }
+        }
+        @keyframes float-b {
+            0%,100% { transform: translateY(0); }
+            35%     { transform: translateY(16px); }
+            65%     { transform: translateY(7px); }
+        }
+        @keyframes shimmer-move {
+            0%   { background-position: -280% 0; }
+            100% { background-position:  280% 0; }
+        }
+        @keyframes scan-down {
+            0%   { top: -3px; opacity: 1; }
+            85%  { opacity: 0.5; }
+            100% { top: 100%; opacity: 0; }
+        }
+        @keyframes pulse-ring {
+            0%   { transform: scale(1);   opacity: 0.55; }
+            100% { transform: scale(2.4); opacity: 0; }
+        }
+        @keyframes count-pop {
+            0%   { opacity: 0; transform: translateY(16px) scale(0.82); }
+            65%  { transform: translateY(-4px) scale(1.05); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes btn-glow {
+            0%,100% { box-shadow: 0 0 30px rgba(124,60,160,0.3); }
+            50%     { box-shadow: 0 0 55px rgba(124,60,160,0.55); }
+        }
+        @keyframes line-draw {
+            from { transform: scaleX(0); transform-origin: left; }
+            to   { transform: scaleX(1);  transform-origin: left; }
+        }
+
+        /* ── Orbs ── */
+        .orb {
+            position: absolute; border-radius: 50%;
+            pointer-events: none; filter: blur(110px);
+        }
+        .orb-a { background: radial-gradient(circle, rgba(124,60,160,0.28) 0%, transparent 60%); }
+        .orb-b { background: radial-gradient(circle, rgba(90,34,117,0.18)  0%, transparent 60%); }
+
+        /* ── Scan line ── */
+        .scan-line {
+            position: absolute; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(157,91,199,0.55), transparent);
+            pointer-events: none;
+            animation: scan-down 8s linear infinite;
+        }
+
+        /* ── Gradient shimmer text ── */
+        .gradient-text {
+            background: linear-gradient(135deg, #9d5bc7 0%, #c084fc 35%, #7c3ca0 65%, #9d5bc7 100%);
+            background-size: 280% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer-move 5s linear infinite;
+        }
+
+        /* ── Industrial grid ── */
+        .factory-grid {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.033) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.033) 1px, transparent 1px);
+            background-size: 72px 72px;
+        }
+        .factory-grid-light {
+            background-image:
+                linear-gradient(rgba(26,26,26,0.042) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(26,26,26,0.042) 1px, transparent 1px);
+            background-size: 72px 72px;
+        }
+
+        /* ── Corner marks ── */
+        .corner-marks::before, .corner-marks::after {
+            content: ''; position: absolute;
+            width: 26px; height: 26px;
+            border-color: rgba(124,60,160,0.5); border-style: solid;
+        }
+        .corner-marks::before { top: 28px; left: 28px; border-width: 2px 0 0 2px; }
+        .corner-marks::after  { bottom: 28px; right: 28px; border-width: 0 2px 2px 0; }
+        @media (max-width:640px) { .corner-marks::before, .corner-marks::after { display: none; } }
+
+        /* ── Pulsing dot ── */
+        .pulse-dot { position: relative; display: inline-block; }
+        .pulse-dot::before {
+            content: ''; position: absolute; inset: -5px; border-radius: 50%;
+            background: rgba(124,60,160,0.35);
+            animation: pulse-ring 2.2s ease-out infinite;
+        }
+
+        /* ── Button shimmer sweep ── */
+        .btn-shimmer { position: relative; overflow: hidden; }
+        .btn-shimmer::after {
+            content: ''; position: absolute;
+            top: 0; left: -80%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+            animation: shimmer-move 2.8s ease-in-out infinite;
+        }
+
+        /* ── Card lift with purple glow ── */
+        .card-lift {
+            transition: transform 0.35s cubic-bezier(.34,1.5,.64,1), box-shadow 0.35s ease;
+        }
+        .card-lift:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 22px 55px -10px rgba(124,60,160,0.2);
+        }
+
+        /* ── Icon bounce on group hover ── */
+        .icon-bounce { transition: transform 0.35s cubic-bezier(.34,1.5,.64,1); }
+        .group:hover .icon-bounce { transform: rotate(14deg) scale(1.2); }
+
+        /* ── Stat animation ── */
+        .stat-num {
+            animation: count-pop 0.65s cubic-bezier(.34,1.5,.64,1) forwards;
+        }
+        .stat-d1 { animation-delay: 0.15s; }
+        .stat-d2 { animation-delay: 0.30s; }
+        .stat-d3 { animation-delay: 0.45s; }
+
+        /* ── Stagger transition delays ── */
+        .stagger-1 { transition-delay: 0s; }
+        .stagger-2 { transition-delay: 0.10s; }
+        .stagger-3 { transition-delay: 0.20s; }
+        .stagger-4 { transition-delay: 0.30s; }
+
+        /* ── Tag pill ── */
+        .tag-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 5px 14px; border-radius: 999px;
+            background: rgba(124,60,160,0.12);
+            border: 1px solid rgba(124,60,160,0.3);
+            font-size: 10px; font-weight: 600;
+            letter-spacing: .22em; text-transform: uppercase;
+            color: #9d5bc7;
+        }
+
+        /* ── Animated underline link ── */
+        .link-underline-accent {
+            background-image: linear-gradient(#7c3ca0, #7c3ca0);
+            background-size: 0% 1.5px;
+            background-repeat: no-repeat;
+            background-position: 0 100%;
+            transition: background-size 0.35s ease, color 0.2s;
+            padding-bottom: 1px;
+        }
+        .link-underline-accent:hover { background-size: 100% 1.5px; color: #7c3ca0; }
+
+        /* ── How-it-works card hover line ── */
+        .step-line {
+            width: 2rem; height: 1px; background: rgba(255,255,255,0.12);
+            transition: width 0.4s ease, background 0.4s ease;
+        }
+        .group:hover .step-line { width: 3.5rem; background: #7c3ca0; }
+
+        /* ── Glow on CTA button ── */
+        .cta-btn {
+            animation: btn-glow 3s ease-in-out infinite;
+        }
+
+        .factory-grid-light {
+            background-image:
+                linear-gradient(rgba(26,26,26,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(26,26,26,0.05) 1px, transparent 1px);
+            background-size: 72px 72px;
+        }
+        /* Corner bracket marks */
+        .corner-marks::before, .corner-marks::after {
+            content: '';
+            position: absolute;
+    </style>
 </head>
 
 <body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden grain">
 @include('layouts.navigation')
 
-<!-- ================= HERO ================= -->
-<section class="relative min-h-screen flex items-center overflow-hidden">
+<!-- ════════════════════ HERO ════════════════════ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden bg-ink corner-marks">
 
-    <!-- Background video - subtle -->
+    <!-- Background video -->
     <video autoplay loop muted playsinline
-           class="absolute inset-0 w-full h-full object-cover opacity-20">
+           class="absolute inset-0 w-full h-full object-cover opacity-[0.07]">
         <source src="/videos/video-fondo-prueba.mp4" type="video/mp4">
     </video>
 
-    <!-- Soft overlay -->
-    <div class="absolute inset-0 bg-cream-50/70"></div>
+    <!-- Industrial grid -->
+    <div class="absolute inset-0 factory-grid"></div>
+
+    <!-- Floating orbs -->
+    <div class="orb orb-a" style="width:700px;height:700px;top:-180px;right:-150px;animation:float-a 10s ease-in-out infinite;"></div>
+    <div class="orb orb-b" style="width:450px;height:450px;bottom:-60px;left:-100px;animation:float-b 13s ease-in-out infinite 2s;"></div>
+
+    <!-- Scan line -->
+    <div class="scan-line"></div>
+
+    <!-- Extra corner accents -->
+    <div class="absolute top-8 right-8 w-6 h-6 border-t-2 border-r-2 hidden sm:block" style="border-color:rgba(124,60,160,0.4)"></div>
+    <div class="absolute bottom-8 left-8 w-6 h-6 border-b-2 border-l-2 hidden sm:block" style="border-color:rgba(124,60,160,0.4)"></div>
 
     <!-- Hero content -->
-    <div class="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-20 grid lg:grid-cols-2 gap-16 items-center">
-        
-        <!-- Left: Text -->
-        <div
-            x-data="{ show: false }"
-            x-init="setTimeout(() => show = true, 200)"
-            :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
-            class="transition-all duration-1000 ease-out"
-        >
-            <p class="text-sm font-medium tracking-widest uppercase text-accent mb-6">AI-Powered Fashion Design</p>
-            
-            <h1 class="font-serif text-5xl sm:text-6xl lg:text-8xl leading-[0.95] mb-8">
-                Design<br>
-                clothes<br>
-                <span class="italic text-purple-700">with intention</span>
-            </h1>
-
-            <!-- Editorial accent line -->
-            <div class="w-16 h-px bg-accent mb-8"></div>
-
-            <p class="text-ink-light text-lg leading-relaxed max-w-lg mb-10">
-                Describe your vision and watch it become a unique clothing design. 
-                From concept to production-ready in seconds.
-            </p>
-
-            <div class="flex flex-wrap gap-4">
-                <a href="/design" class="btn-primary">
-                    Start designing
-                </a>
-                <a href="#how-it-works" class="btn-outline">
-                    Learn more
-                </a>
-            </div>
+    <div
+        x-data="{ show: false }"
+        x-init="setTimeout(() => show = true, 80)"
+        :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
+        class="relative z-10 max-w-7xl mx-auto px-6 pt-36 pb-24 transition-all duration-1000 ease-out"
+    >
+        <!-- Tag pill -->
+        <div class="mb-10">
+            <span class="tag-pill">
+                <span class="pulse-dot w-1.5 h-1.5 rounded-full inline-block bg-accent"></span>
+                AI Print-on-Demand
+            </span>
         </div>
 
-        <!-- Right: Prompt preview -->
+        <!-- Headline -->
+        <h1 class="font-serif leading-[0.87] mb-14 max-w-5xl"
+            style="font-size:clamp(3.5rem,10vw,9.5rem)">
+            <span class="text-white">Ready to sell.</span><br>
+            <span class="italic gradient-text">Products</span><br>
+            <span class="text-white">in seconds.</span>
+        </h1>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-10">
+            <a href="/design"
+               class="btn-shimmer inline-flex items-center gap-3 px-8 py-4 bg-accent text-white
+                      text-xs font-semibold tracking-[0.2em] uppercase
+                      hover:bg-accent-dark hover:-translate-y-0.5 transition-all duration-300">
+                Start generating <span>→</span>
+            </a>
+            <a href="#how-it-works"
+               class="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] uppercase
+                      text-white/40 hover:text-white transition-colors duration-300">
+                How it works <span class="opacity-50">↓</span>
+            </a>
+        </div>
+
+        <!-- Stats with scroll-triggered animation -->
         <div
-            x-data="{
-                show: false,
-                promptExamples: [
-                    'A playful pixel art robot eating a pink frosted donut with colorful sprinkles',
-                    'Japanese streetwear inspired aesthetic with bright neon lights and vibrant Tokyo nightlife energy',
-                    'Minimalistic geometric pattern made of repeating shapes and sharp symmetrical lines',
-                    'Surreal dreamlike landscape with floating elements and soft gradients',
-                    'Abstract flowing shapes blended with soft pastel gradients and smooth color transitions',
-                ],
-                promptIndex: 0,
-                prompt: '',
-                promptTimeout: null,
-                typePrompt() {
-                    clearTimeout(this.promptTimeout);
-                    const prompt = this.promptExamples[this.promptIndex];
-                    let i = 0;
-                    const type = () => {
-                        if (i <= prompt.length) {
-                            this.prompt = prompt.slice(0, i++);
-                            this.promptTimeout = setTimeout(type, 60);
-                        } else {
-                            this.promptTimeout = setTimeout(() => this.erasePrompt(), 2500);
-                        }
-                    };
-                    type();
-                },
-                erasePrompt() {
-                    clearTimeout(this.promptTimeout);
-                    let i = this.prompt.length;
-                    const erase = () => {
-                        if (i >= 0) {
-                            this.prompt = this.prompt.slice(0, i--);
-                            this.promptTimeout = setTimeout(erase, 30);
-                        } else {
-                            this.promptIndex = (this.promptIndex + 1) % this.promptExamples.length;
-                            this.typePrompt();
-                        }
-                    };
-                    erase();
-                },
-                init() {
-                    setTimeout(() => this.show = true, 500);
-                    this.typePrompt();
-                }
-            }"
-            x-init="init()"
-            :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
-            class="transition-all duration-1000 delay-300 hidden lg:block"
+            x-data="{ visible: false }"
+            x-intersect.once="visible = true"
+            class="mt-24 pt-8 border-t border-white/[0.07] grid grid-cols-3 gap-6 max-w-sm"
         >
-            <div class="bg-white border border-cream-300 rounded-lg p-8 shadow-sm hover:border-accent/40 transition-colors duration-500">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-2 h-2 rounded-full bg-accent"></div>
-                    <span class="text-xs font-medium text-ink-muted uppercase tracking-wider">Design prompt</span>
-                </div>
-                <div class="min-h-[80px] text-ink-light text-base leading-relaxed">
-                    <span x-text="prompt"></span><span class="inline-block w-0.5 h-5 bg-accent animate-pulse align-middle ml-0.5"></span>
-                </div>
-                <div class="mt-6 pt-6 border-t border-cream-200 flex justify-end">
-                    <span class="inline-block px-5 py-2.5 bg-ink text-white text-xs font-medium tracking-wide uppercase">Generate →</span>
-                </div>
+            @php $stats = [
+                ['val' => '∞',    'label' => 'Designs',       'delay' => 'stat-d1'],
+                ['val' => '<15s', 'label' => 'Per design',    'delay' => 'stat-d2'],
+                ['val' => '1',    'label' => 'Prompt needed', 'delay' => 'stat-d3'],
+            ]; @endphp
+            @foreach($stats as $s)
+            <div>
+                <p class="font-serif text-3xl text-white {{ $s['delay'] }}"
+                   :class="visible ? 'stat-num' : 'opacity-0'">{{ $s['val'] }}</p>
+                <p class="text-[10px] text-white/30 tracking-[0.2em] uppercase mt-1">{{ $s['label'] }}</p>
             </div>
+            @endforeach
         </div>
     </div>
-
 </section>
 
-<!-- ================= MARQUEE ================= -->
-<section class="border-y border-cream-300 py-5 overflow-hidden bg-white">
+<!-- ════════════════════ MARQUEE ════════════════════ -->
+<section class="border-y border-cream-300 py-4 overflow-hidden bg-white">
     <div class="marquee-track">
         @for($i = 0; $i < 2; $i++)
-        <span class="flex items-center gap-8 mr-8">
-            <span class="text-sm font-medium tracking-widest uppercase text-ink-muted">AI-Powered Design</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-            <span class="text-sm font-medium tracking-widest uppercase text-ink-muted">Print-on-Demand Ready</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-            <span class="text-sm font-medium tracking-widest uppercase text-ink-muted">Background Removal</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-            <span class="text-sm font-medium tracking-widest uppercase text-ink-muted">Printify Integration</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-            <span class="text-sm font-medium tracking-widest uppercase text-ink-muted">High Resolution</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-            <span class="text-sm font-medium tracking-widest uppercase text-ink-muted">No Design Skills Needed</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
+        <span class="flex items-center gap-7 mr-7">
+            @php $items = ['One Prompt','100 Designs','Ship in Seconds','Printify Ready','Background Removal','No Design Skills']; @endphp
+            @foreach($items as $item)
+            <span class="text-[10px] font-semibold tracking-[0.3em] uppercase text-ink-muted">{{ $item }}</span>
+            <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-accent"></span>
+            @endforeach
         </span>
         @endfor
     </div>
 </section>
 
-<!-- ================= HOW IT WORKS ================= -->
-<section id="how-it-works" class="section-padding bg-white">
+<!-- ════════════════════ STATEMENT ════════════════════ -->
+<section class="bg-cream-100 factory-grid-light py-24 md:py-40 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-6">
 
-    <div class="max-w-6xl mx-auto px-6">
-
-        <div class="mb-20">
-            <p class="text-sm font-medium tracking-widest uppercase text-accent mb-4">Process</p>
-            <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl text-ink">
-                How it works
-            </h2>
-            <div class="w-16 h-px bg-accent mt-6"></div>
+        <div class="grid lg:grid-cols-[1fr_360px] gap-16 items-end mb-20">
+            <div
+                x-data="{ show: false }"
+                x-intersect.once="show = true"
+                :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
+                class="transition-all duration-700 ease-out"
+            >
+                <h2 class="font-serif leading-[0.9] text-ink"
+                    style="font-size:clamp(3rem,7vw,7rem)">
+                    Manual clothing<br>
+                    <span class="italic gradient-text">designing</span><br>
+                    is over.
+                </h2>
+            </div>
+            <div
+                x-data="{ show: false }"
+                x-intersect.once="show = true"
+                :class="show ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'"
+                class="transition-all duration-700 ease-out delay-200"
+            >
+                <div class="w-8 h-px bg-accent mb-6"></div>
+                <p class="text-ink-muted leading-relaxed text-base">
+                    Create and ship entire collections in seconds. Stop making your clients
+                    wait for new products. FabricAI plugs straight into Printify — your
+                    designs go live the moment they're ready.
+                </p>
+                <a href="/design"
+                   class="link-underline-accent inline-flex items-center gap-2 mt-8 text-xs font-semibold
+                          tracking-[0.2em] uppercase text-ink transition-colors duration-300">
+                    Start building <span>→</span>
+                </a>
+            </div>
         </div>
 
-        @php
-$steps = [
-    [
-        'num' => '01',
-        'title' => 'Describe your idea',
-        'desc' => 'Write a detailed description of the clothing design you imagine. Be as creative as you want.'
-    ],
-    [
-        'num' => '02',
-        'title' => 'AI generates the design',
-        'desc' => 'Our AI model turns your prompt into a unique visual concept, optimized for production.'
-    ],
-    [
-        'num' => '03',
-        'title' => 'Refine & iterate',
-        'desc' => 'Improve the result with additional prompts and creative direction until it\'s perfect.'
-    ],
-    [
-        'num' => '04',
-        'title' => 'Download & use',
-        'desc' => 'Export your final design in high quality, ready for print-on-demand or production.'
-    ],
-];
-        @endphp
-
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-cream-300">
-            @foreach($steps as $step)
+        <!-- Pain-point tiles -->
+        <div class="grid sm:grid-cols-3 gap-px bg-cream-300">
+            @php
+            $problems = [
+                ['icon' => 'fa-clock-rotate-left', 'label' => 'Still using POD editors in 2026?', 'desc' => 'Drag-and-drop is dead. Type your idea, press generate, done.'],
+                ['icon' => 'fa-user-slash',         'label' => 'No designer on payroll?',          'desc' => 'You don\'t need one anymore. FabricAI handles the creative work.'],
+                ['icon' => 'fa-hourglass-half',     'label' => 'Clients waiting for new drops?',  'desc' => 'Spin up a whole new collection before the Zoom call ends.'],
+            ];
+            @endphp
+            @foreach($problems as $i => $p)
             <div
                 x-data="{ show: false }"
                 x-intersect.once="show = true"
                 :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
-                class="bg-white p-10 transition-all duration-700 ease-out group card-hover"
+                class="bg-cream-100 p-8 group card-lift stagger-{{ $i+1 }} transition-all duration-700"
             >
-                <span class="font-serif text-5xl text-cream-400 group-hover:text-accent transition-colors duration-500">
-                    {{ $step['num'] }}
-                </span>
-
-                <div class="w-8 h-px bg-cream-400 group-hover:bg-accent group-hover:w-12 transition-all duration-500 mt-6 mb-4"></div>
-
-                <h3 class="text-lg font-semibold text-ink mb-3">
-                    {{ $step['title'] }}
-                </h3>
-
-                <p class="text-ink-muted text-sm leading-relaxed">
-                    {{ $step['desc'] }}
-                </p>
+                <div class="w-10 h-10 bg-ink group-hover:bg-accent flex items-center justify-center mb-5 transition-colors duration-300">
+                    <i class="fas {{ $p['icon'] }} text-xs text-white icon-bounce"></i>
+                </div>
+                <h3 class="text-xs font-bold text-ink uppercase tracking-[0.12em] mb-2">{{ $p['label'] }}</h3>
+                <p class="text-sm text-ink-muted leading-relaxed">{{ $p['desc'] }}</p>
             </div>
             @endforeach
         </div>
-
     </div>
 </section>
 
-<!-- ================= CTA BANNER ================= -->
-<section class="bg-ink text-white section-padding relative overflow-hidden">
-    <!-- Decorative large text -->
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-        <span class="font-serif text-[20vw] leading-none text-white/[0.03] whitespace-nowrap">FabricAI</span>
+<!-- ════════════════════ HOW IT WORKS ════════════════════ -->
+<section id="how-it-works" class="bg-ink section-padding relative overflow-hidden">
+    <div class="absolute inset-0 factory-grid"></div>
+    <div class="orb orb-a absolute" style="width:500px;height:500px;top:-80px;left:-100px;opacity:0.7;animation:float-b 12s ease-in-out infinite;"></div>
+    <div class="scan-line" style="animation-delay:4s"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6">
+        <div class="mb-20 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
+            <div
+                x-data="{ show: false }"
+                x-intersect.once="show = true"
+                :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
+                class="transition-all duration-700"
+            >
+                <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">Process</p>
+                <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl text-white leading-tight">
+                    From idea to<br><span class="italic gradient-text">production.</span>
+                </h2>
+            </div>
+            <p class="text-white/30 text-sm leading-relaxed sm:text-right" style="max-width:200px">
+                Four steps. Zero friction.<br>Everything automated.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.06]">
+            @php
+            $steps = [
+                ['num' => '01', 'title' => 'Describe your idea',   'desc' => 'Write a prompt. Be as detailed or abstract as you want — our AI speaks fashion.'],
+                ['num' => '02', 'title' => 'AI builds the design', 'desc' => 'Watch your concept materialize in seconds. Production-ready from the start.'],
+                ['num' => '03', 'title' => 'Refine until perfect', 'desc' => 'Iterate with follow-up prompts. Remove backgrounds in one click.'],
+                ['num' => '04', 'title' => 'Upload & go live',     'desc' => 'Push directly to Printify. Your product is live before your next meeting.'],
+            ];
+            @endphp
+            @foreach($steps as $i => $step)
+            <div
+                x-data="{ show: false }"
+                x-intersect.once="show = true"
+                :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
+                class="bg-ink p-10 transition-all duration-700 group hover:bg-white/[0.04] cursor-default stagger-{{ $i+1 }}"
+            >
+                <span class="font-serif text-5xl text-white/[0.1] group-hover:text-accent/60 transition-colors duration-500">
+                    {{ $step['num'] }}
+                </span>
+                <div class="step-line mt-6 mb-4"></div>
+                <h3 class="text-xs font-bold text-white uppercase tracking-[0.12em] mb-3">{{ $step['title'] }}</h3>
+                <p class="text-sm text-white/35 leading-relaxed">{{ $step['desc'] }}</p>
+            </div>
+            @endforeach
+        </div>
     </div>
+</section>
+
+<!-- ════════════════════ FEATURES ════════════════════ -->
+<section class="bg-white section-padding">
+    <div class="max-w-7xl mx-auto px-6">
+        <div
+            x-data="{ show: false }"
+            x-intersect.once="show = true"
+            :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+            class="transition-all duration-700 mb-16"
+        >
+            <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">What you get</p>
+            <h2 class="font-serif text-4xl sm:text-5xl text-ink">Built for speed.</h2>
+            <div class="w-14 h-px bg-accent mt-6"></div>
+        </div>
+
+        @php
+        $features = [
+            ['icon' => 'fa-bolt',        'title' => 'AI generation',      'desc' => 'Industry-leading diffusion models deliver stunning garment-ready graphics in under 15 seconds.'],
+            ['icon' => 'fa-eraser',      'title' => 'Background removal', 'desc' => 'Automatic background removal and clean PNG export — no Photoshop, no manual editing.'],
+            ['icon' => 'fa-store',       'title' => 'Printify sync',       'desc' => 'One click uploads your design to every garment in your Printify catalog simultaneously.'],
+            ['icon' => 'fa-layer-group', 'title' => 'Design library',      'desc' => 'Every design auto-saves. Build a library. Reuse and remix your best work anytime.'],
+        ];
+        @endphp
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-cream-300">
+            @foreach($features as $i => $f)
+            <div
+                x-data="{ show: false }"
+                x-intersect.once="show = true"
+                :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                class="bg-white p-8 group card-lift stagger-{{ $i+1 }} transition-all duration-700"
+            >
+                <div class="w-10 h-10 bg-cream-100 border border-cream-300
+                            group-hover:bg-accent group-hover:border-accent
+                            flex items-center justify-center mb-6 transition-all duration-300">
+                    <i class="fas {{ $f['icon'] }} text-sm text-ink group-hover:text-white icon-bounce transition-colors duration-300"></i>
+                </div>
+                <h3 class="text-xs font-bold text-ink uppercase tracking-[0.12em] mb-2">{{ $f['title'] }}</h3>
+                <p class="text-sm text-ink-muted leading-relaxed">{{ $f['desc'] }}</p>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════ DEMO TYPING ════════════════════ -->
+<section class="bg-cream-100 border-y border-cream-300 factory-grid-light py-20 md:py-28">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+            <!-- Copy -->
+            <div
+                x-data="{ show: false }"
+                x-intersect.once="show = true"
+                :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                class="transition-all duration-700"
+            >
+                <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">See it in action</p>
+                <h2 class="font-serif text-4xl sm:text-5xl text-ink leading-tight mb-6">
+                    Type it.<br><span class="italic gradient-text">It ships.</span>
+                </h2>
+                <p class="text-ink-muted text-base leading-relaxed mb-8">
+                    Describe any garment design — graphic tees, all-over prints, minimalist logos —
+                    and FabricAI generates production-ready artwork instantly.
+                </p>
+                <a href="/design"
+                   class="btn-shimmer inline-flex items-center gap-3 px-8 py-4 bg-accent text-white
+                          text-xs font-semibold tracking-[0.2em] uppercase
+                          hover:bg-accent-dark hover:-translate-y-0.5 transition-all duration-300">
+                    Launch Studio →
+                </a>
+            </div>
+
+            <!-- Typing animation card -->
+            <div
+                x-data="{
+                    show: false,
+                    examples: [
+                        'A playful pixel art robot eating a pink frosted donut with colorful sprinkles',
+                        'Japanese streetwear aesthetic with bright neon lights and vibrant Tokyo nightlife energy',
+                        'Minimalistic geometric pattern made of repeating shapes and sharp symmetrical lines',
+                        'Surreal dreamlike landscape with floating elements and soft gradients',
+                    ],
+                    idx: 0, prompt: '', t: null,
+                    type() {
+                        clearTimeout(this.t);
+                        const p = this.examples[this.idx]; let i = 0;
+                        const go = () => {
+                            if (i <= p.length) { this.prompt = p.slice(0, i++); this.t = setTimeout(go, 52); }
+                            else { this.t = setTimeout(() => this.erase(), 2600); }
+                        }; go();
+                    },
+                    erase() {
+                        clearTimeout(this.t);
+                        let i = this.prompt.length;
+                        const go = () => {
+                            if (i >= 0) { this.prompt = this.prompt.slice(0, i--); this.t = setTimeout(go, 24); }
+                            else { this.idx = (this.idx + 1) % this.examples.length; this.type(); }
+                        }; go();
+                    },
+                    init() { setTimeout(() => this.show = true, 200); this.type(); }
+                }"
+                x-init="init()"
+                :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                class="transition-all duration-700 delay-200"
+            >
+                <div class="bg-white border border-cream-300 p-6"
+                     style="box-shadow:0 24px 60px -12px rgba(124,60,160,0.14)">
+                    <div class="flex items-center gap-2.5 mb-4 pb-4 border-b border-cream-200">
+                        <span class="pulse-dot w-2 h-2 rounded-full inline-block bg-accent"></span>
+                        <span class="text-[10px] font-semibold text-ink-muted uppercase tracking-[0.25em]">FabricAI Studio</span>
+                        <span class="ml-auto text-[10px] px-2.5 py-0.5 rounded-full text-white font-semibold tracking-wider bg-accent">LIVE</span>
+                    </div>
+                    <div class="min-h-[72px] text-ink-light text-sm leading-relaxed">
+                        <span x-text="prompt"></span><span class="inline-block w-0.5 h-4 bg-accent animate-pulse align-middle ml-0.5"></span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-cream-200 flex justify-between items-center">
+                        <span class="text-[10px] text-ink-muted tracking-widest uppercase flex items-center gap-1.5">
+                            <span class="w-1 h-1 rounded-full bg-accent inline-block" style="animation:pulse-ring 1.8s ease-out infinite"></span>
+                            Generating…
+                        </span>
+                        <span class="inline-block px-4 py-2 bg-accent text-white text-[10px] font-semibold tracking-[0.2em] uppercase">Generate →</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════ CTA ════════════════════ -->
+<section class="bg-ink section-padding relative overflow-hidden corner-marks">
+    <div class="absolute inset-0 factory-grid"></div>
+    <div class="orb orb-a absolute" style="width:800px;height:800px;top:-260px;right:-250px;opacity:0.55;animation:float-a 14s ease-in-out infinite;"></div>
+    <div class="scan-line" style="animation-delay:2s"></div>
+
+    <!-- Ghost text -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <span class="font-serif text-[22vw] leading-none whitespace-nowrap"
+              style="color:rgba(124,60,160,0.04)">GENERATE</span>
+    </div>
+
     <div class="relative max-w-4xl mx-auto px-6 text-center">
-        <div class="w-12 h-px bg-accent mx-auto mb-10"></div>
-        <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl mb-6">
-            Ready to <span class="italic text-accent-light">create</span>?
+        <div class="w-10 h-px bg-accent mx-auto mb-10"></div>
+        <h2
+            x-data="{ show: false }"
+            x-intersect.once="show = true"
+            :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
+            class="font-serif text-5xl sm:text-6xl lg:text-7xl text-white leading-[0.92] mb-8 transition-all duration-700"
+        >
+            Stop waiting.<br>
+            <span class="italic gradient-text">Start shipping.</span>
         </h2>
-        <p class="text-white/50 text-lg max-w-xl mx-auto mb-10">
-            Join thousands of designers using FabricAI to bring their fashion ideas to life.
+        <p class="text-white/35 text-lg max-w-md mx-auto mb-12 leading-relaxed">
+            Create and ship entire collections in seconds.<br>
+            Your competitors are already automating.
         </p>
         <a href="/design"
-           class="inline-block px-10 py-4 bg-white text-ink text-sm font-medium tracking-wide uppercase
-                  hover:bg-accent hover:text-white transition-colors duration-300">
-            Start your first design
+           class="btn-shimmer cta-btn relative inline-flex items-center gap-3 px-10 py-4 bg-accent text-white
+                  text-xs font-semibold tracking-[0.2em] uppercase
+                  hover:bg-accent-dark hover:-translate-y-1 transition-all duration-300">
+            Generate your first design <span>→</span>
         </a>
     </div>
 </section>

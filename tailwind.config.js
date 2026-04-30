@@ -29,9 +29,9 @@ export default {
                     muted: '#8a8a8a',
                 },
                 accent: {
-                    DEFAULT: '#c2704f',
-                    light: '#d4956e',
-                    dark: '#a85a3a',
+                    DEFAULT: '#7c3ca0',
+                    light: '#9d5bc7',
+                    dark: '#5a2275',
                 },
             },
             keyframes: {
