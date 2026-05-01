@@ -27,12 +27,24 @@ class ChatController extends Controller
             ]);
     }
 
+    private static function chatLimitForPlan(string $plan): int
+    {
+        return match ($plan) {
+            'pro'      => 10,
+            'business' => 30,
+            default    => 5,  // free, starter
+        };
+    }
+
     public function store()
     {
-        $user = Auth::user();
-        if ($user->chats()->count() >= 5) {
+        $user  = Auth::user();
+        $limit = self::chatLimitForPlan($user->plan ?? 'free');
+
+        if ($user->chats()->count() >= $limit) {
             return response()->json([
-                'error' => 'Has alcanzado el límite de 5 chats.'
+                'error'       => "Has alcanzado el límite de {$limit} chats para tu plan.",
+                'upgrade_url' => '/pricing',
             ], 403);
         }
         $chat = $user->chats()->create(['title' => null]);

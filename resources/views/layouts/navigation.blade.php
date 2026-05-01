@@ -1,10 +1,14 @@
 <!-- ================= NAVBAR ================= -->
+<style>
+    nav.nav-dark-hero .nav-link       { color: rgba(255,255,255,0.72); }
+    nav.nav-dark-hero .nav-link:hover { color: #fff; }
+</style>
 <nav
-    x-data="{ scrolled: false, mobileOpen: false }"
+    x-data="{ scrolled: false, mobileOpen: false, darkHero: {{ isset($navDarkHero) && $navDarkHero ? 'true' : 'false' }} }"
     @scroll.window="scrolled = window.scrollY > 50"
     :class="scrolled
         ? 'bg-cream-50/95 backdrop-blur-md border-b border-cream-300'
-        : 'bg-transparent'"
+        : (darkHero ? 'bg-transparent nav-dark-hero' : 'bg-transparent')"
     class="fixed w-full z-50 transition-all duration-500"
 >
     <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
@@ -18,17 +22,21 @@
         </div>
 
         <!-- Desktop links -->
-        <div class="hidden md:flex gap-10 text-sm text-ink-muted font-medium tracking-wide uppercase">
+        <div class="hidden md:flex gap-10 text-sm font-medium tracking-wide uppercase"
+             :class="darkHero && !scrolled ? '' : 'text-ink-muted'">
             <a href="/#how-it-works"
-               class="link-underline hover:text-ink transition-colors duration-300 pb-0.5">
+               class="nav-link link-underline transition-colors duration-300 pb-0.5"
+               :class="!(darkHero && !scrolled) ? 'hover:text-ink text-ink-muted' : ''">
                 How it works
             </a>
             <a href="/pricing"
-               class="link-underline hover:text-ink transition-colors duration-300 pb-0.5">
+               class="nav-link link-underline transition-colors duration-300 pb-0.5"
+               :class="!(darkHero && !scrolled) ? 'hover:text-ink text-ink-muted' : ''">
                 Pricing
             </a>
             <a href="/faq"
-               class="link-underline hover:text-ink transition-colors duration-300 pb-0.5">
+               class="nav-link link-underline transition-colors duration-300 pb-0.5"
+               :class="!(darkHero && !scrolled) ? 'hover:text-ink text-ink-muted' : ''">
                 FAQ
             </a>
         </div>

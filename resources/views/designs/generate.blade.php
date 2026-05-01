@@ -815,6 +815,7 @@
     // User identity
     const userInitial   = '{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}';
     const userAvatarUrl = @json(Auth::user()->avatar);
+    const userPlan      = @json(Auth::user()->plan ?? 'free');
 
     // ─── Token Manager ────────────────────────────────────────────────
     const TokenManager = {
@@ -1346,7 +1347,11 @@
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
             });
             const data = await res.json();
-            if (!res.ok && data.error) { showError(data.error); return; }
+            if (!res.ok && data.error) {
+                showError(data.error);
+                if (data.upgrade_url) setTimeout(() => window.location.href = data.upgrade_url, 2500);
+                return;
+            }
             currentChatId = data.id;
             messagesContainer.innerHTML = '';
             document.getElementById('chat-title').textContent = 'New Design';
@@ -2922,6 +2927,11 @@
     });
 
     function openTurboUpdateModal(chatImageSrc) {
+        if (userPlan !== 'pro' && userPlan !== 'business') {
+            showToast('El Turbo Update está disponible desde el plan Pro. Actualiza tu plan para usarlo.', 'error');
+            setTimeout(() => window.location.href = '/pricing', 2800);
+            return;
+        }
         _turboFrontImageSrc = chatImageSrc || null;
         if (!chatImageSrc && !_layers.front.length) {
             showToast('Carga un diseño en el canvas primero.', 'error'); return;

@@ -188,6 +188,7 @@
 </head>
 
 <body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden grain">
+@php $navDarkHero = true; @endphp
 @include('layouts.navigation')
 
 <!-- ════════════════════ HERO ════════════════════ -->
