@@ -170,6 +170,14 @@
                     <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
                     Design history
                 </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    10 AI chats / month
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-purple-400 rounded-full shrink-0"></span>
+                    Front &amp; back garment placement (Turbo)
+                </li>
             </ul>
 
             @auth
@@ -227,6 +235,14 @@
                 <li class="flex items-center gap-3">
                     <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
                     Design history
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    30 AI chats / month
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1 h-1 bg-ink rounded-full shrink-0"></span>
+                    Front &amp; back garment placement (Turbo)
                 </li>
             </ul>
 
