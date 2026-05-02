@@ -823,7 +823,7 @@
     // ─── Token Manager ────────────────────────────────────────────────
     const TokenManager = {
         MAX: 10,
-        _cache: {{ Auth::user()->tokens ?? 10 }},
+        _cache: {{ Auth::user()->tokens ?? 5 }},
         get()    { return this._cache; },
         set(n)   { this._cache = Math.max(0, n); this._render(this._cache); },
         deduct() {

@@ -21,6 +21,11 @@ Route::get('/terms', function () {
     return view('terms');
 });
 
+// Privacy Policy page
+Route::get('/privacy', function () {
+    return view('privacy');
+});
+
 // Pricing page
 Route::get('/pricing', function () {
     return view('pricing');

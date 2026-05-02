@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('is_admin')->default(false)->after('password');
-            $table->integer('tokens')->default(10)->after('is_admin');
+            $table->integer('tokens')->default(5)->after('is_admin');
             $table->string('plan', 20)->default('free')->after('tokens');
             $table->timestamp('last_login_at')->nullable()->after('plan');
         });
