@@ -47,8 +47,23 @@ class SubscriptionController extends Controller
             'plan' => ['required', 'in:starter,pro,business'],
         ]);
 
-        $user = $request->user();
+        $user     = $request->user();
         $resolved = $this->resolvePlan($request->plan);
+
+        // If the user already has an active subscription, swap the plan immediately
+        // instead of creating a new checkout session. This ensures tokens are applied
+        // right away without waiting for the next billing cycle.
+        if ($user->subscribed('default')) {
+            $user->subscription('default')->swap($resolved['price_id']);
+
+            $user->update([
+                'plan'            => $resolved['plan'],
+                'tokens'          => self::tokensForPlan($resolved['plan']),
+                'tokens_reset_at' => now()->startOfMonth(),
+            ]);
+
+            return redirect()->route('subscription.success');
+        }
 
         return $user->newSubscription('default', $resolved['price_id'])
             ->checkout([

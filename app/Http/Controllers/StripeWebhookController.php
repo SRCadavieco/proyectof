@@ -30,10 +30,12 @@ class StripeWebhookController extends CashierWebhookController
         $plan = $this->planFromPriceId($stripeSubscription['items']['data'][0]['price']['id'] ?? '');
 
         if ($stripeSubscription['status'] === 'active' && $plan) {
+            // On plan change, always grant the full new plan's token amount immediately.
+            // Also refresh the reset timestamp so the next monthly reset is correct.
             $user->update([
                 'plan'            => $plan,
                 'tokens'          => SubscriptionController::tokensForPlan($plan),
-                'tokens_reset_at' => now()->startOfMonth(),
+                'tokens_reset_at' => now(),
             ]);
         }
     }

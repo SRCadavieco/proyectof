@@ -233,9 +233,9 @@
         <!-- Headline -->
         <h1 class="font-serif leading-[0.87] mb-14 max-w-5xl"
             style="font-size:clamp(3.5rem,10vw,9.5rem)">
-            <span class="text-white">Ready to sell.</span><br>
+            <span style="color:rgba(255,255,255,0.82)">Ready to sell.</span><br>
             <span class="italic gradient-text">Products</span><br>
-            <span class="text-white">in seconds.</span>
+            <span style="color:rgba(255,255,255,0.82)">in seconds.</span>
         </h1>
 
         <!-- CTAs -->
@@ -276,13 +276,13 @@
 </section>
 
 <!-- ════════════════════ MARQUEE ════════════════════ -->
-<section class="border-y border-cream-300 py-4 overflow-hidden bg-white">
+<section class="border-y border-white/[0.07] py-4 overflow-hidden" style="background:#161616">
     <div class="marquee-track">
         @for($i = 0; $i < 2; $i++)
         <span class="flex items-center gap-7 mr-7">
             @php $items = ['One Prompt','100 Designs','Ship in Seconds','Printify Ready','Background Removal','No Design Skills']; @endphp
             @foreach($items as $item)
-            <span class="text-[10px] font-semibold tracking-[0.3em] uppercase text-ink-muted">{{ $item }}</span>
+            <span class="text-[10px] font-semibold tracking-[0.3em] uppercase" style="color:rgba(255,255,255,0.35)">{{ $item }}</span>
             <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-accent"></span>
             @endforeach
         </span>
@@ -291,7 +291,7 @@
 </section>
 
 <!-- ════════════════════ STATEMENT ════════════════════ -->
-<section class="bg-cream-100 factory-grid-light py-24 md:py-40 overflow-hidden">
+<section class="bg-ink factory-grid py-24 md:py-40 overflow-hidden">
     <div class="max-w-7xl mx-auto px-6">
 
         <div class="grid lg:grid-cols-[1fr_360px] gap-16 items-end mb-20">
@@ -301,8 +301,7 @@
                 :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                 class="transition-all duration-700 ease-out"
             >
-                <h2 class="font-serif leading-[0.9] text-ink"
-                    style="font-size:clamp(3rem,7vw,7rem)">
+                <h2 class="font-serif leading-[0.9]" style="color:rgba(255,255,255,0.82);font-size:clamp(3rem,7vw,7rem)">
                     Manual clothing<br>
                     <span class="italic gradient-text">designing</span><br>
                     is over.
@@ -315,21 +314,21 @@
                 class="transition-all duration-700 ease-out delay-200"
             >
                 <div class="w-8 h-px bg-accent mb-6"></div>
-                <p class="text-ink-muted leading-relaxed text-base">
+                <p class="text-white/40 leading-relaxed text-base">
                     Create and ship entire collections in seconds. Stop making your clients
                     wait for new products. FabricAI plugs straight into Printify — your
                     designs go live the moment they're ready.
                 </p>
                 <a href="/design"
                    class="link-underline-accent inline-flex items-center gap-2 mt-8 text-xs font-semibold
-                          tracking-[0.2em] uppercase text-ink transition-colors duration-300">
+                          tracking-[0.2em] uppercase text-white/60 hover:text-white transition-colors duration-300">
                     Start building <span>→</span>
                 </a>
             </div>
         </div>
 
         <!-- Pain-point tiles -->
-        <div class="grid sm:grid-cols-3 gap-px bg-cream-300">
+        <div class="grid sm:grid-cols-3 gap-px bg-white/[0.04]">
             @php
             $problems = [
                 ['icon' => 'fa-clock-rotate-left', 'label' => 'Still using POD editors in 2026?', 'desc' => 'Drag-and-drop is dead. Type your idea, press generate, done.'],
@@ -342,13 +341,13 @@
                 x-data="{ show: false }"
                 x-intersect.once="show = true"
                 :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
-                class="bg-cream-100 p-8 group card-lift stagger-{{ $i+1 }} transition-all duration-700"
+                class="bg-[#111] p-8 group card-lift stagger-{{ $i+1 }} transition-all duration-700"
             >
                 <div class="w-10 h-10 bg-ink group-hover:bg-accent flex items-center justify-center mb-5 transition-colors duration-300">
                     <i class="fas {{ $p['icon'] }} text-xs text-white icon-bounce"></i>
                 </div>
-                <h3 class="text-xs font-bold text-ink uppercase tracking-[0.12em] mb-2">{{ $p['label'] }}</h3>
-                <p class="text-sm text-ink-muted leading-relaxed">{{ $p['desc'] }}</p>
+                <h3 class="text-xs font-bold text-white/70 uppercase tracking-[0.12em] mb-2">{{ $p['label'] }}</h3>
+                <p class="text-sm text-white/35 leading-relaxed">{{ $p['desc'] }}</p>
             </div>
             @endforeach
         </div>
@@ -370,7 +369,7 @@
                 class="transition-all duration-700"
             >
                 <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">Process</p>
-                <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl text-white leading-tight">
+                <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl leading-tight" style="color:rgba(255,255,255,0.82)">
                     From idea to<br><span class="italic gradient-text">production.</span>
                 </h2>
             </div>
@@ -408,7 +407,7 @@
 </section>
 
 <!-- ════════════════════ FEATURES ════════════════════ -->
-<section class="bg-white section-padding">
+<section class="bg-[#0f0f0f] section-padding" style="border-top:1px solid rgba(255,255,255,0.06)">
     <div class="max-w-7xl mx-auto px-6">
         <div
             x-data="{ show: false }"
@@ -417,7 +416,7 @@
             class="transition-all duration-700 mb-16"
         >
             <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">What you get</p>
-            <h2 class="font-serif text-4xl sm:text-5xl text-ink">Built for speed.</h2>
+            <h2 class="font-serif text-4xl sm:text-5xl" style="color:rgba(255,255,255,0.82)">Built for speed.</h2>
             <div class="w-14 h-px bg-accent mt-6"></div>
         </div>
 
@@ -429,21 +428,21 @@
             ['icon' => 'fa-layer-group', 'title' => 'Design library',      'desc' => 'Every design auto-saves. Build a library. Reuse and remix your best work anytime.'],
         ];
         @endphp
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-cream-300">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.04]">
             @foreach($features as $i => $f)
             <div
                 x-data="{ show: false }"
                 x-intersect.once="show = true"
                 :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
-                class="bg-white p-8 group card-lift stagger-{{ $i+1 }} transition-all duration-700"
+                class="bg-[#111] p-8 group card-lift stagger-{{ $i+1 }} transition-all duration-700"
             >
-                <div class="w-10 h-10 bg-cream-100 border border-cream-300
+                <div class="w-10 h-10 bg-white/[0.06] border border-white/10
                             group-hover:bg-accent group-hover:border-accent
                             flex items-center justify-center mb-6 transition-all duration-300">
-                    <i class="fas {{ $f['icon'] }} text-sm text-ink group-hover:text-white icon-bounce transition-colors duration-300"></i>
+                    <i class="fas {{ $f['icon'] }} text-sm text-white/40 group-hover:text-white icon-bounce transition-colors duration-300"></i>
                 </div>
-                <h3 class="text-xs font-bold text-ink uppercase tracking-[0.12em] mb-2">{{ $f['title'] }}</h3>
-                <p class="text-sm text-ink-muted leading-relaxed">{{ $f['desc'] }}</p>
+                <h3 class="text-xs font-bold text-white/70 uppercase tracking-[0.12em] mb-2">{{ $f['title'] }}</h3>
+                <p class="text-sm text-white/35 leading-relaxed">{{ $f['desc'] }}</p>
             </div>
             @endforeach
         </div>
@@ -451,7 +450,7 @@
 </section>
 
 <!-- ════════════════════ DEMO TYPING ════════════════════ -->
-<section class="bg-cream-100 border-y border-cream-300 factory-grid-light py-20 md:py-28">
+<section class="bg-ink border-y border-white/[0.06] factory-grid py-20 md:py-28">
     <div class="max-w-6xl mx-auto px-6">
         <div class="grid lg:grid-cols-2 gap-16 items-center">
 
@@ -463,10 +462,10 @@
                 class="transition-all duration-700"
             >
                 <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">See it in action</p>
-                <h2 class="font-serif text-4xl sm:text-5xl text-ink leading-tight mb-6">
+                <h2 class="font-serif text-4xl sm:text-5xl leading-tight mb-6" style="color:rgba(255,255,255,0.82)">
                     Type it.<br><span class="italic gradient-text">It ships.</span>
                 </h2>
-                <p class="text-ink-muted text-base leading-relaxed mb-8">
+                <p class="text-white/40 text-base leading-relaxed mb-8">
                     Describe any garment design — graphic tees, all-over prints, minimalist logos —
                     and FabricAI generates production-ready artwork instantly.
                 </p>
@@ -511,18 +510,18 @@
                 :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                 class="transition-all duration-700 delay-200"
             >
-                <div class="bg-white border border-cream-300 p-6"
+                <div class="bg-[#111] border border-white/[0.08] p-6"
                      style="box-shadow:0 24px 60px -12px rgba(124,60,160,0.14)">
-                    <div class="flex items-center gap-2.5 mb-4 pb-4 border-b border-cream-200">
+                    <div class="flex items-center gap-2.5 mb-4 pb-4 border-b border-white/[0.07]">
                         <span class="pulse-dot w-2 h-2 rounded-full inline-block bg-accent"></span>
-                        <span class="text-[10px] font-semibold text-ink-muted uppercase tracking-[0.25em]">FabricAI Studio</span>
+                        <span class="text-[10px] font-semibold text-white/30 uppercase tracking-[0.25em]">FabricAI Studio</span>
                         <span class="ml-auto text-[10px] px-2.5 py-0.5 rounded-full text-white font-semibold tracking-wider bg-accent">LIVE</span>
                     </div>
-                    <div class="min-h-[72px] text-ink-light text-sm leading-relaxed">
+                    <div class="min-h-[72px] text-white/60 text-sm leading-relaxed">
                         <span x-text="prompt"></span><span class="inline-block w-0.5 h-4 bg-accent animate-pulse align-middle ml-0.5"></span>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-cream-200 flex justify-between items-center">
-                        <span class="text-[10px] text-ink-muted tracking-widest uppercase flex items-center gap-1.5">
+                    <div class="mt-4 pt-4 border-t border-white/[0.07] flex justify-between items-center">
+                        <span class="text-[10px] text-white/30 tracking-widest uppercase flex items-center gap-1.5">
                             <span class="w-1 h-1 rounded-full bg-accent inline-block" style="animation:pulse-ring 1.8s ease-out infinite"></span>
                             Generating…
                         </span>
@@ -552,7 +551,8 @@
             x-data="{ show: false }"
             x-intersect.once="show = true"
             :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
-            class="font-serif text-5xl sm:text-6xl lg:text-7xl text-white leading-[0.92] mb-8 transition-all duration-700"
+            class="font-serif text-5xl sm:text-6xl lg:text-7xl leading-[0.92] mb-8 transition-all duration-700"
+            style="color:rgba(255,255,255,0.82)"
         >
             Stop waiting.<br>
             <span class="italic gradient-text">Start shipping.</span>

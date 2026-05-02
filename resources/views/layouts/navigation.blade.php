@@ -108,7 +108,8 @@
                     </div>
                 </div>
                 <a href="{{ route('designs.form') }}"
-                   class="btn-primary text-xs px-6 py-2.5">
+                   class="text-xs px-6 py-2.5 inline-flex items-center justify-center font-semibold tracking-wide uppercase text-white transition-all duration-300 hover:opacity-90 hover:-translate-y-0.5"
+                   style="background:#7c3ca0">
                     My Studio
                 </a>
             </div>
