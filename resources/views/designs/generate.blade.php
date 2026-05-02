@@ -255,13 +255,6 @@
                 class="font-medium text-sm text-white/80 truncate flex-1 text-left">
                 New Design
             </h1>
-            <button onclick="openCreditPacksModal()"
-                    class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                    style="background:rgba(124,60,160,0.15);border:1px solid rgba(124,60,160,0.3);color:#c084fc"
-                    onmouseover="this.style.background='rgba(124,60,160,0.28)'" onmouseout="this.style.background='rgba(124,60,160,0.15)'">
-                <span>⚡</span>
-                <span id="header-credits-count">{{ Auth::user()->tokens }}</span>
-            </button>
         </header>
 
         <!-- Chat area -->
@@ -359,7 +352,7 @@
                 </div>
                 <div class="flex gap-2 items-end">
                     <!-- Attach image -->
-                    <label class="cursor-pointer icon-btn shrink-0" title="Attach image">
+                    <label class="cursor-pointer icon-btn shrink-0" title="Attach image" style="color:#c084fc">
                         <i class="fas fa-paperclip text-base"></i>
                         <input type="file" id="image-upload" accept="image/*" class="hidden">
                     </label>
@@ -946,10 +939,8 @@
             const banner   = document.getElementById('no-credits-banner');
             const textarea = document.getElementById('prompt');
             const sendBtn  = document.getElementById('submit-btn');
-            const headerCount = document.getElementById('header-credits-count');
             if (!countEl) return;
             countEl.textContent = n;
-            if (headerCount) headerCount.textContent = n;
             if (iconEl) iconEl.textContent = '⚡';
             if (banner) banner.classList.toggle('hidden', n > 0);
             if (textarea) textarea.disabled = n <= 0;
@@ -1331,9 +1322,13 @@
     }
 
     // ─── Image lightbox ───────────────────────────────────────────────
+    let _lightboxSrc = null;
     function openLightbox(src) {
+        _lightboxSrc = src;
         const modal = document.getElementById('lightbox-modal');
         document.getElementById('lightbox-img').src = src;
+        const dlBtn = document.getElementById('lightbox-download-btn');
+        if (dlBtn) dlBtn.href = src;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
@@ -1342,6 +1337,11 @@
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         document.getElementById('lightbox-img').src = '';
+    }
+    function _closeLightboxThen(fn) {
+        closeLightbox();
+        // Small delay so the lightbox closes before the next modal opens
+        setTimeout(fn, 120);
     }
     // Delegate click on any .chat-lightbox-img inside the messages container
     document.addEventListener('click', e => {
