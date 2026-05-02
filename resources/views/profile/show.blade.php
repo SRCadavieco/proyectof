@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="title">My Profile</x-slot>
+    <x-slot name="bodyClass">bg-[#0d0d0d]</x-slot>
 
     {{-- ── Hero banner ── --}}
     <div class="bg-ink">
@@ -33,22 +34,18 @@
 
         {{-- Stats row --}}
         <div class="max-w-5xl mx-auto px-4 sm:px-6 pb-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-3 gap-3">
                 <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
                     <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['images_generated']) }}</p>
                     <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Designs created</p>
                 </div>
                 <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
                     <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['tokens_used']) }}</p>
-                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Tokens used</p>
+                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Credits used</p>
                 </div>
                 <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
                     <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['products_pushed']) }}</p>
                     <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Products pushed</p>
-                </div>
-                <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
-                    <p class="text-lg font-bold text-white truncate">{{ $stats['most_used_model'] }}</p>
-                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Top model</p>
                 </div>
             </div>
         </div>
@@ -58,22 +55,22 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if(session('subscription_cancelled'))
-                <div class="px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center gap-2">
+                <div class="px-4 py-3 rounded-lg flex items-center gap-2 text-sm" style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.25);color:#fde68a">
                     <i class="fas fa-circle-info shrink-0"></i>
                     {{ session('subscription_cancelled') }}
                 </div>
             @endif
 
             {{-- ── Printify Integration Card ── --}}
-            <div class="bg-white border border-cream-200 sm:rounded-lg p-6 sm:p-8">
+            <div class="sm:rounded-xl p-6 sm:p-8" style="background:#111;border:1px solid rgba(255,255,255,0.08)">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h3 class="font-medium text-ink text-base flex items-center gap-2">
+                        <h3 class="font-medium text-white text-base flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full bg-[#FF4D00]"></span>
                             Printify Integration
                         </h3>
                         @if($printify)
-                            <p class="text-sm text-green-700 mt-1">
+                            <p class="text-sm text-green-400 mt-1">
                                 <i class="fas fa-circle-check mr-1"></i>
                                 Connected
                                 @if($printify->shop_name)
@@ -81,7 +78,7 @@
                                 @endif
                             </p>
                         @else
-                            <p class="text-sm text-ink-muted mt-1">
+                            <p class="text-sm text-white/50 mt-1">
                                 Connect your Printify account to send designs directly to your print-on-demand store.
                             </p>
                         @endif
@@ -101,7 +98,7 @@
                                 @method('DELETE')
                                 <button type="submit"
                                         class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded text-sm font-medium
-                                               text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
+                                               text-red-400 transition-colors" style="border:1px solid rgba(239,68,68,0.3)" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
                                     <i class="fas fa-unlink"></i> Disconnect
                                 </button>
                             </form>
@@ -110,12 +107,12 @@
                 </div>
 
                 @if(session('printify_success'))
-                    <div class="mt-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded">
+                    <div class="mt-4 px-3 py-2.5 rounded-lg text-green-400 text-sm" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2)">
                         <i class="fas fa-circle-check mr-1"></i>{{ session('printify_success') }}
                     </div>
                 @endif
                 @if($errors->has('api_token'))
-                    <div class="mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
+                    <div class="mt-4 px-3 py-2.5 rounded-lg text-red-400 text-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2)">
                         <i class="fas fa-circle-exclamation mr-1"></i>{{ $errors->first('api_token') }}
                     </div>
                 @endif
@@ -125,145 +122,71 @@
             @php
                 $plan = strtolower($user->plan ?? 'free');
                 $planMeta = [
-                    'free'   => [
-                        'label'       => 'Free',
-                        'price'       => '€0',
-                        'period'      => '/ month',
-                        'headerBg'    => 'bg-cream-100',
-                        'headerText'  => 'text-ink',
-                        'badgeBg'     => 'bg-cream-300 text-ink-muted',
-                        'accent'      => 'bg-cream-400',
-                        'perks'       => ['5 designs / month', 'Standard quality output', 'Basic prompt styles'],
-                        'missing'     => ['Background removal', 'Design history', 'Priority support'],
-                        'desc'        => 'Perfect for exploring FabricAI and testing your first ideas.',
-                    ],
-                    'pro'    => [
-                        'label'       => 'Pro',
-                        'price'       => '€19',
-                        'period'      => '/ month',
-                        'headerBg'    => 'bg-ink',
-                        'headerText'  => 'text-white',
-                        'badgeBg'     => 'bg-purple-500 text-white',
-                        'accent'      => 'bg-purple-400',
-                        'perks'       => ['100 designs / month', 'High quality output', 'All prompt styles', 'Background removal', 'Full design history'],
-                        'missing'     => ['Priority support'],
-                        'desc'        => 'Great for freelancers and creators who design regularly.',
-                    ],
-                    'studio' => [
-                        'label'       => 'Studio',
-                        'price'       => '€49',
-                        'period'      => '/ month',
-                        'headerBg'    => 'bg-ink',
-                        'headerText'  => 'text-white',
-                        'badgeBg'     => 'bg-purple-700 text-white',
-                        'accent'      => 'bg-purple-600',
-                        'perks'       => ['Unlimited designs', 'Ultra-high quality output', 'All prompt styles + custom', 'Background removal', 'Full design history', 'Priority support'],
-                        'missing'     => [],
-                        'desc'        => 'Built for studios and teams with high volume needs.',
-                    ],
+                    'free'     => ['label' => 'Free',     'price' => '$0',  'accent' => '#444',   'perks' => ['5 credits to start', 'All AI models', 'Printify integration'], 'desc' => 'Perfect for exploring FabricAI.'],
+                    'starter'  => ['label' => 'Starter',  'price' => '$5',  'accent' => '#7c3ca0','perks' => ['Up to 80 credits/month', 'Daily refill', 'All AI models', 'Printify integration', 'Choose 1 garment color per upload'], 'desc' => 'For creators getting serious.'],
+                    'pro'      => ['label' => 'Pro',      'price' => '$10', 'accent' => '#c084fc','perks' => ['Up to 200 credits/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For freelancers who design regularly.'],
+                    'business' => ['label' => 'Business', 'price' => '$20', 'accent' => '#a855f7','perks' => ['Up to 500 credits/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For studios with high-volume needs.'],
                 ];
                 $meta = $planMeta[$plan] ?? $planMeta['free'];
             @endphp
 
-            <div class="border border-cream-200 sm:rounded-lg overflow-hidden flex flex-col">
+            <div class="sm:rounded-xl overflow-hidden flex flex-col" style="background:#111;border:1px solid rgba(255,255,255,0.08)">
 
                 {{-- Card header --}}
-                <div class="relative {{ $meta['headerBg'] }} px-6 pt-6 pb-8">
-                    {{-- Top accent line --}}
-                    <div class="absolute top-0 left-0 right-0 h-1 {{ $meta['accent'] }}"></div>
-
+                <div class="relative px-6 pt-6 pb-6" style="background:#1a1a1a;border-bottom:1px solid rgba(255,255,255,0.07)">
+                    <div class="absolute top-0 left-0 right-0 h-0.5" style="background:{{ $meta['accent'] }}"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-widest {{ $meta['badgeBg'] }} mb-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-widest text-white mb-2" style="background:{{ $meta['accent'] }}20;border:1px solid {{ $meta['accent'] }}50">
                                 {{ $meta['label'] }}
                             </span>
-                            <p class="text-[11px] {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/60' }} uppercase tracking-wide font-medium">
-                                Current plan
-                            </p>
+                            <p class="text-[11px] text-white/40 uppercase tracking-wide font-medium">Current plan</p>
                         </div>
                         <div class="text-right">
-                            <span class="font-serif text-4xl font-bold {{ $meta['headerText'] }}">{{ $meta['price'] }}</span>
-                            <span class="text-xs {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/50' }} ml-1">{{ $meta['period'] }}</span>
+                            <span class="font-serif text-4xl font-bold text-white">{{ $meta['price'] }}</span>
+                            <span class="text-xs text-white/40 ml-1">/ month</span>
                         </div>
                     </div>
-
-                    <p class="mt-3 text-sm {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/70' }}">
-                        {{ $meta['desc'] }}
-                    </p>
+                    <p class="mt-2 text-sm text-white/50">{{ $meta['desc'] }}</p>
                 </div>
 
                 {{-- Features list --}}
-                <div class="bg-white flex-1 px-6 py-5">
+                <div class="flex-1 px-6 py-5">
                     <ul class="space-y-2.5">
                         @foreach($meta['perks'] as $perk)
-                            <li class="flex items-center gap-2.5 text-sm text-ink">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-100 shrink-0">
-                                    <i class="fas fa-check text-green-600" style="font-size:9px;"></i>
-                                </span>
+                            <li class="flex items-center gap-2.5 text-sm text-white/70">
+                                <span class="w-1 h-1 rounded-full shrink-0" style="background:{{ $meta['accent'] }}"></span>
                                 {{ $perk }}
-                            </li>
-                        @endforeach
-                        @foreach($meta['missing'] as $miss)
-                            <li class="flex items-center gap-2.5 text-sm text-ink-muted/40">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-cream-100 shrink-0">
-                                    <i class="fas fa-xmark text-ink-muted/40" style="font-size:9px;"></i>
-                                </span>
-                                {{ $miss }}
                             </li>
                         @endforeach
                     </ul>
                 </div>
 
                 {{-- CTA --}}
-                <div class="bg-white border-t border-cream-200 px-6 py-4">
-                    @if($plan === 'studio')
+                <div class="px-6 py-4" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    @if(in_array($plan, ['pro', 'business', 'studio']))
                         <div class="flex flex-col gap-2">
                             <a href="/pricing"
-                               class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
-                                      bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
-                                <i class="fas fa-repeat text-xs"></i>
-                                Change plan
+                               class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors"
+                               style="background:#7c3ca0" onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
+                                <i class="fas fa-repeat text-xs"></i> Change plan
                             </a>
                             <form method="POST" action="{{ route('subscription.cancel.confirm') }}"
                                   x-data
-                                  @submit.prevent="if(confirm('Are you sure you want to cancel your subscription? You will be moved to the Free plan immediately.')) $el.submit()">
+                                  @submit.prevent="if(confirm('Cancel subscription? You will be moved to the Free plan immediately.')) $el.submit()">
                                 @csrf
                                 <button type="submit"
-                                        class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-lg
-                                               border border-red-200 text-red-600 text-sm font-medium
-                                               hover:bg-red-50 transition-colors">
-                                    <i class="fas fa-circle-xmark text-xs"></i>
-                                    Cancel subscription
-                                </button>
-                            </form>
-                        </div>
-                    @elseif($plan === 'pro')
-                        <div class="flex flex-col gap-2">
-                            <a href="/pricing"
-                               class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
-                                      bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
-                                <i class="fas fa-repeat text-xs"></i>
-                                Change plan
-                            </a>
-                            <form method="POST" action="{{ route('subscription.cancel.confirm') }}"
-                                  x-data
-                                  @submit.prevent="if(confirm('Are you sure you want to cancel your subscription? You will be moved to the Free plan immediately.')) $el.submit()">
-                                @csrf
-                                <button type="submit"
-                                        class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-lg
-                                               border border-red-200 text-red-600 text-sm font-medium
-                                               hover:bg-red-50 transition-colors">
-                                    <i class="fas fa-circle-xmark text-xs"></i>
-                                    Cancel subscription
+                                        class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-xl text-red-400 text-sm font-medium transition-colors"
+                                        style="border:1px solid rgba(239,68,68,0.3)" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
+                                    <i class="fas fa-circle-xmark text-xs"></i> Cancel subscription
                                 </button>
                             </form>
                         </div>
                     @else
                         <a href="/pricing"
-                           class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
-                                  bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
-                            <i class="fas fa-arrow-up text-xs"></i>
-                            Upgrade plan
+                           class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors"
+                           style="background:#7c3ca0" onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
+                            <i class="fas fa-arrow-up text-xs"></i> Upgrade plan
                         </a>
                     @endif
                 </div>
@@ -288,7 +211,7 @@
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"
                  @click="showPrintifyModal = false"></div>
 
-            <div class="relative bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 sm:p-8 z-10"
+            <div class="relative rounded-xl shadow-2xl max-w-lg w-full p-6 sm:p-8 z-10" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -302,26 +225,26 @@
                         <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[#FF4D00]/10">
                             <i class="fas fa-plug text-[#FF4D00]"></i>
                         </span>
-                        <h2 class="font-serif text-lg text-ink">Connect to Printify</h2>
+                        <h2 class="font-serif text-lg text-white">Connect to Printify</h2>
                     </div>
                     <button @click="showPrintifyModal = false"
-                            class="text-ink-muted hover:text-ink transition-colors p-1 rounded focus:outline-none">
+                            class="text-white/40 hover:text-white transition-colors p-1 rounded focus:outline-none">
                         <i class="fas fa-xmark text-lg"></i>
                     </button>
                 </div>
 
                 {{-- Tutorial --}}
-                <div class="bg-cream-50 border border-cream-200 rounded-lg p-4 mb-5 text-sm text-ink-muted space-y-2">
-                    <p class="font-semibold text-ink text-sm mb-2 flex items-center gap-1.5">
+                <div class="rounded-lg p-4 mb-5 text-sm space-y-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)">
+                    <p class="font-semibold text-white text-sm mb-2 flex items-center gap-1.5">
                         <i class="fas fa-circle-info text-[#FF4D00]"></i>
                         How to get your Printify API Token
                     </p>
                     <ol class="list-decimal list-inside space-y-1.5 pl-1">
-                        <li>Log in to your <span class="font-medium text-ink">Printify</span> account.</li>
-                        <li>Go to <span class="font-medium text-ink">My account</span> (top-right corner).</li>
-                        <li>Select <span class="font-medium text-ink">Connections</span> in the left sidebar.</li>
-                        <li>Under <span class="font-medium text-ink">API access tokens</span>, click <span class="font-medium text-ink">Generate new token</span>.</li>
-                        <li>Give it a name (e.g. "FabricAI") and <span class="font-medium text-ink">copy it</span> before closing.</li>
+                        <li>Log in to your <span class="font-medium text-white">Printify</span> account.</li>
+                        <li>Go to <span class="font-medium text-white">My account</span> (top-right corner).</li>
+                        <li>Select <span class="font-medium text-white">Connections</span> in the left sidebar.</li>
+                        <li>Under <span class="font-medium text-white">API access tokens</span>, click <span class="font-medium text-white">Generate new token</span>.</li>
+                        <li>Give it a name (e.g. "FabricAI") and <span class="font-medium text-white">copy it</span> before closing.</li>
                     </ol>
                     <p class="pt-1">
                         <a href="https://printify.com/app/account/api" target="_blank" rel="noopener noreferrer"
@@ -336,7 +259,7 @@
                 <form method="POST" action="{{ route('printify.connect') }}">
                     @csrf
 
-                    <label for="api_token" class="block text-sm font-medium text-ink mb-1.5">
+                    <label for="api_token" class="block text-sm font-medium text-white/80 mb-1.5">
                         Your Printify API Token
                     </label>
                     <input type="text"
@@ -344,16 +267,15 @@
                            name="api_token"
                            placeholder="pst-xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                            autocomplete="off"
-                           class="w-full border border-cream-300 rounded-lg px-4 py-2.5 text-sm text-ink
-                                  focus:outline-none focus:ring-2 focus:ring-[#FF4D00]/40 focus:border-[#FF4D00]
-                                  placeholder:text-ink-muted/50 transition"
+                           class="w-full rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none transition"
+                           style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);" onfocus="this.style.borderColor='rgba(255,77,0,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'"
                            value="{{ old('api_token') }}">
 
                     <div class="flex justify-end gap-3 mt-5">
                         <button type="button"
                                 @click="showPrintifyModal = false"
-                                class="px-5 py-2 text-sm font-medium text-ink-muted border border-cream-300
-                                       rounded-lg hover:bg-cream-100 transition-colors">
+                                class="px-5 py-2 text-sm font-medium text-white/50 hover:text-white rounded-lg transition-colors"
+                                style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                             Cancel
                         </button>
                         <button type="submit"

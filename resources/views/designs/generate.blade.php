@@ -255,6 +255,13 @@
                 class="font-medium text-sm text-white/80 truncate flex-1 text-left">
                 New Design
             </h1>
+            <button onclick="openCreditPacksModal()"
+                    class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                    style="background:rgba(124,60,160,0.15);border:1px solid rgba(124,60,160,0.3);color:#c084fc"
+                    onmouseover="this.style.background='rgba(124,60,160,0.28)'" onmouseout="this.style.background='rgba(124,60,160,0.15)'">
+                <span>⚡</span>
+                <span id="header-credits-count">{{ Auth::user()->tokens }}</span>
+            </button>
         </header>
 
         <!-- Chat area -->
@@ -273,6 +280,33 @@
                     <p class="text-xs text-white/20 mt-2 italic">
                         Try: "Minimalist botanical line art in earthy tones"
                     </p>
+                    @php $printifyConnected = Auth::check() && Auth::user()->printifyConnection; @endphp
+                    @if(!$printifyConnected)
+                    <div class="mt-6 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs text-yellow-300/80" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2)">
+                        <i class="fas fa-plug text-yellow-400/60"></i>
+                        <span>Printify not connected. You won't be able to upload your designs.</span>
+                        <a href="/profile" class="underline ml-1 text-yellow-300/60 hover:text-yellow-300 transition-colors">Connect →</a>
+                    </div>
+                    @endif
+                    <!-- Sample design prompts -->
+                    <div class="mt-8 w-full max-w-lg">
+                        <p class="text-[10px] uppercase tracking-widest text-white/20 mb-4">Inspiration</p>
+                        <div class="grid grid-cols-2 gap-3 text-left">
+                            @foreach([
+                                ['Minimalist lotus in soft ink wash', 'Spiritual / Zen'],
+                                ['Y2K chrome butterfly on dark bg', 'Retro / Pop'],
+                                ['Vintage surf club patch design', 'Lifestyle'],
+                                ['Abstract geometric mountain range', 'Nature / Minimal'],
+                            ] as [$prompt, $tag])
+                            <button type="button" onclick="document.getElementById('prompt-input').value = '{{ addslashes($prompt) }}'; document.getElementById('prompt-input').focus()"
+                                    class="text-left px-3.5 py-3 rounded-xl transition-colors"
+                                    style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07)" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                                <span class="block text-xs text-white/70 mb-1">{{ $prompt }}</span>
+                                <span class="text-[10px] text-white/25">{{ $tag }}</span>
+                            </button>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Dynamic messages -->
@@ -292,7 +326,7 @@
                         <span style="color:#7c3ca0;font-size:16px;">⚡</span>
                         <span class="text-sm font-medium" style="color:#5a2275;">You've used all your design credits</span>
                     </div>
-                    <a href="/pricing"
+                    <a href="#" onclick="openCreditPacksModal(); return false;"
                        class="shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold text-white transition-colors"
                        style="background:#7c3ca0;"
                        onmouseover="this.style.background='#5a2275'"
@@ -759,7 +793,7 @@
             </div>
 
             <!-- ─ Canvas ─ -->
-            <div class="flex-1 flex items-center justify-center overflow-hidden" style="background:#0a0a0a">
+            <div class="flex-1 flex flex-col items-center justify-center overflow-hidden" style="background:#0a0a0a">
                 <div id="canvas-wrapper" style="position:relative;display:inline-block;max-width:100%;line-height:0;">
                     <canvas id="garment-canvas" width="500" height="550"
                             class="max-w-full h-auto rounded-xl block"
@@ -767,6 +801,9 @@
                     <canvas id="design-canvas" style="position:absolute;left:0;top:0;pointer-events:none;"></canvas>
                     <canvas id="handle-canvas" style="position:absolute;left:0;top:0;cursor:grab;"></canvas>
                 </div>
+                <p class="text-[10px] text-white/20 mt-2 select-none pointer-events-none">
+                    <i class="fas fa-arrows-alt mr-1"></i>Drag to move &nbsp;·&nbsp; <i class="fas fa-search-plus mr-1"></i>Scroll to zoom
+                </p>
             </div>
 
             <!-- ─ Controls + Actions ─ -->
@@ -909,8 +946,10 @@
             const banner   = document.getElementById('no-credits-banner');
             const textarea = document.getElementById('prompt');
             const sendBtn  = document.getElementById('submit-btn');
+            const headerCount = document.getElementById('header-credits-count');
             if (!countEl) return;
             countEl.textContent = n;
+            if (headerCount) headerCount.textContent = n;
             if (iconEl) iconEl.textContent = '⚡';
             if (banner) banner.classList.toggle('hidden', n > 0);
             if (textarea) textarea.disabled = n <= 0;
@@ -2468,6 +2507,48 @@
         hc.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
         document.addEventListener('touchmove', e => { if (mode) { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); } }, {passive:false});
         document.addEventListener('touchend', () => onEnd());
+
+        // Scroll-wheel zoom
+        hc.addEventListener('wheel', e => {
+            e.preventDefault();
+            const layer = getSelectedLayer();
+            if (!layer) return;
+            const delta = e.deltaY < 0 ? 0.06 : -0.06;
+            layer.scale = Math.max(0.2, Math.min(2, (layer.scale || 1) + delta));
+            const scaleSlider = document.getElementById('design-scale');
+            const scaleVal    = document.getElementById('scale-val');
+            if (scaleSlider) scaleSlider.value = layer.scale;
+            if (scaleVal)    scaleVal.textContent = layer.scale.toFixed(2);
+            requestAnimationFrame(() => renderDesign());
+        }, {passive: false});
+
+        // Pinch-to-zoom (two-finger touch)
+        let _pinchDist0 = null, _pinchScale0 = null;
+        hc.addEventListener('touchstart', e => {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                _pinchDist0  = Math.sqrt(dx*dx + dy*dy);
+                _pinchScale0 = getSelectedLayer()?.scale || 1;
+            }
+        }, {passive: true});
+        document.addEventListener('touchmove', e => {
+            if (e.touches.length === 2 && _pinchDist0) {
+                const dx   = e.touches[0].clientX - e.touches[1].clientX;
+                const dy   = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const layer = getSelectedLayer();
+                if (layer) {
+                    layer.scale = Math.max(0.2, Math.min(2, _pinchScale0 * (dist / _pinchDist0)));
+                    const sl = document.getElementById('design-scale');
+                    const sv = document.getElementById('scale-val');
+                    if (sl) sl.value = layer.scale;
+                    if (sv) sv.textContent = layer.scale.toFixed(2);
+                    requestAnimationFrame(() => renderDesign());
+                }
+            }
+        }, {passive: true});
+        document.addEventListener('touchend', () => { _pinchDist0 = null; _pinchScale0 = null; });
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -2571,7 +2652,7 @@
                 headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json' },
                 body: JSON.stringify(payload),
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status}). Check server logs.`); });
             if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
             showPrintifyFeedback(`✓ Product created! <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open in Printify →</a>`, 'success');
             btn.textContent = 'Create Another';
@@ -2590,9 +2671,14 @@
             showPrintifyFeedback('Please fill in all fields and load a design.'); return;
         }
         const garments = [
-            {type:'tshirt',label:'T-Shirt'},{type:'hoodie',label:'Hoodie'},
-            {type:'tanktop',label:'Tank Top'},{type:'longsleeve',label:'Long Sleeve'},
+            {type:'tshirt',    label:'T-Shirt'},
+            {type:'hoodie',    label:'Hoodie'},
+            {type:'zip_hoodie',label:'Zip Hoodie'},
+            {type:'tanktop',   label:'Tank Top'},
+            {type:'longsleeve',label:'Long Sleeve'},
             {type:'sweatshirt',label:'Sweatshirt'},
+            {type:'vneck',     label:'V-Neck Tee'},
+            {type:'womens_tee',label:"Women's Tee"},
         ];
         btn.disabled = true; send.disabled = true; resetPrintifyFeedback();
         const frontLayers  = _layers.front;
@@ -2644,7 +2730,7 @@
                     headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json'},
                     body: JSON.stringify(payload),
                 });
-                const data = await res.json();
+                const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
                 if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
                 resultLines.push(`<div class="text-green-700 text-xs">✓ ${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></div>`);
             } catch (err) {
@@ -2746,9 +2832,14 @@
         if (!_bulkUploadImageSrc) { alert('No image selected.'); return; }
 
         const garments = [
-            {type:'tshirt',label:'T-Shirt'},{type:'hoodie',label:'Hoodie'},
-            {type:'tanktop',label:'Tank Top'},{type:'longsleeve',label:'Long Sleeve'},
+            {type:'tshirt',    label:'T-Shirt'},
+            {type:'hoodie',    label:'Hoodie'},
+            {type:'zip_hoodie',label:'Zip Hoodie'},
+            {type:'tanktop',   label:'Tank Top'},
+            {type:'longsleeve',label:'Long Sleeve'},
             {type:'sweatshirt',label:'Sweatshirt'},
+            {type:'vneck',     label:'V-Neck Tee'},
+            {type:'womens_tee',label:"Women's Tee"},
         ];
 
         // Switch to progress view
@@ -2793,11 +2884,12 @@
                         design_scale: 1,
                     }),
                 });
-                const data = await res.json();
+                const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
                 if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
                 successCount++;
             } catch (err) {
                 errorCount++;
+                console.warn('Bulk upload error for', type, err.message);
             }
         }
         updateProgress(garments.length, '');
@@ -3291,5 +3383,64 @@
 </script>
 
 @include('layouts.printify-popup')
+
+{{-- Credit Packs Modal --}}
+<div id="credit-packs-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+    <div class="w-full max-w-sm rounded-2xl p-6" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-semibold text-white">Get more credits</h2>
+            <button onclick="closeCreditPacksModal()" class="text-white/30 hover:text-white/70 transition-colors text-lg leading-none">&times;</button>
+        </div>
+        <div class="space-y-3">
+            @php
+            $packs = [
+                ['key' => 'small',  'credits' => 10,  'price' => '$1',  'save' => null,      'label' => 'Starter Pack'],
+                ['key' => 'medium', 'credits' => 60,  'price' => '$5',  'save' => '20%',     'label' => 'Popular Pack'],
+                ['key' => 'large',  'credits' => 140, 'price' => '$10', 'save' => '40%',     'label' => 'Best Value'],
+            ];
+            @endphp
+            @foreach($packs as $pack)
+            <form method="POST" action="{{ route('credits.checkout') }}">
+                @csrf
+                <input type="hidden" name="pack" value="{{ $pack['key'] }}">
+                <button type="submit" class="w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-colors text-left"
+                        style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)"
+                        onmouseover="this.style.background='rgba(124,60,160,0.15)';this.style.borderColor='rgba(124,60,160,0.4)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.08)'">
+                    <div>
+                        <span class="block text-sm font-medium text-white">{{ $pack['credits'] }} credits</span>
+                        <span class="block text-xs text-white/40">{{ $pack['label'] }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        @if($pack['save'])
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold text-white" style="background:#7c3ca0">Save {{ $pack['save'] }}</span>
+                        @endif
+                        <span class="text-sm font-semibold" style="color:#c084fc">{{ $pack['price'] }}</span>
+                    </div>
+                </button>
+            </form>
+            @endforeach
+        </div>
+        <p class="text-[10px] text-white/20 text-center mt-4">Credits never expire. Secure checkout via Stripe.</p>
+    </div>
+</div>
+
+@if(session('credits_purchased'))
+<div id="credits-success-toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl"
+     style="background:#1a1a1a;border:1px solid rgba(124,60,160,0.4)">
+    <span style="color:#c084fc;font-size:18px">⚡</span>
+    <span class="text-sm text-white font-medium">{{ session('credits_purchased') }} credits added to your account!</span>
+    <button onclick="this.parentElement.remove()" class="text-white/30 hover:text-white ml-2">&times;</button>
+</div>
+<script>setTimeout(()=>{ const t=document.getElementById('credits-success-toast'); if(t) t.remove(); }, 5000);</script>
+@endif
+
+<script>
+    function openCreditPacksModal()  { document.getElementById('credit-packs-modal').classList.remove('hidden'); }
+    function closeCreditPacksModal() { document.getElementById('credit-packs-modal').classList.add('hidden'); }
+    document.getElementById('credit-packs-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeCreditPacksModal();
+    });
+</script>
 </body>
 </html>

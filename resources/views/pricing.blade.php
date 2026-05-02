@@ -155,6 +155,7 @@
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Printify integration</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Design history</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Turbo upload (front only)</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Upload in <span class="font-semibold text-white/80">1 garment color</span></li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'starter')
@@ -191,6 +192,7 @@
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>Design history</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>10 AI chats / month</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>Turbo front &amp; back</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span><span class="font-semibold" style="color:#c084fc">Post in all colors</span> <span class="text-[9px] ml-1 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest text-white" style="background:#7c3ca0">Pro</span></li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'pro')
@@ -271,6 +273,8 @@
                         ['AI chats / month',     false,                false,                '10',                 '30'],
                         ['Turbo upload (front)',      true,  true,  true,  true],
                         ['Turbo back placement',      false, false, true,  true],
+                        ['Garment colors on upload',  '1',   '1',   'All', 'All'],
+                        ['Post in all colors',        false, false, true,  true],
                     ];
                     @endphp
                     @foreach($rows as $i => $row)

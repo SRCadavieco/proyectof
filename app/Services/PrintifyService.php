@@ -10,11 +10,14 @@ class PrintifyService
 
     // Blueprint ID map (Printify catalog IDs)
     public const BLUEPRINT_MAP = [
-        'tshirt'     => 6,    // Unisex Heavy Cotton Tee (Gildan 5000)
-        'hoodie'     => 77,   // Unisex Heavy Blend™ Hooded Sweatshirt (Gildan 18500)
-        'tanktop'    => 39,   // Unisex Jersey Tank
-        'longsleeve' => 41,   // Unisex Jersey Long Sleeve Tee
-        'sweatshirt' => 49,   // Unisex Heavy Blend™ Crewneck Sweatshirt
+        'tshirt'      => 6,    // Unisex Heavy Cotton Tee (Gildan 5000)
+        'hoodie'      => 77,   // Unisex Heavy Blend™ Hooded Sweatshirt (Gildan 18500)
+        'zip_hoodie'  => 429,  // Unisex Heavy Blend™ Zip Hoodie (Gildan 18600)
+        'tanktop'     => 39,   // Unisex Jersey Tank
+        'longsleeve'  => 41,   // Unisex Jersey Long Sleeve Tee
+        'sweatshirt'  => 49,   // Unisex Heavy Blend™ Crewneck Sweatshirt
+        'vneck'       => 71,   // Unisex Jersey V-Neck Tee (Bella+Canvas 3005)
+        'womens_tee'  => 9,    // Women's Jersey Short Sleeve Tee (Bella+Canvas 6004)
     ];
 
     // ─── HTTP client ─────────────────────────────────────────────────────────

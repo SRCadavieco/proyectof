@@ -1,8 +1,35 @@
 <x-app-layout>
     <x-slot name="title">Edit Profile</x-slot>
+    <x-slot name="bodyClass">bg-[#0d0d0d]</x-slot>
+
+    <style>
+        /* Dark form inputs for profile edit */
+        .dark-profile input[type="text"],
+        .dark-profile input[type="email"],
+        .dark-profile input[type="password"] {
+            background: rgba(255,255,255,0.07) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            color: #fff !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
+        }
+        .dark-profile input:focus {
+            border-color: rgba(124,60,160,0.6) !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        .dark-profile input::placeholder { color: rgba(255,255,255,0.3) !important; }
+        .dark-profile label { color: rgba(255,255,255,0.5) !important; }
+        .dark-profile .dark-input {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+            border-radius: 8px;
+        }
+    </style>
 
     {{-- ── Page header ── --}}
-    <div class="bg-ink">
+    <div style="background:#111;border-bottom:1px solid rgba(255,255,255,0.07)">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex items-center justify-between">
             <div>
                 <a href="{{ route('profile.show') }}"
@@ -23,21 +50,21 @@
         </div>
     </div>
 
-    <div class="min-h-screen bg-cream-50">
+    <div class="min-h-screen dark-profile" style="background:#0d0d0d">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
             {{-- ── Block 1: Account Info ── --}}
-            <div class="bg-white border border-cream-200 p-6 sm:p-8">
+            <div class="rounded-xl p-6 sm:p-8" style="background:#111;border:1px solid rgba(255,255,255,0.08)">
                 <div class="flex items-center gap-2 mb-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                     </svg>
-                    <h2 class="text-base font-serif text-ink">Account Info</h2>
+                    <h2 class="text-base font-serif text-white">Account Info</h2>
                 </div>
-                <p class="text-xs text-ink-muted mb-6">Update your username and profile photo.</p>
+                <p class="text-xs text-white/50 mb-6">Update your username and profile photo.</p>
 
                 @if(session('status') === 'profile-updated')
-                    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm">
+                    <div class="mb-4 px-4 py-3 rounded-lg text-green-400" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25) text-sm">
                         Profile updated successfully.
                     </div>
                 @endif
@@ -88,7 +115,7 @@
 
                     <div class="flex justify-end pt-2">
                         <button type="submit"
-                                class="px-6 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase hover:bg-purple-900 transition-colors">
+                                class="px-6 py-2.5 text-white text-xs font-medium tracking-widest uppercase rounded-lg transition-colors" style="background:#7c3ca0" onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
                             Save Changes
                         </button>
                     </div>
@@ -96,17 +123,17 @@
             </div>
 
             {{-- ── Block 2: Email ── --}}
-            <div class="bg-white border border-cream-200 p-6 sm:p-8">
+            <div class="rounded-xl p-6 sm:p-8" style="background:#111;border:1px solid rgba(255,255,255,0.08)">
                 <div class="flex items-center gap-2 mb-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                     </svg>
-                    <h2 class="text-base font-serif text-ink">Email</h2>
+                    <h2 class="text-base font-serif text-white">Email</h2>
                 </div>
-                <p class="text-xs text-ink-muted mb-6">Change your login email address. You'll need to confirm your current password.</p>
+                <p class="text-xs text-white/50 mb-6">Change your login email address. You'll need to confirm your current password.</p>
 
                 @if(session('status') === 'email-updated')
-                    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm">
+                    <div class="mb-4 px-4 py-3 rounded-lg text-green-400" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25) text-sm">
                         Email updated successfully.
                     </div>
                 @endif
@@ -116,7 +143,7 @@
 
                     <div>
                         <x-input-label value="Current Email" />
-                        <div class="mt-1 w-full border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-ink-muted">
+                        <div class="mt-1 w-full border px-3 py-2 text-sm rounded-lg dark-input">
                             {{ $user->email }}
                         </div>
                     </div>
@@ -144,7 +171,7 @@
 
                     <div class="flex justify-end pt-2">
                         <button type="submit"
-                                class="px-6 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase hover:bg-purple-900 transition-colors">
+                                class="px-6 py-2.5 text-white text-xs font-medium tracking-widest uppercase rounded-lg transition-colors" style="background:#7c3ca0" onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
                             Update Email
                         </button>
                     </div>
@@ -152,17 +179,17 @@
             </div>
 
             {{-- ── Block 3: Password ── --}}
-            <div class="bg-white border border-cream-200 p-6 sm:p-8">
+            <div class="rounded-xl p-6 sm:p-8" style="background:#111;border:1px solid rgba(255,255,255,0.08)">
                 <div class="flex items-center gap-2 mb-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                     </svg>
-                    <h2 class="text-base font-serif text-ink">Password</h2>
+                    <h2 class="text-base font-serif text-white">Password</h2>
                 </div>
-                <p class="text-xs text-ink-muted mb-6">Use a long, random password to keep your account secure.</p>
+                <p class="text-xs text-white/50 mb-6">Use a long, random password to keep your account secure.</p>
 
                 @if(session('status') === 'password-updated')
-                    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm">
+                    <div class="mb-4 px-4 py-3 rounded-lg text-green-400" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25) text-sm">
                         Password updated successfully.
                     </div>
                 @endif
@@ -194,7 +221,7 @@
 
                     <div class="flex justify-end pt-2">
                         <button type="submit"
-                                class="px-6 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase hover:bg-purple-900 transition-colors">
+                                class="px-6 py-2.5 text-white text-xs font-medium tracking-widest uppercase rounded-lg transition-colors" style="background:#7c3ca0" onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
                             Update Password
                         </button>
                     </div>
@@ -202,18 +229,18 @@
             </div>
 
             {{-- ── Block 4: Connections ── --}}
-            <div class="bg-white border border-cream-200 p-6 sm:p-8 space-y-6">
+            <div class="rounded-xl p-6 sm:p-8 space-y-6" style="background:#111;border:1px solid rgba(255,255,255,0.08)">
                 <div class="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                     </svg>
-                    <h2 class="text-base font-serif text-ink">Connections</h2>
+                    <h2 class="text-base font-serif text-white">Connections</h2>
                 </div>
 
                 {{-- Printify --}}
                 <div>
                     <div class="flex items-center gap-3 mb-2">
-                        <span class="text-sm font-medium text-ink">Printify</span>
+                        <span class="text-sm font-medium text-white/70">Printify</span>
                         @php $conn = Auth::user()->printifyConnection; @endphp
                         @if($conn)
                             <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-0.5">
@@ -224,16 +251,16 @@
                             <span class="inline-flex items-center text-xs text-ink-muted bg-cream-50 border border-cream-200 px-2 py-0.5">Not connected</span>
                         @endif
                     </div>
-                    <p class="text-xs text-ink-muted mb-3">Connect your Printify account to send designs directly to your print-on-demand store.</p>
+                    <p class="text-xs text-white/50 mb-3">Connect your Printify account to send designs directly to your print-on-demand store.</p>
 
                     @if(session('printify_error'))
-                        <div class="mb-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm">{{ session('printify_error') }}</div>
+                        <div class="mb-3 px-4 py-3 rounded-lg text-red-400" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25) text-sm">{{ session('printify_error') }}</div>
                     @endif
                     @if(session('printify_success'))
-                        <div class="mb-3 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm">{{ session('printify_success') }}</div>
+                        <div class="mb-3 px-4 py-3 rounded-lg text-green-400" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25) text-sm">{{ session('printify_success') }}</div>
                     @endif
                     @if($errors->has('api_token'))
-                        <div class="mb-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm">{{ $errors->first('api_token') }}</div>
+                        <div class="mb-3 px-4 py-3 rounded-lg text-red-400" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25) text-sm">{{ $errors->first('api_token') }}</div>
                     @endif
 
                     @if($conn)
@@ -256,7 +283,7 @@
                                        autocomplete="off">
                             </div>
                             <button type="submit"
-                                    class="px-6 py-2.5 bg-ink text-white text-xs font-medium tracking-widest uppercase hover:bg-purple-900 transition-colors">
+                                    class="px-6 py-2.5 text-white text-xs font-medium tracking-widest uppercase rounded-lg transition-colors" style="background:#7c3ca0" onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
                                 Connect Printify
                             </button>
                         </form>
@@ -267,12 +294,12 @@
                 </div>
 
                 {{-- Divider --}}
-                <div class="border-t border-cream-200"></div>
+                <div style="border-top:1px solid rgba(255,255,255,0.07)"></div>
 
                 {{-- Google --}}
                 <div>
                     <div class="flex items-center gap-3 mb-2">
-                        <span class="text-sm font-medium text-ink">Google</span>
+                        <span class="text-sm font-medium text-white/70">Google</span>
                         @if($user->google_id)
                             <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-0.5">
                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>
@@ -284,7 +311,7 @@
                             </span>
                         @endif
                     </div>
-                    <p class="text-xs text-ink-muted">
+                    <p class="text-xs text-white/50">
                         @if($user->google_id)
                             Your account is linked to Google. You can sign in with Google.
                         @else
@@ -295,12 +322,12 @@
                 </div>
 
                 {{-- Divider --}}
-                <div class="border-t border-cream-200"></div>
+                <div style="border-top:1px solid rgba(255,255,255,0.07)"></div>
 
                 {{-- Danger Zone --}}
                 <div>
                     <h3 class="text-sm font-medium text-red-600 mb-1">Danger Zone</h3>
-                    <p class="text-xs text-ink-muted mb-4">Once deleted, all your data will be permanently removed. This action cannot be undone.</p>
+                    <p class="text-xs text-white/50 mb-4">Once deleted, all your data will be permanently removed. This action cannot be undone.</p>
                     <button type="button"
                             onclick="document.getElementById('delete-account-modal').classList.remove('hidden')"
                             class="px-6 py-2.5 border border-red-300 text-red-600 text-xs font-medium tracking-widest uppercase hover:bg-red-50 transition-colors">
@@ -313,10 +340,10 @@
     </div>
 
     {{-- Delete Account Modal --}}
-    <div id="delete-account-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-        <div class="bg-white border border-cream-200 p-8 w-full max-w-md">
-            <h2 class="text-lg font-serif text-ink mb-2">Delete your account?</h2>
-            <p class="text-sm text-ink-muted mb-6">This action is irreversible. All your data will be permanently deleted. Enter your password to confirm.</p>
+    <div id="delete-account-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+        <div class="rounded-xl p-8 w-full max-w-md" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
+            <h2 class="text-lg font-serif text-white mb-2">Delete your account?</h2>
+            <p class="text-sm text-white/50 mb-6">This action is irreversible. All your data will be permanently deleted. Enter your password to confirm.</p>
 
             <form method="POST" action="{{ route('profile.destroy') }}" class="space-y-4">
                 @csrf
@@ -324,19 +351,20 @@
 
                 <div>
                     <x-input-label for="delete_password" value="Password" class="sr-only" />
-                    <x-text-input id="delete_password" name="password" type="password" class="block w-full"
-                        placeholder="Your password" autocomplete="current-password" />
+                    <input id="delete_password" name="password" type="password" class="dark-input block w-full rounded-lg px-3 py-2.5 text-sm"
+                        placeholder="Your password" autocomplete="current-password">
                     <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
                 </div>
 
                 <div class="flex justify-end gap-3">
                     <button type="button"
                             onclick="document.getElementById('delete-account-modal').classList.add('hidden')"
-                            class="px-5 py-2.5 border border-cream-300 text-ink text-xs font-medium tracking-widest uppercase hover:bg-cream-50 transition-colors">
+                            class="px-5 py-2.5 text-white/50 hover:text-white text-xs font-medium tracking-widest uppercase transition-colors rounded-lg"
+                            style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                         Cancel
                     </button>
                     <button type="submit"
-                            class="px-5 py-2.5 bg-red-600 text-white text-xs font-medium tracking-widest uppercase hover:bg-red-700 transition-colors">
+                            class="px-5 py-2.5 bg-red-600 text-white text-xs font-medium tracking-widest uppercase hover:bg-red-700 transition-colors rounded-lg">
                         Delete Account
                     </button>
                 </div>

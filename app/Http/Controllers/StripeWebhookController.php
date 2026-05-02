@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierWebhookController;
 
 class StripeWebhookController extends CashierWebhookController
@@ -63,6 +64,38 @@ class StripeWebhookController extends CashierWebhookController
             'tokens'          => SubscriptionController::tokensForPlan('free'),
             'tokens_reset_at' => now()->startOfMonth(),
         ]);
+    }
+
+    /**
+     * Handle one-time credit pack payment as webhook backup.
+     */
+    public function handleCheckoutSessionCompleted(array $payload): void
+    {
+        $session = $payload['data']['object'];
+
+        if (($session['mode'] ?? '') !== 'payment') {
+            return;
+        }
+
+        $sessionId = $session['id'] ?? null;
+        $userId    = $session['metadata']['user_id'] ?? null;
+        $credits   = (int) ($session['metadata']['credits'] ?? 0);
+
+        if (! $sessionId || ! $userId || $credits <= 0) {
+            return;
+        }
+
+        if ($session['payment_status'] !== 'paid') {
+            return;
+        }
+
+        // Idempotency: skip if already credited via success URL
+        if (! Cache::add('cp_sess_' . $sessionId, true, now()->addDays(7))) {
+            return;
+        }
+
+        $user = User::find($userId);
+        $user?->increment('tokens', $credits);
     }
 
     /**

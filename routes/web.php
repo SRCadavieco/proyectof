@@ -9,6 +9,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\CreditPackController;
 
 
 // FAQ page
@@ -40,6 +41,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/design', [DesignController::class, 'form']);
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
+
+    // Credit packs (one-time purchases)
+    Route::post('/credits/checkout', [CreditPackController::class, 'checkout'])->name('credits.checkout');
+    Route::get('/credits/success',   [CreditPackController::class, 'success'])->name('credits.success');
 
     // Saved designs
     Route::get('/designs/saved',                  [DesignController::class, 'savedDesigns'])->name('designs.saved.index');

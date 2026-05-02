@@ -14,7 +14,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-cream-50">
+        <div class="min-h-screen {{ $bodyClass ?? 'bg-cream-50' }}">
             @include('layouts.navigation')
 
             <!-- Page Content -->
