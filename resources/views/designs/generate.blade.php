@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en" style="background:#f5f0e8">
+<html lang="en" style="background:#0d0d0d;overflow:hidden">
 <head>
     <link rel="icon" href="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" type="image/png">
     <meta charset="UTF-8">
@@ -14,8 +14,8 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d4cdc0; border-radius: 99px; }
-        * { scrollbar-width: thin; scrollbar-color: #d4cdc0 transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
 
         /* ── Animations ── */
         @keyframes msgIn {
@@ -70,21 +70,21 @@
             text-decoration: none;
             flex-shrink: 0;
         }
-        .icon-btn:hover           { background: #f5f1ea; color: #1a1a1a; }
-        .icon-btn.danger:hover    { background: #fef2f2; color: #ef4444; }
-        .icon-btn.accent:hover    { background: #f5edff; color: #7c3ca0; }
+        .icon-btn:hover           { background: rgba(255,255,255,0.08); color: #fff; }
+        .icon-btn.danger:hover    { background: rgba(239,68,68,0.12); color: #f87171; }
+        .icon-btn.accent:hover    { background: rgba(124,60,160,0.18); color: #c084fc; }
 
         /* ── Chat thumbnail ── */
         .chat-thumb {
             width: 36px; height: 36px;
             border-radius: 8px;
-            background: #f5f1ea;
+            background: rgba(255,255,255,0.07);
             overflow: hidden;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #d4cdc0;
+            color: rgba(255,255,255,0.2);
             font-size: 13px;
         }
         .chat-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -116,7 +116,7 @@
         /* ── Chat area background ── */
         #chat-container {
             background-image:
-                linear-gradient(rgba(245,241,234,0.80), rgba(245,241,234,0.80)),
+                linear-gradient(rgba(13,13,13,0.82), rgba(13,13,13,0.82)),
                 url('/images/fitting-room.jpg');
             background-size: cover;
             background-position: center;
@@ -137,7 +137,7 @@
         @media (min-width: 768px) { #sidebar-toggle-btn { display: none; } }
     </style>
 </head>
-<body class="bg-cream-100 text-ink h-[100dvh] overflow-hidden font-sans antialiased">
+<body class="bg-[#0d0d0d] text-white h-[100dvh] overflow-hidden font-sans antialiased">
 
 <div class="flex h-[100dvh]">
 
@@ -147,15 +147,15 @@
          class="fixed inset-0 bg-black/40 z-30 backdrop-blur-sm"></div>
 
     <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
-    <aside id="sidebar" class="w-64 bg-white border-r border-cream-300 flex flex-col h-[100dvh]">
+    <aside id="sidebar" class="w-64 flex flex-col h-[100dvh]" style="background:#111;border-right:1px solid rgba(255,255,255,0.07)">
 
         <!-- Logo + New Design button -->
-        <div class="px-4 py-4 border-b border-cream-300 flex items-center justify-between">
+        <div class="px-4 py-4 flex items-center justify-between" style="border-bottom:1px solid rgba(255,255,255,0.07)">
             <a href="/" class="flex items-center gap-2.5 min-w-0">
                 <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-8 w-8 object-contain shrink-0">
                 <div class="min-w-0">
-                    <span class="font-serif text-sm text-ink block leading-tight">fabricAI</span>
-                    <span class="text-[9px] tracking-[0.22em] uppercase" style="color:#7c3ca0">atelier</span>
+                    <span class="font-serif text-sm text-white block leading-tight">fabricAI</span>
+                    <span class="text-[9px] tracking-[0.22em] uppercase" style="color:#9d5bc7">atelier</span>
                 </div>
             </a>
         </div>
@@ -163,7 +163,7 @@
         <!-- Design sessions list -->
         <div class="flex-1 overflow-y-auto py-3 scrollbar-hide">
             <div class="flex items-center justify-between px-4 mb-2">
-                <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted">My Designs</p>
+                <p class="text-[9px] uppercase tracking-[0.2em] text-white/30">My Designs</p>
                 <button onclick="newChat()" title="New design session"
                         class="w-5 h-5 flex items-center justify-center bg-ink text-white
                                hover:bg-[#7c3ca0] transition-colors rounded-full shrink-0">
@@ -174,54 +174,57 @@
         </div>
 
         <!-- Footer -->
-        <div class="border-t border-cream-300 p-4 space-y-3">
+        <div class="px-4 pt-4 pb-6 space-y-3" style="border-top:1px solid rgba(255,255,255,0.07)">
 
             <!-- Design credits -->
-            <div class="flex items-center justify-between px-3 py-2.5 bg-cream-100 border border-cream-300 rounded-xl">
-                <span class="text-xs text-ink-muted tracking-wide">Design Credits</span>
+            <div class="flex items-center justify-between px-3 py-2.5 rounded-xl" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)">
+                <span class="text-xs text-white/40 tracking-wide">Design Credits</span>
                 <div class="flex items-center gap-1.5">
                     <span id="token-icon" class="text-sm" style="color:#7c3ca0">⚡</span>
-                    <span id="token-count" class="text-sm font-semibold text-ink">{{ Auth::user()->tokens ?? 0 }}</span>
+                    <span id="token-count" class="text-sm font-semibold text-white">{{ Auth::user()->tokens ?? 0 }}</span>
                 </div>
             </div>
 
             <!-- User menu -->
             <div class="relative" id="user-menu-wrapper">
                 <button onclick="toggleUserMenu()"
-                        class="flex items-center gap-2 w-full px-3 py-2 rounded-xl hover:bg-cream-100 transition-colors text-left">
+                        class="flex items-center gap-2 w-full px-3 py-2 rounded-xl transition-colors text-left" style="--tw-hover:rgba(255,255,255,0.06)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                     <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
                          style="background:#7c3ca0">
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </div>
-                    <span class="text-xs text-ink truncate flex-1">{{ Auth::user()->name }}</span>
-                    <i class="fas fa-chevron-up text-ink-muted shrink-0 transition-transform duration-200" id="user-menu-chevron" style="font-size:9px"></i>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-xs text-white/80 truncate leading-tight">{{ Auth::user()->name }}</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest mt-0.5" style="color:#c084fc">{{ ucfirst(Auth::user()->plan ?? 'free') }}</span>
+                    </div>
+                    <i class="fas fa-chevron-up text-white/30 shrink-0 transition-transform duration-200" id="user-menu-chevron" style="font-size:9px"></i>
                 </button>
 
                 <!-- Dropdown (opens upward) -->
                 <div id="user-menu-dropdown"
-                     class="hidden absolute bottom-full left-0 right-0 mb-1 bg-white border border-cream-300 rounded-xl shadow-lg overflow-hidden z-50">
+                     class="hidden absolute bottom-full left-0 right-0 mb-1 rounded-xl shadow-lg overflow-hidden z-50" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
                     <a href="/profile"
-                       class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink hover:bg-cream-100 transition-colors">
-                        <i class="fas fa-user text-ink-muted w-4 text-center" style="font-size:11px"></i>
+                       class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/70 hover:text-white transition-colors" style="--hover:1" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-user text-white/30 w-4 text-center" style="font-size:11px"></i>
                         Profile
                     </a>
                     @if(Auth::user()->is_admin)
                     <a href="/admin"
-                       class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink hover:bg-cream-100 transition-colors">
-                        <i class="fas fa-shield-alt text-ink-muted w-4 text-center" style="font-size:11px"></i>
+                       class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/70 hover:text-white transition-colors" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-shield-alt text-white/30 w-4 text-center" style="font-size:11px"></i>
                         Admin Panel
                     </a>
                     @endif
                     <button onclick="openMyDesignsModal(); closeUserMenu()"
-                            class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink hover:bg-cream-100 transition-colors w-full text-left">
-                        <i class="fas fa-bookmark text-ink-muted w-4 text-center" style="font-size:11px"></i>
+                            class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/70 hover:text-white transition-colors w-full text-left" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-bookmark text-white/30 w-4 text-center" style="font-size:11px"></i>
                         My Saved Designs
                     </button>
-                    <div class="border-t border-cream-200 mx-2"></div>
+                    <div class="mx-2" style="border-top:1px solid rgba(255,255,255,0.07)"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"
-                                class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left">
+                                class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 transition-colors w-full text-left" onmouseover="this.style.background='rgba(239,68,68,0.08)'" onmouseout="this.style.background='transparent'">
                             <i class="fas fa-sign-out-alt w-4 text-center" style="font-size:11px"></i>
                             Log out
                         </button>
@@ -236,14 +239,13 @@
     <main class="flex-1 flex flex-col overflow-hidden min-w-0">
 
         <!-- Header -->
-        <header class="bg-white/80 backdrop-blur-sm border-b border-cream-300
-                       px-4 py-3 flex items-center gap-3 z-10 relative shrink-0">
+        <header class="backdrop-blur-sm px-4 py-3 flex items-center gap-3 z-10 relative shrink-0" style="background:rgba(17,17,17,0.9);border-bottom:1px solid rgba(255,255,255,0.07)">
             <button id="sidebar-toggle-btn" onclick="toggleSidebar()"
                     class="md:hidden icon-btn shrink-0" aria-label="Open menu">
                 <i class="fas fa-bars text-base"></i>
             </button>
             <h1 id="chat-title"
-                class="font-medium text-sm text-ink truncate flex-1 text-left">
+                class="font-medium text-sm text-white/80 truncate flex-1 text-left">
                 New Design
             </h1>
         </header>
@@ -254,27 +256,26 @@
 
                 <!-- Welcome screen (hidden once messages exist) -->
                 <div id="welcome-screen" class="flex flex-col items-center py-10 text-center">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-ink-muted mb-3">Your personal atelier</p>
-                    <h2 class="font-serif text-2xl md:text-3xl text-ink mb-8 leading-snug">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-white/30 mb-3">Your personal atelier</p>
+                    <h2 class="font-serif text-2xl md:text-3xl text-white mb-8 leading-snug">
                         What shall we create today?&nbsp;<span style="color:#7c3ca0">✦</span>
                     </h2>
-                    <p class="text-sm text-ink-muted max-w-xs leading-relaxed">
+                    <p class="text-sm text-white/40 max-w-xs leading-relaxed">
                         Describe your design — a style, a mood, a concept — and I'll bring it to life.
                     </p>
-                    <p class="text-xs text-cream-400 mt-2 italic">
+                    <p class="text-xs text-white/20 mt-2 italic">
                         Try: "Minimalist botanical line art in earthy tones"
                     </p>
                 </div>
 
                 <!-- Dynamic messages -->
-                <div id="messages" class="space-y-6"></div>
+                <div id="messages" class="space-y-6 pb-4"></div>
 
             </div>
         </div>
 
         <!-- Input area -->
-        <div class="bg-white/90 backdrop-blur-sm border-t border-cream-300
-                    px-4 py-3 relative z-10 shrink-0">
+        <div class="backdrop-blur-sm px-4 pt-3 pb-5 relative z-10 shrink-0" style="background:rgba(17,17,17,0.95);border-top:1px solid rgba(255,255,255,0.07)">
             <div id="error" class="hidden text-red-500 text-xs mb-2 px-1"></div>
             <!-- No credits banner -->
             <div id="no-credits-banner" class="hidden mb-3">
@@ -329,10 +330,8 @@
                         rows="1"
                         maxlength="270"
                         placeholder="Describe your idea…"
-                        class="flex-1 bg-cream-100 border border-cream-300 rounded-xl
-                               px-4 py-2.5 text-sm resize-none text-ink
-                               focus:outline-none focus:border-[#7c3ca0] transition-colors
-                               placeholder-ink-muted/60 max-h-32 scrollbar-hide leading-relaxed"></textarea>
+                        class="flex-1 rounded-xl px-4 py-2.5 text-sm resize-none text-white focus:outline-none transition-colors max-h-32 scrollbar-hide leading-relaxed placeholder-white/25"
+                        style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
                     <!-- Send button -->
                     <button type="submit" id="submit-btn"
                             class="w-10 h-10 flex items-center justify-center rounded-full
@@ -344,7 +343,7 @@
                     </button>
                 </div>
                 <!-- Char counter -->
-                <div id="char-counter" class="flex justify-end text-[10px] pr-1 mt-1" style="color:#8a8a8a">0 / 270</div>
+                <div id="char-counter" class="flex justify-end text-[10px] pr-1 mt-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
             </form>
         </div>
 
@@ -359,11 +358,11 @@
 <!-- ═══════════ MY SAVED DESIGNS MODAL ═══════════ -->
 <div id="my-designs-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-3xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300 flex-shrink-0">
+    <div class="shadow-2xl w-full max-w-3xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
+        <div class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
             <div>
-                <h2 class="text-base font-semibold text-ink">My Saved Designs</h2>
-                <p class="text-xs text-ink-muted mt-0.5">Click a design to use it in a new session</p>
+                <h2 class="text-base font-semibold text-white">My Saved Designs</h2>
+                <p class="text-xs text-white/40 mt-0.5">Click a design to use it in a new session</p>
             </div>
             <button onclick="closeMyDesignsModal()" class="icon-btn">
                 <i class="fas fa-times text-lg"></i>
@@ -374,14 +373,14 @@
                 <!-- populated by JS -->
             </div>
             <div id="my-designs-empty" class="hidden flex-col items-center justify-center py-16 text-center">
-                <div class="w-14 h-14 rounded-full bg-cream-100 flex items-center justify-center mb-4">
-                    <i class="fas fa-bookmark text-ink-muted text-xl"></i>
+                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(255,255,255,0.07)">
+                    <i class="fas fa-bookmark text-white/20 text-xl"></i>
                 </div>
-                <p class="text-sm text-ink-muted">No saved designs yet.</p>
-                <p class="text-xs text-cream-400 mt-1">Bookmark a generated image to save it here.</p>
+                <p class="text-sm text-white/40">No saved designs yet.</p>
+                <p class="text-xs text-white/20 mt-1">Bookmark a generated image to save it here.</p>
             </div>
             <div id="my-designs-loading" class="flex items-center justify-center py-16">
-                <i class="fas fa-spinner fa-spin text-ink-muted text-xl"></i>
+                <i class="fas fa-spinner fa-spin text-white/30 text-xl"></i>
             </div>
         </div>
     </div>
@@ -428,18 +427,17 @@
 
 <div id="delete-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-        <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div class="rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style="background:rgba(239,68,68,0.1)">
             <i class="fas fa-trash text-red-400 text-lg"></i>
         </div>
-        <h3 class="font-semibold text-ink text-base mb-1">Delete this session?</h3>
-        <p class="text-sm text-ink-muted mb-6 leading-relaxed">
+        <h3 class="font-semibold text-white text-base mb-1">Delete this session?</h3>
+        <p class="text-sm text-white/50 mb-6 leading-relaxed">
             All messages and generated designs in this session will be permanently removed.
         </p>
         <div class="flex gap-3">
             <button id="delete-cancel-btn"
-                    class="flex-1 py-2.5 border border-cream-300 text-sm font-medium
-                           text-ink hover:bg-cream-100 transition-colors rounded-xl">
+                    class="flex-1 py-2.5 text-sm font-medium text-white/60 hover:text-white transition-colors rounded-xl" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                 Cancel
             </button>
             <button id="delete-confirm-btn"
@@ -454,12 +452,12 @@
 <!-- ═══════════ BULK UPLOAD MODAL ═══════════ -->
 <div id="bulk-upload-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col">
+    <div class="shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col" style="background:#111;border:1px solid rgba(255,255,255,0.09)">
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-cream-300">
+        <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.07)">
             <div class="flex items-center gap-2">
-                <i class="fas fa-cloud-upload-alt text-[#7c3ca0] text-sm"></i>
-                <h2 class="text-sm font-semibold text-ink">Upload to All Garments</h2>
+                <i class="fas fa-cloud-upload-alt text-[#c084fc] text-sm"></i>
+                <h2 class="text-sm font-semibold text-white">Upload to All Garments</h2>
             </div>
             <button onclick="closeBulkUploadModal()" id="bulk-modal-close-btn" class="icon-btn">
                 <i class="fas fa-times"></i>
@@ -469,45 +467,44 @@
         <div class="px-5 py-4 space-y-4 overflow-y-auto">
             <div id="bulk-form-section">
                 <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-ink-muted">Product name</label>
+                    <label class="text-xs text-white/40">Product name</label>
                     <input id="bulk-title" type="text" placeholder="FabricAI — My Design"
-                           class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                  focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                           class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
+                           style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
                 </div>
                 <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-ink-muted">Printify store</label>
+                    <label class="text-xs text-white/40">Printify store</label>
                     <select id="bulk-shop"
-                            class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                   focus:outline-none focus:border-[#7c3ca0]">
+                            class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
+                            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
                         <option value="">Loading stores…</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs text-ink-muted">Garment color</label>
+                    <label class="text-xs text-white/40">Garment color</label>
                     <div class="flex items-center gap-3">
                         <input type="color" id="bulk-color-hex" value="#ffffff"
                                oninput="document.getElementById('bulk-color-name').textContent=hexToColorName(this.value)"
-                               class="w-10 h-10 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
-                        <span id="bulk-color-name" class="text-xs text-ink font-medium">White</span>
+                               class="w-10 h-10 rounded-lg cursor-pointer bg-transparent" style="border:1px solid rgba(255,255,255,0.12)">
+                        <span id="bulk-color-name" class="text-xs text-white/70 font-medium">White</span>
                     </div>
                 </div>
             </div>
             <div id="bulk-progress-section" class="hidden space-y-3">
-                <div class="flex justify-between text-xs text-ink-muted mb-1">
+                <div class="flex justify-between text-xs text-white/40 mb-1">
                     <span id="bulk-progress-label">Uploading…</span>
                     <span id="bulk-progress-count">0/5</span>
                 </div>
-                <div class="w-full bg-cream-200 rounded-full h-2">
+                <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
                     <div id="bulk-progress-bar" class="bg-[#7c3ca0] h-2 rounded-full transition-all duration-300" style="width:0%"></div>
                 </div>
                 <div id="bulk-progress-results" class="space-y-1 pt-1 text-xs max-h-40 overflow-y-auto"></div>
             </div>
         </div>
         <!-- Footer -->
-        <div class="px-5 py-4 border-t border-cream-300 flex gap-2">
+        <div class="px-5 py-4 flex gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
             <button onclick="closeBulkUploadModal()" id="bulk-cancel-btn"
-                    class="flex-1 py-2.5 border border-cream-300 text-ink text-xs font-medium tracking-wide
-                           uppercase rounded-xl hover:bg-cream-100 transition-colors">
+                    class="flex-1 py-2.5 text-white/50 hover:text-white text-xs font-medium tracking-wide uppercase rounded-xl transition-colors" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                 Cancel
             </button>
             <button onclick="startBulkUpload()" id="bulk-start-btn"
@@ -522,12 +519,12 @@
 <!-- ═══════════ TURBO UPDATE MODAL ═══════════ -->
 <div id="turbo-update-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col">
+    <div class="shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col" style="background:#111;border:1px solid rgba(255,255,255,0.09)">
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-cream-300">
+        <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.07)">
             <div class="flex items-center gap-2">
-                <i class="fas fa-bolt text-[#7c3ca0] text-sm"></i>
-                <h2 class="text-sm font-semibold text-ink">Turbo Update</h2>
+                <i class="fas fa-bolt text-[#c084fc] text-sm"></i>
+                <h2 class="text-sm font-semibold text-white">Turbo Update</h2>
             </div>
             <button onclick="closeTurboUpdateModal()" id="turbo-modal-close-btn" class="icon-btn">
                 <i class="fas fa-times"></i>
@@ -537,64 +534,63 @@
         <div class="px-5 py-4 space-y-4 overflow-y-auto">
             <div id="turbo-form-section">
                 <div class="flex flex-col gap-2 mb-3">
-                    <label class="text-xs text-ink-muted mb-1">Select sides to print</label>
+                    <label class="text-xs text-white/40 mb-1">Select sides to print</label>
                     <div class="flex gap-4">
-                        <label class="flex items-center gap-2 text-xs">
+                        <label class="flex items-center gap-2 text-xs text-white/60">
                             <input type="checkbox" id="turbo-front" checked class="accent-[#7c3ca0]"> Front
                         </label>
-                        <label class="flex items-center gap-2 text-xs">
+                        <label class="flex items-center gap-2 text-xs text-white/60">
                             <input type="checkbox" id="turbo-back" class="accent-[#7c3ca0]"> Back
                         </label>
                     </div>
                 </div>
                 <div id="turbo-back-selector" class="hidden mb-3">
-                    <label class="text-xs text-ink-muted block mb-1">Back image</label>
+                    <label class="text-xs text-white/40 block mb-1">Back image</label>
                     <button type="button" onclick="openTurboBackDesigns()"
-                            class="px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-xs text-ink hover:bg-cream-200 transition-colors w-full text-left">
+                            class="px-3 py-2 rounded-lg text-xs text-white/60 hover:text-white transition-colors w-full text-left" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
                         Choose from My Designs
                     </button>
                     <div id="turbo-back-thumb" class="mt-2"></div>
                 </div>
                 <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-ink-muted">Product name</label>
+                    <label class="text-xs text-white/40">Product name</label>
                     <input id="turbo-title" type="text" placeholder="FabricAI — My Design"
-                           class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                  focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                           class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
+                           style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
                 </div>
                 <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-ink-muted">Printify store</label>
+                    <label class="text-xs text-white/40">Printify store</label>
                     <select id="turbo-shop"
-                            class="bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                   focus:outline-none focus:border-[#7c3ca0]">
+                            class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
+                            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
                         <option value="">Loading stores…</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs text-ink-muted">Garment color</label>
+                    <label class="text-xs text-white/40">Garment color</label>
                     <div class="flex items-center gap-3">
                         <input type="color" id="turbo-color-hex" value="#ffffff"
                                oninput="document.getElementById('turbo-color-name').textContent=hexToColorName(this.value)"
-                               class="w-10 h-10 border border-cream-300 rounded-lg cursor-pointer bg-transparent">
-                        <span id="turbo-color-name" class="text-xs text-ink font-medium">White</span>
+                               class="w-10 h-10 rounded-lg cursor-pointer bg-transparent" style="border:1px solid rgba(255,255,255,0.12)">
+                        <span id="turbo-color-name" class="text-xs text-white/70 font-medium">White</span>
                     </div>
                 </div>
             </div>
             <div id="turbo-progress-section" class="hidden space-y-3">
-                <div class="flex justify-between text-xs text-ink-muted mb-1">
+                <div class="flex justify-between text-xs text-white/40 mb-1">
                     <span id="turbo-progress-label">Uploading…</span>
                     <span id="turbo-progress-count">0/5</span>
                 </div>
-                <div class="w-full bg-cream-200 rounded-full h-2">
+                <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
                     <div id="turbo-progress-bar" class="bg-[#7c3ca0] h-2 rounded-full transition-all duration-300" style="width:0%"></div>
                 </div>
                 <div id="turbo-progress-results" class="space-y-1 pt-1 text-xs max-h-40 overflow-y-auto"></div>
             </div>
         </div>
         <!-- Footer -->
-        <div class="px-5 py-4 border-t border-cream-300 flex gap-2">
+        <div class="px-5 py-4 flex gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
             <button onclick="closeTurboUpdateModal()" id="turbo-cancel-btn"
-                    class="flex-1 py-2.5 border border-cream-300 text-ink text-xs font-medium tracking-wide
-                           uppercase rounded-xl hover:bg-cream-100 transition-colors">
+                    class="flex-1 py-2.5 text-white/50 hover:text-white text-xs font-medium tracking-wide uppercase rounded-xl transition-colors" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                 Cancel
             </button>
             <button onclick="startTurboUpdate()" id="turbo-start-btn"
@@ -609,9 +605,9 @@
 <!-- ═══════════ TURBO BACK DESIGNS PICKER ═══════════ -->
 <div id="turbo-back-designs-modal"
      class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div class="bg-white border border-cream-300 shadow-2xl w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-300 flex-shrink-0">
-            <h2 class="text-base font-semibold text-ink">Choose back design</h2>
+    <div class="shadow-2xl w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
+        <div class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+            <h2 class="text-base font-semibold text-white">Choose back design</h2>
             <button onclick="closeTurboBackDesigns()" class="icon-btn">
                 <i class="fas fa-times text-lg"></i>
             </button>
@@ -619,13 +615,13 @@
         <div class="flex-1 overflow-y-auto p-6">
             <div id="turbo-back-designs-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
             <div id="turbo-back-designs-empty" class="hidden flex-col items-center justify-center py-16 text-center">
-                <div class="w-14 h-14 rounded-full bg-cream-100 flex items-center justify-center mb-4">
-                    <i class="fas fa-bookmark text-ink-muted text-xl"></i>
+                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(255,255,255,0.07)">
+                    <i class="fas fa-bookmark text-white/20 text-xl"></i>
                 </div>
-                <p class="text-sm text-ink-muted">No saved designs yet.</p>
+                <p class="text-sm text-white/40">No saved designs yet.</p>
             </div>
             <div id="turbo-back-designs-loading" class="flex items-center justify-center py-16">
-                <i class="fas fa-spinner fa-spin text-ink-muted text-xl"></i>
+                <i class="fas fa-spinner fa-spin text-white/30 text-xl"></i>
             </div>
         </div>
     </div>
@@ -634,9 +630,9 @@
 <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
 <div id="preview-modal"
      class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
-    <div class="bg-white border-t sm:border border-cream-300 shadow-2xl w-full sm:max-w-4xl rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col" style="max-height:97dvh;">
-        <div class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-cream-300 flex-shrink-0">
-            <h2 class="text-sm sm:text-base font-semibold text-ink">Preview on Garment</h2>
+    <div class="shadow-2xl w-full sm:max-w-4xl rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col" style="max-height:97dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
+        <div class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+            <h2 class="text-sm sm:text-base font-semibold text-white">Preview on Garment</h2>
             <button onclick="closePreviewModal()" class="icon-btn">
                 <i class="fas fa-times text-lg"></i>
             </button>
@@ -645,9 +641,9 @@
 
             <!-- ── Saved Designs panel ── -->
             <!-- Mobile: horizontal scrollable strip at top; Desktop: vertical left sidebar -->
-            <div id="saved-designs-panel" class="flex-shrink-0 border-b sm:border-b-0 sm:border-r border-cream-300 bg-cream-50 flex flex-col sm:w-44">
-                <div class="px-3 py-2 border-b border-cream-200 flex items-center justify-between">
-                    <p class="text-[9px] uppercase tracking-[0.2em] text-ink-muted font-medium">Saved Designs</p>
+            <div id="saved-designs-panel" class="flex-shrink-0 flex flex-col sm:w-44" style="border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03)">
+                <div class="px-3 py-2 flex items-center justify-between" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+                    <p class="text-[9px] uppercase tracking-[0.2em] text-white/30 font-medium">Saved Designs</p>
                     <!-- Mobile: Add button inline -->
                     <button id="add-to-canvas-btn-mobile" disabled onclick="addSelectedToCanvas()"
                             class="sm:hidden px-3 py-1 bg-[#5a2275] text-white text-[9px] font-medium uppercase tracking-widest
@@ -659,9 +655,9 @@
                 <div id="saved-designs-list"
                      class="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-x-hidden overflow-y-hidden sm:overflow-y-auto
                             p-2 flex-row">
-                    <p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed whitespace-nowrap sm:whitespace-normal">Loading…</p>
+                    <p class="text-[10px] text-white/30 text-center py-6 leading-relaxed whitespace-nowrap sm:whitespace-normal">Loading…</p>
                 </div>
-                <div class="p-2 border-t border-cream-200 flex-shrink-0 hidden sm:block">
+                <div class="p-2 flex-shrink-0 hidden sm:block" style="border-top:1px solid rgba(255,255,255,0.07)">
                     <button id="add-to-canvas-btn" disabled onclick="addSelectedToCanvas()"
                             class="w-full py-2 bg-[#5a2275] text-white text-[10px] font-medium uppercase tracking-widest
                                    rounded-lg hover:bg-[#7c3ca0] transition-colors disabled:opacity-40">
@@ -674,10 +670,10 @@
             <div class="flex-1 flex flex-col overflow-hidden min-w-0">
 
             <!-- ─ Toolbar ─ -->
-            <div class="flex items-center gap-2 px-3 py-2.5 border-b border-cream-200 flex-shrink-0 bg-white">
+            <div class="flex items-center gap-2 px-3 py-2.5 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03)">
                 <select id="garment-select" onchange="renderPreview()"
-                        class="flex-1 min-w-0 bg-cream-50 border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs text-ink
-                               focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                        class="flex-1 min-w-0 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none transition-colors"
+                        style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1)">
                     <option value="tshirt">T-Shirt</option>
                     <option value="hoodie">Hoodie</option>
                     <option value="tanktop">Tank Top</option>
@@ -686,17 +682,17 @@
                 </select>
                 <input type="color" id="garment-color" value="#ffffff" oninput="renderPreview()"
                        title="Garment color"
-                       class="w-8 h-8 border border-cream-300 rounded-lg cursor-pointer flex-shrink-0">
-                <div class="flex rounded-lg overflow-hidden border border-cream-300 flex-shrink-0">
+                       class="w-8 h-8 rounded-lg cursor-pointer flex-shrink-0" style="border:1px solid rgba(255,255,255,0.12)">
+                <div class="flex rounded-lg overflow-hidden flex-shrink-0" style="border:1px solid rgba(255,255,255,0.12)">
                     <button id="side-front-btn" type="button" onclick="switchSide('front')"
                             class="px-3 py-1.5 text-[11px] font-medium transition-colors bg-[#7c3ca0] text-white">Front</button>
                     <button id="side-back-btn" type="button" onclick="switchSide('back')"
-                            class="px-3 py-1.5 text-[11px] font-medium transition-colors bg-white text-ink-muted">Back</button>
+                            class="px-3 py-1.5 text-[11px] font-medium transition-colors text-white/40" style="background:rgba(255,255,255,0.04)">Back</button>
                 </div>
             </div>
 
             <!-- ─ Canvas ─ -->
-            <div class="flex-1 flex items-center justify-center bg-[#f8f5ef] overflow-hidden">
+            <div class="flex-1 flex items-center justify-center overflow-hidden" style="background:#0a0a0a">
                 <div id="canvas-wrapper" style="position:relative;display:inline-block;max-width:100%;line-height:0;">
                     <canvas id="garment-canvas" width="500" height="550"
                             class="max-w-full h-auto rounded-xl block"
@@ -707,53 +703,53 @@
             </div>
 
             <!-- ─ Controls + Actions ─ -->
-            <div class="flex-shrink-0 border-t border-cream-200 bg-white px-4 py-3 space-y-3 overflow-y-auto" style="max-height:44dvh;">
+            <div class="flex-shrink-0 px-4 py-3 space-y-3 overflow-y-auto" style="border-top:1px solid rgba(255,255,255,0.07);background:rgba(17,17,17,0.95);max-height:44dvh">
 
-                <div id="printify-spec" class="text-[10px] text-ink-muted text-center leading-relaxed empty:hidden"></div>
+                <div id="printify-spec" class="text-[10px] text-white/30 text-center leading-relaxed empty:hidden"></div>
 
                 <!-- Sliders -->
                 <div class="grid grid-cols-2 gap-x-5 gap-y-2.5">
                     <label class="flex items-center gap-2 min-w-0">
-                        <span class="text-[10px] text-ink-muted shrink-0 w-4">X</span>
+                        <span class="text-[10px] text-white/30 shrink-0 w-4">X</span>
                         <input type="range" id="design-pos-x" min="-1" max="1" step="0.01" value="0"
                                oninput="document.getElementById('pos-x-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
                                class="flex-1 accent-purple-600 min-w-0">
-                        <span id="pos-x-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">0</span>
+                        <span id="pos-x-val" class="text-[10px] text-white/70 tabular-nums w-7 text-right shrink-0">0</span>
                     </label>
                     <label class="flex items-center gap-2 min-w-0">
-                        <span class="text-[10px] text-ink-muted shrink-0 w-4">Y</span>
+                        <span class="text-[10px] text-white/30 shrink-0 w-4">Y</span>
                         <input type="range" id="design-pos-y" min="-1" max="1" step="0.01" value="0"
                                oninput="document.getElementById('pos-y-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
                                class="flex-1 accent-purple-600 min-w-0">
-                        <span id="pos-y-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">0</span>
+                        <span id="pos-y-val" class="text-[10px] text-white/70 tabular-nums w-7 text-right shrink-0">0</span>
                     </label>
                     <label class="flex items-center gap-2 min-w-0">
-                        <span class="text-[10px] text-ink-muted shrink-0 w-4">⊕</span>
+                        <span class="text-[10px] text-white/30 shrink-0 w-4">⊕</span>
                         <input type="range" id="design-scale" min="0.2" max="2" step="0.01" value="1"
                                oninput="document.getElementById('scale-val').textContent=parseFloat(this.value).toFixed(2); syncSelectedLayerFromControls(); renderPreview()"
                                class="flex-1 accent-purple-600 min-w-0">
-                        <span id="scale-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">1.00</span>
+                        <span id="scale-val" class="text-[10px] text-white/70 tabular-nums w-7 text-right shrink-0">1.00</span>
                     </label>
                     <label class="flex items-center gap-2 min-w-0">
-                        <span class="text-[10px] text-ink-muted shrink-0 w-4">↻</span>
+                        <span class="text-[10px] text-white/30 shrink-0 w-4">↻</span>
                         <input type="range" id="design-rotation" min="-180" max="180" step="1" value="0"
                                oninput="document.getElementById('rotation-val').textContent=parseInt(this.value)+'°'; syncSelectedLayerFromControls(); renderPreview()"
                                class="flex-1 accent-purple-600 min-w-0">
-                        <span id="rotation-val" class="text-[10px] text-ink tabular-nums w-7 text-right shrink-0">0°</span>
+                        <span id="rotation-val" class="text-[10px] text-white/70 tabular-nums w-7 text-right shrink-0">0°</span>
                     </label>
                 </div>
 
                 <!-- Layers -->
-                <div id="layers-container" class="hidden border border-cream-200 rounded-xl p-2.5 bg-cream-50">
-                    <p class="text-[9px] uppercase tracking-[0.15em] text-ink-muted mb-2">Layers</p>
+                <div id="layers-container" class="hidden rounded-xl p-2.5" style="border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.04)">
+                    <p class="text-[9px] uppercase tracking-[0.15em] text-white/30 mb-2">Layers</p>
                     <div id="layers-list" class="space-y-1.5"></div>
                 </div>
 
                 <!-- Actions -->
                 <div class="flex gap-2">
                     <button onclick="downloadPreview()"
-                            class="flex-1 py-2 border border-cream-300 text-ink text-xs font-medium rounded-xl
-                                   hover:bg-cream-100 transition-colors flex items-center justify-center gap-1.5">
+                            class="flex-1 py-2 text-white/60 hover:text-white text-xs font-medium rounded-xl
+                                   transition-colors flex items-center justify-center gap-1.5" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                         <i class="fas fa-download text-[10px]"></i> Download
                     </button>
                     <button onclick="togglePrintifyPanel()"
@@ -764,29 +760,29 @@
                 </div>
 
                 <!-- Printify panel -->
-                <div id="printify-panel" class="hidden border border-cream-200 rounded-xl overflow-hidden">
-                    <div class="px-3 py-2 bg-cream-50 border-b border-cream-200">
-                        <p class="text-[10px] font-medium tracking-widest uppercase text-ink-muted">New Printify product</p>
+                <div id="printify-panel" class="hidden rounded-xl overflow-hidden" style="border:1px solid rgba(255,255,255,0.07)">
+                    <div class="px-3 py-2" style="background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.07)">
+                        <p class="text-[10px] font-medium tracking-widest uppercase text-white/30">New Printify product</p>
                     </div>
                     <div class="px-3 py-3 space-y-2.5">
                         <div id="printify-connect-notice"
-                             class="hidden px-3 py-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-xs">
+                             class="hidden px-3 py-2.5 rounded-lg text-yellow-300 text-xs" style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.2)">
                             Account not connected.
                             <a href="/profile" target="_blank" rel="noopener" class="underline font-medium">Connect in Profile →</a>
                         </div>
                         <input id="printify-title" type="text" placeholder="Product name"
-                               class="w-full bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                      focus:outline-none focus:border-[#7c3ca0] transition-colors">
+                               class="w-full rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
+                               style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
                         <select id="printify-shop"
-                                class="w-full bg-white border border-cream-300 rounded-lg px-3 py-2 text-sm text-ink
-                                       focus:outline-none focus:border-[#7c3ca0]">
+                                class="w-full rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
+                                style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
                             <option value="">Loading stores…</option>
                         </select>
                         <div class="flex items-center gap-2.5">
                             <input type="color" id="printify-color-hex" value="#ffffff"
                                    oninput="onPrintifyColorChange(this.value)"
-                                   class="w-8 h-8 border border-cream-300 rounded-lg cursor-pointer flex-shrink-0">
-                            <span id="printify-color-name" class="text-xs text-ink">White</span>
+                                   class="w-8 h-8 rounded-lg cursor-pointer flex-shrink-0" style="border:1px solid rgba(255,255,255,0.12)">
+                            <span id="printify-color-name" class="text-xs text-white/60">White</span>
                         </div>
                         <div id="printify-feedback" class="hidden text-xs py-1"></div>
                         <div class="flex gap-2">
@@ -1072,48 +1068,54 @@
         previewImageStore.push(imageUrl);
 
         div.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-white border border-cream-300 shadow-sm
-                        flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5">
+            <div class="w-8 h-8 rounded-full shadow-sm
+                        flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
                 <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="w-full h-full object-contain">
             </div>
-            <div class="bg-white border border-cream-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-sm">
-                <div id="${uniqueId}" class="bg-cream-100 p-2.5 relative">
-                    <img src="${imageUrl}" alt="Generated design" class="rounded-xl w-full block cursor-zoom-in chat-lightbox-img" crossorigin="anonymous">
+            <div class="rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-sm" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.09)">
+                <div id="${uniqueId}" class="relative" style="background:#ffffff">
+                    <img src="${imageUrl}" alt="Generated design" class="w-full block cursor-zoom-in chat-lightbox-img" crossorigin="anonymous">
                     <button type="button" title="Save design"
                             class="save-design-btn absolute top-2 right-2 w-7 h-7 rounded-full
-                                   bg-white/80 backdrop-blur-sm border border-cream-200 shadow-sm
+                                   backdrop-blur-sm shadow-sm
                                    flex items-center justify-center transition-all hover:scale-110"
+                            style="background:rgba(0,0,0,0.45);border:1px solid rgba(0,0,0,0.15)"
                             data-image-src="${imageUrl}">
-                        <i class="fas fa-bookmark text-xs text-ink-muted"></i>
+                        <i class="fas fa-bookmark text-xs text-white"></i>
                     </button>
                 </div>
-                <div class="px-3 py-2 border-t border-cream-200 flex items-center gap-1.5 flex-wrap">
-                    <span class="text-[9px] text-ink-muted uppercase tracking-wider mr-1">BG</span>
+                <div class="px-3 py-2 flex items-center gap-1.5 flex-wrap" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <span class="text-[9px] text-white/30 uppercase tracking-wider mr-1">BG</span>
                     <button type="button" onclick="changeBg('${uniqueId}','#faf8f4')"
-                            class="w-4 h-4 rounded border border-cream-300 bg-cream-100 hover:border-ink-muted transition-colors" title="Cream"></button>
+                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#faf8f4;border:1px solid rgba(255,255,255,0.15)" title="Cream"></button>
                     <button type="button" onclick="changeBg('${uniqueId}','#18181b')"
-                            class="w-4 h-4 rounded border border-cream-300 bg-zinc-900 hover:border-ink-muted transition-colors" title="Dark"></button>
+                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#18181b;border:1px solid rgba(255,255,255,0.15)" title="Dark"></button>
                     <button type="button" onclick="changeBg('${uniqueId}','#ffffff')"
-                            class="w-4 h-4 rounded border border-cream-300 bg-white hover:border-ink-muted transition-colors" title="White"></button>
+                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#ffffff;border:1px solid rgba(255,255,255,0.15)" title="White"></button>
                     <button type="button" onclick="changeBg('${uniqueId}','#000000')"
-                            class="w-4 h-4 rounded border border-cream-300 bg-black hover:border-ink-muted transition-colors" title="Black"></button>
+                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#000000;border:1px solid rgba(255,255,255,0.15)" title="Black"></button>
                     <button type="button" onclick="changeBg('${uniqueId}','#7c3ca0')"
-                            class="w-4 h-4 rounded border border-cream-300 bg-purple-700 hover:border-ink-muted transition-colors" title="Purple"></button>
+                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#7c3ca0;border:1px solid rgba(255,255,255,0.15)" title="Purple"></button>
                     <input type="color" onchange="changeBg('${uniqueId}',this.value)"
-                           class="w-4 h-4 rounded border border-cream-300 cursor-pointer" title="Custom colour">
+                           class="w-4 h-4 rounded cursor-pointer" style="border:1px solid rgba(255,255,255,0.15)" title="Custom colour">
                 </div>
-                <div class="px-2 py-2 border-t border-cream-200 flex items-center gap-0.5">
-                    <a href="${imageUrl}" download="design.png" title="Download" class="icon-btn">
+                <div class="px-2 py-2 flex items-center justify-center gap-1" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <a href="${imageUrl}" download="design.png" title="Download"
+                       class="icon-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,0.1);border-radius:10px">
                         <i class="fas fa-download"></i>
+                        <span style="font-size:8px;opacity:0.6">Save</span>
                     </a>
-                    <button type="button" title="Retouch this design" class="icon-btn accent edit-btn">
+                    <button type="button" title="Retouch this design" class="icon-btn accent edit-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#c084fc;background:rgba(124,60,160,0.2);border-radius:10px">
                         <i class="fas fa-magic"></i>
+                        <span style="font-size:8px;opacity:0.7">Edit</span>
                     </button>
-                    <button type="button" title="Preview on garment" class="icon-btn preview-btn" data-preview-idx="${idx}">
+                    <button type="button" title="Preview on garment" class="icon-btn preview-btn flex-col gap-0.5" data-preview-idx="${idx}" style="width:52px;height:44px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,0.1);border-radius:10px">
                         <i class="fas fa-tshirt"></i>
+                        <span style="font-size:8px;opacity:0.6">Try on</span>
                     </button>
-                    <button type="button" title="Turbo Upload (frente/espalda a todas las prendas)" class="icon-btn accent turbo-quick-btn">
+                    <button type="button" title="Turbo Upload" class="icon-btn accent turbo-quick-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#c084fc;background:rgba(124,60,160,0.2);border-radius:10px">
                         <i class="fas fa-bolt"></i>
+                        <span style="font-size:8px;opacity:0.7">Upload</span>
                     </button>
                 </div>
             </div>`;
@@ -1134,15 +1136,15 @@
         div.id        = id;
         div.className = 'flex items-start gap-3 msg-enter';
         div.innerHTML = `
-            <div style="width:32px;height:32px;border-radius:50%;background:white;border:1px solid #e8e3d9;
-                        box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:center;
+            <div style="width:32px;height:32px;border-radius:50%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);
+                        display:flex;align-items:center;
                         justify-content:center;flex-shrink:0;overflow:hidden;padding:4px;margin-top:2px;">
                 <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" style="width:100%;height:100%;object-fit:contain;">
             </div>
-            <div style="background:white;border:1px solid #e8e3d9;border-radius:0 16px 16px 16px;
-                        box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;width:260px;">
+            <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.09);border-radius:0 16px 16px 16px;
+                        box-shadow:0 4px 16px rgba(0,0,0,0.3);overflow:hidden;width:260px;">
                 <!-- Animated image area -->
-                <div style="position:relative;width:260px;height:260px;background:#f5f1ea;
+                <div style="position:relative;width:260px;height:260px;background:#111;
                             border-radius:0 12px 0 0;overflow:hidden;">
                     <!-- Grid overlay -->
                     <div style="position:absolute;inset:0;
@@ -1160,7 +1162,7 @@
                     <!-- Pencil -->
                     <div class="gen-placeholder" style="position:absolute;inset:0;display:flex;
                          align-items:center;justify-content:center;">
-                        <span style="font-size:36px;color:rgba(124,60,160,0.6);">✎</span>
+                        <span style="font-size:36px;color:rgba(124,60,160,0.6);transform:scaleX(-1);display:inline-block;">✎</span>
                     </div>
                 </div>
             </div>`;
@@ -1174,12 +1176,12 @@
         const div = document.createElement('div');
         div.className = 'flex items-start gap-3 msg-enter';
         div.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-white border border-cream-300 shadow-sm
-                        flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5">
+            <div class="w-8 h-8 rounded-full shadow-sm
+                        flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
                 <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="w-full h-full object-contain">
             </div>
-            <div class="bg-red-50 border border-red-200 rounded-2xl rounded-tl-sm px-4 py-3
-                        text-red-700 text-sm leading-relaxed max-w-xs md:max-w-md">
+            <div class="rounded-2xl rounded-tl-sm px-4 py-3
+                        text-red-400 text-sm leading-relaxed max-w-xs md:max-w-md" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)">
                 ${escapeHtml(msg)}
             </div>`;
         messagesContainer.appendChild(div);
@@ -1229,7 +1231,7 @@
         chats.forEach(chat => {
             const wrapper = document.createElement('div');
             wrapper.className = 'group flex items-center gap-2.5 px-2 py-2 rounded-xl transition-colors ' +
-                (chat.id === currentChatId ? 'bg-cream-200' : 'hover:bg-cream-100');
+                (chat.id === currentChatId ? 'bg-white/10' : 'hover:bg-white/[0.06]');
 
             // Thumbnail
             const thumb = document.createElement('div');
@@ -1250,10 +1252,10 @@
             const content = document.createElement('div');
             content.className = 'flex-1 min-w-0 cursor-pointer';
             const nameEl = document.createElement('p');
-            nameEl.className = 'text-xs font-medium text-ink truncate leading-tight';
+            nameEl.className = 'text-xs font-medium text-white/80 truncate leading-tight';
             nameEl.textContent = chat.title || 'New Design';
             const dateEl = document.createElement('p');
-            dateEl.className = 'text-[10px] text-ink-muted mt-0.5';
+            dateEl.className = 'text-[10px] text-white/30 mt-0.5';
             dateEl.textContent = relativeDate(chat.created_at);
             content.appendChild(nameEl); content.appendChild(dateEl);
             content.onclick = () => { loadChat(chat.id); closeSidebar(); };
@@ -1261,7 +1263,7 @@
             // Inline rename input
             const input = document.createElement('input');
             input.type = 'text'; input.value = chat.title || 'New Design';
-            input.className = 'hidden flex-1 min-w-0 px-1.5 py-0.5 text-xs rounded-lg border border-[#7c3ca0] bg-white text-ink focus:outline-none';
+            input.className = 'hidden flex-1 min-w-0 px-1.5 py-0.5 text-xs rounded-lg border border-[#7c3ca0] text-white focus:outline-none' + ' bg-[#111]';
 
             let renameSaved = false;
             const saveRename = async () => {
@@ -1573,30 +1575,31 @@
             data.forEach(d => {
                 const wrap = document.createElement('div');
                 wrap.dataset.designId = d.id;
-                wrap.className = 'group relative rounded-xl overflow-hidden border border-cream-300 bg-cream-50 hover:border-[#7c3ca0] transition-colors';
+                wrap.className = 'group relative rounded-xl overflow-hidden bg-transparent hover:border-[#7c3ca0] transition-colors' + (active ? ' ring-2 ring-[#7c3ca0]' : '');
+                wrap.style.cssText = 'border:1px solid rgba(255,255,255,0.09)';
 
                 // Bottom bar: inline editable title + action buttons
                 wrap.innerHTML = `
                     <img src="${d.image_data}" alt="${d.title || 'design'}"
                          class="w-full aspect-square object-contain bg-white cursor-pointer" loading="lazy">
                     <div class="px-2 py-1.5 flex items-center gap-1">
-                        <span class="design-title-label flex-1 text-[10px] text-ink-muted truncate cursor-text"
+                        <span class="design-title-label flex-1 text-[10px] text-white/30 truncate cursor-text"
                               title="Click to rename">${d.title || 'Design'}</span>
                         <input type="text" value="${(d.title || 'Design').replace(/"/g,'&quot;')}"
-                               class="design-title-input hidden flex-1 text-[10px] text-ink bg-white border border-[#7c3ca0] rounded px-1 py-0.5 outline-none min-w-0">
-                        <button class="rename-btn text-cream-400 hover:text-[#7c3ca0] transition-colors shrink-0" title="Rename">
+                               class="design-title-input hidden flex-1 text-[10px] text-white border border-[#7c3ca0] rounded px-1 py-0.5 outline-none min-w-0" style="background:#111">
+                        <button class="rename-btn text-white/20 hover:text-[#c084fc] transition-colors shrink-0" title="Rename">
                             <i class="fas fa-pencil-alt" style="font-size:9px"></i>
                         </button>
-                        <button class="delete-btn text-cream-400 hover:text-red-400 transition-colors shrink-0" title="Delete">
+                        <button class="delete-btn text-white/20 hover:text-red-400 transition-colors shrink-0" title="Delete">
                             <i class="fas fa-trash" style="font-size:10px"></i>
                         </button>
                     </div>
                     <!-- inline confirm bar (hidden by default) -->
-                    <div class="confirm-bar hidden items-center justify-between px-2 py-1.5 bg-red-50 border-t border-red-200 text-[10px]">
-                        <span class="text-red-500">Delete?</span>
+                    <div class="confirm-bar hidden items-center justify-between px-2 py-1.5 text-[10px]" style="background:rgba(239,68,68,0.1);border-top:1px solid rgba(239,68,68,0.2)">
+                        <span class="text-red-400">Delete?</span>
                         <div class="flex gap-1">
                             <button class="confirm-yes px-2 py-0.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">Yes</button>
-                            <button class="confirm-no px-2 py-0.5 border border-cream-300 text-ink rounded-md hover:bg-cream-100 transition-colors">No</button>
+                            <button class="confirm-no px-2 py-0.5 text-white/50 rounded-md hover:bg-white/10 transition-colors" style="border:1px solid rgba(255,255,255,0.15)">No</button>
                         </div>
                     </div>`;
 
@@ -1999,12 +2002,13 @@
             const isSelected = layer.id === _selectedLayerId;
             const item = document.createElement('div');
             item.className = 'flex items-center gap-2 p-1.5 rounded-lg cursor-pointer border transition-all ' +
-                (isSelected ? 'border-purple-400 bg-purple-50' : 'border-cream-200 hover:border-cream-400');
+                (isSelected ? 'border-purple-400' : 'hover:border-purple-600/40') + (isSelected ? ' bg-purple-900/20' : '');
+            item.style.borderColor = isSelected ? '' : 'rgba(255,255,255,0.08)';
             const thumb = document.createElement('img');
             thumb.src = layer.src; thumb.alt = '';
-            thumb.className = 'w-8 h-8 rounded object-contain bg-cream-100 flex-shrink-0';
+            thumb.className = 'w-8 h-8 rounded object-contain flex-shrink-0' + ' bg-white/[0.07]';
             const label = document.createElement('span');
-            label.className = 'text-xs text-ink flex-1 min-w-0 truncate';
+            label.className = 'text-xs text-white/60 flex-1 min-w-0 truncate';
             label.textContent = 'Layer ' + (idx + 1);
             const del = document.createElement('button');
             del.type = 'button';
@@ -2489,11 +2493,11 @@
         const renderProgress = (cur, curLabel) => {
             const pct = Math.round((cur/garments.length)*100);
             showPrintifyFeedback(`<div class="space-y-2">
-                <div class="flex justify-between text-xs text-ink-muted mb-0.5">
+                <div class="flex justify-between text-xs text-white/30 mb-0.5">
                     <span>${cur < garments.length ? 'Uploading '+curLabel+'…' : 'Done'}</span>
                     <span>${cur}/${garments.length}</span>
                 </div>
-                <div class="w-full bg-cream-200 rounded h-1.5">
+                <div class="w-full rounded h-1.5" style="background:rgba(255,255,255,0.08)">
                     <div class="bg-purple-600 h-1.5 rounded transition-all duration-300" style="width:${pct}%"></div>
                 </div>
                 <div class="space-y-0.5 pt-1">${resultLines.join('')}</div></div>`);
@@ -2695,7 +2699,7 @@
             if (!btn) return;
             const isActive = (i === 0 && side === 'front') || (i === 1 && side === 'back');
             btn.className = `flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                isActive ? 'bg-[#7c3ca0] text-white border-[#7c3ca0]' : 'bg-cream-100 text-ink-muted border-cream-300'
+                isActive ? 'bg-[#7c3ca0] text-white border-[#7c3ca0]' : 'text-white/40 hover:text-white' + ' rounded-lg px-2 py-1 text-xs'
             }`;
         });
         updateControlsFromSelected();
@@ -2754,7 +2758,7 @@
     async function loadSavedDesigns() {
         const list = document.getElementById('saved-designs-list');
         if (!list) return;
-        list.innerHTML = '<p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed">Loading…</p>';
+        list.innerHTML = '<p class="text-[10px] text-white/30 text-center py-6 leading-relaxed">Loading…</p>';
         try {
             const res  = await fetch('/designs/saved', { headers: { 'Accept': 'application/json' } });
             const data = await res.json();
@@ -2776,7 +2780,7 @@
         _selectedSavedDesign = null;
         _setAddBtnState(false);
         if (!designs.length) {
-            list.innerHTML = '<p class="text-[10px] text-ink-muted text-center py-6 leading-relaxed px-2">No saved designs yet.<br>Tap <i class=\'fas fa-bookmark\'></i> on a design to save it.</p>';
+            list.innerHTML = '<p class="text-[10px] text-white/30 text-center py-6 leading-relaxed px-2">No saved designs yet.<br>Tap <i class=\'fas fa-bookmark\'></i> on a design to save it.</p>';
             return;
         }
         list.innerHTML = '';
@@ -2787,7 +2791,7 @@
             item.dataset.id = d.id;
             const img = document.createElement('img');
             img.src = d.image_data; img.alt = d.title || 'Design';
-            img.className = 'w-full h-16 sm:h-20 object-contain bg-cream-100 block';
+            img.className = 'w-full h-16 sm:h-20 object-contain block' + ' bg-white/[0.05]';
             const del = document.createElement('button');
             del.type = 'button'; del.title = 'Remove';
             del.className = 'absolute top-0.5 right-0.5 w-5 h-5 bg-red-500/90 text-white rounded-full ' +
@@ -3020,7 +3024,7 @@
             if (!Array.isArray(designs) || !designs.length) { empty.classList.remove('hidden'); return; }
             designs.forEach(d => {
                 const item = document.createElement('div');
-                item.className = 'rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-[#7c3ca0] transition-all bg-cream-100';
+                item.className = 'rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-[#7c3ca0] transition-all bg-white/[0.05]';
                 const img = document.createElement('img');
                 img.src = d.image_data; img.alt = d.title || 'Design';
                 img.className = 'w-full h-24 object-contain block';

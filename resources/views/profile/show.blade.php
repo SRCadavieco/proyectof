@@ -108,278 +108,151 @@
                 @endif
             </div>
 
-            {{-- ── Stats Grid ── --}}
-            <div class="bg-white border border-cream-200 sm:rounded-lg p-6 sm:p-8">
-                <h3 class="font-medium text-ink text-base mb-5 flex items-center gap-2">
-                    <i class="fas fa-chart-bar text-ink-muted"></i>
-                    Your Activity
-                </h3>
+            {{-- ── Plan ── --}}
+            @php
+                $plan = strtolower($user->plan ?? 'free');
+                $planMeta = [
+                    'free'   => [
+                        'label'       => 'Free',
+                        'price'       => '€0',
+                        'period'      => '/ month',
+                        'headerBg'    => 'bg-cream-100',
+                        'headerText'  => 'text-ink',
+                        'badgeBg'     => 'bg-cream-300 text-ink-muted',
+                        'accent'      => 'bg-cream-400',
+                        'perks'       => ['5 designs / month', 'Standard quality output', 'Basic prompt styles'],
+                        'missing'     => ['Background removal', 'Design history', 'Priority support'],
+                        'desc'        => 'Perfect for exploring FabricAI and testing your first ideas.',
+                    ],
+                    'pro'    => [
+                        'label'       => 'Pro',
+                        'price'       => '€19',
+                        'period'      => '/ month',
+                        'headerBg'    => 'bg-ink',
+                        'headerText'  => 'text-white',
+                        'badgeBg'     => 'bg-purple-500 text-white',
+                        'accent'      => 'bg-purple-400',
+                        'perks'       => ['100 designs / month', 'High quality output', 'All prompt styles', 'Background removal', 'Full design history'],
+                        'missing'     => ['Priority support'],
+                        'desc'        => 'Great for freelancers and creators who design regularly.',
+                    ],
+                    'studio' => [
+                        'label'       => 'Studio',
+                        'price'       => '€49',
+                        'period'      => '/ month',
+                        'headerBg'    => 'bg-ink',
+                        'headerText'  => 'text-white',
+                        'badgeBg'     => 'bg-purple-700 text-white',
+                        'accent'      => 'bg-purple-600',
+                        'perks'       => ['Unlimited designs', 'Ultra-high quality output', 'All prompt styles + custom', 'Background removal', 'Full design history', 'Priority support'],
+                        'missing'     => [],
+                        'desc'        => 'Built for studios and teams with high volume needs.',
+                    ],
+                ];
+                $meta = $planMeta[$plan] ?? $planMeta['free'];
+            @endphp
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="border border-cream-200 sm:rounded-lg overflow-hidden flex flex-col">
 
-                    {{-- Most used model --}}
-                    <div class="flex items-start gap-4 p-4 bg-cream-50 border border-cream-200 rounded-lg">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-violet-100 shrink-0">
-                            <i class="fas fa-microchip text-violet-500"></i>
-                        </span>
+                {{-- Card header --}}
+                <div class="relative {{ $meta['headerBg'] }} px-6 pt-6 pb-8">
+                    {{-- Top accent line --}}
+                    <div class="absolute top-0 left-0 right-0 h-1 {{ $meta['accent'] }}"></div>
+
+                    <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs text-ink-muted uppercase tracking-wide font-medium">Most Used Model</p>
-                            <p class="text-xl font-bold text-ink mt-0.5">
-                                @php
-                                    $modelLabels = [
-                                        'fabric_light'    => 'Fabric Light',
-                                        'fabric_pro'      => 'Fabric Pro',
-                                        'z_image_turbo'   => 'Z Image Turbo',
-                                        'flux_schnell'    => 'Flux Schnell',
-                                    ];
-                                @endphp
-                                {{ $modelLabels[$stats['most_used_model']] ?? $stats['most_used_model'] }}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-widest {{ $meta['badgeBg'] }} mb-3">
+                                {{ $meta['label'] }}
+                            </span>
+                            <p class="text-[11px] {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/60' }} uppercase tracking-wide font-medium">
+                                Current plan
                             </p>
                         </div>
-                    </div>
-
-                    {{-- Tokens spent --}}
-                    <div class="flex items-start gap-4 p-4 bg-cream-50 border border-cream-200 rounded-lg">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100 shrink-0">
-                            <i class="fas fa-coins text-amber-500"></i>
-                        </span>
-                        <div>
-                            <p class="text-xs text-ink-muted uppercase tracking-wide font-medium">Tokens Spent</p>
-                            <p class="text-xl font-bold text-ink mt-0.5">{{ number_format($stats['tokens_used']) }}</p>
+                        <div class="text-right">
+                            <span class="font-serif text-4xl font-bold {{ $meta['headerText'] }}">{{ $meta['price'] }}</span>
+                            <span class="text-xs {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/50' }} ml-1">{{ $meta['period'] }}</span>
                         </div>
                     </div>
 
-                    {{-- Images generated --}}
-                    <div class="flex items-start gap-4 p-4 bg-cream-50 border border-cream-200 rounded-lg">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-sky-100 shrink-0">
-                            <i class="fas fa-image text-sky-500"></i>
-                        </span>
-                        <div>
-                            <p class="text-xs text-ink-muted uppercase tracking-wide font-medium">Images Generated</p>
-                            <p class="text-xl font-bold text-ink mt-0.5">{{ number_format($stats['images_generated']) }}</p>
-                        </div>
-                    </div>
-
-                    {{-- Uploaded to Printify --}}
-                    <div class="flex items-start gap-4 p-4 bg-cream-50 border border-cream-200 rounded-lg">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100 shrink-0">
-                            <i class="fas fa-shirt text-[#FF4D00]"></i>
-                        </span>
-                        <div>
-                            <p class="text-xs text-ink-muted uppercase tracking-wide font-medium">Uploaded to Printify</p>
-                            <p class="text-xl font-bold text-ink mt-0.5">{{ number_format($stats['products_pushed']) }}</p>
-                        </div>
-                    </div>
-
+                    <p class="mt-3 text-sm {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/70' }}">
+                        {{ $meta['desc'] }}
+                    </p>
                 </div>
-            </div>
 
-            {{-- ── Tokens & Plan Grid ── --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-                {{-- Tokens column --}}
-                <div class="bg-white border border-cream-200 sm:rounded-lg p-6 sm:p-8 flex flex-col gap-5">
-                    <div>
-                        <h3 class="font-medium text-ink text-base flex items-center gap-2 mb-1">
-                            <i class="fas fa-coins text-amber-500"></i>
-                            Tokens
-                        </h3>
-                        <p class="text-xs text-ink-muted">Use tokens to generate designs. They never expire.</p>
-                    </div>
-
-                    {{-- Current balance --}}
-                    <div class="flex items-end gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <span class="font-serif text-4xl font-bold text-amber-600">{{ number_format($user->tokens ?? 0) }}</span>
-                        <span class="text-sm text-amber-700 pb-1">tokens remaining</span>
-                    </div>
-
-                    {{-- Buy more label --}}
-                    <p class="text-xs font-semibold text-ink uppercase tracking-wide">Buy more tokens</p>
-
-                    {{-- Token packs --}}
-                    <div class="flex flex-col gap-3">
-                        @foreach([
-                            ['amount' => 100,  'price' => '€2',  'label' => 'Starter Pack',   'popular' => false],
-                            ['amount' => 500,  'price' => '€8',  'label' => 'Creator Pack',   'popular' => true],
-                            ['amount' => 1000, 'price' => '€14', 'label' => 'Studio Pack',    'popular' => false],
-                        ] as $pack)
-                        <div class="relative flex items-center justify-between px-4 py-3
-                                    border rounded-lg transition-colors
-                                    {{ $pack['popular']
-                                        ? 'border-amber-400 bg-amber-50'
-                                        : 'border-cream-300 bg-white hover:bg-cream-50' }}">
-                            @if($pack['popular'])
-                                <span class="absolute -top-2.5 left-4 text-[10px] font-semibold uppercase tracking-wide
-                                             bg-amber-400 text-white px-2 py-0.5 rounded-full">
-                                    Best value
+                {{-- Features list --}}
+                <div class="bg-white flex-1 px-6 py-5">
+                    <ul class="space-y-2.5">
+                        @foreach($meta['perks'] as $perk)
+                            <li class="flex items-center gap-2.5 text-sm text-ink">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-100 shrink-0">
+                                    <i class="fas fa-check text-green-600" style="font-size:9px;"></i>
                                 </span>
-                            @endif
-                            <div>
-                                <p class="text-sm font-semibold text-ink">{{ $pack['amount'] }} tokens</p>
-                                <p class="text-xs text-ink-muted">{{ $pack['label'] }}</p>
-                            </div>
-                            <button disabled
-                                    title="Coming soon"
-                                    class="text-xs font-semibold px-4 py-1.5 rounded
-                                           {{ $pack['popular']
-                                               ? 'bg-amber-400 text-white opacity-60 cursor-not-allowed'
-                                               : 'bg-ink text-white opacity-40 cursor-not-allowed' }}">
-                                {{ $pack['price'] }}
-                            </button>
-                        </div>
+                                {{ $perk }}
+                            </li>
                         @endforeach
-                    </div>
-
-                    <p class="text-[11px] text-ink-muted/70 text-center">Token purchases coming soon.</p>
+                        @foreach($meta['missing'] as $miss)
+                            <li class="flex items-center gap-2.5 text-sm text-ink-muted/40">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-cream-100 shrink-0">
+                                    <i class="fas fa-xmark text-ink-muted/40" style="font-size:9px;"></i>
+                                </span>
+                                {{ $miss }}
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
 
-                {{-- Plan column --}}
-                @php
-                    $plan = strtolower($user->plan ?? 'free');
-                    $planMeta = [
-                        'free'   => [
-                            'label'       => 'Free',
-                            'price'       => '€0',
-                            'period'      => '/ month',
-                            'headerBg'    => 'bg-cream-100',
-                            'headerText'  => 'text-ink',
-                            'badgeBg'     => 'bg-cream-300 text-ink-muted',
-                            'accent'      => 'bg-cream-400',
-                            'perks'       => ['5 designs / month', 'Standard quality output', 'Basic prompt styles'],
-                            'missing'     => ['Background removal', 'Design history', 'Priority support'],
-                            'desc'        => 'Perfect for exploring FabricAI and testing your first ideas.',
-                        ],
-                        'pro'    => [
-                            'label'       => 'Pro',
-                            'price'       => '€19',
-                            'period'      => '/ month',
-                            'headerBg'    => 'bg-ink',
-                            'headerText'  => 'text-white',
-                            'badgeBg'     => 'bg-purple-500 text-white',
-                            'accent'      => 'bg-purple-400',
-                            'perks'       => ['100 designs / month', 'High quality output', 'All prompt styles', 'Background removal', 'Full design history'],
-                            'missing'     => ['Priority support'],
-                            'desc'        => 'Great for freelancers and creators who design regularly.',
-                        ],
-                        'studio' => [
-                            'label'       => 'Studio',
-                            'price'       => '€49',
-                            'period'      => '/ month',
-                            'headerBg'    => 'bg-ink',
-                            'headerText'  => 'text-white',
-                            'badgeBg'     => 'bg-purple-700 text-white',
-                            'accent'      => 'bg-purple-600',
-                            'perks'       => ['Unlimited designs', 'Ultra-high quality output', 'All prompt styles + custom', 'Background removal', 'Full design history', 'Priority support'],
-                            'missing'     => [],
-                            'desc'        => 'Built for studios and teams with high volume needs.',
-                        ],
-                    ];
-                    $meta = $planMeta[$plan] ?? $planMeta['free'];
-                @endphp
-
-                <div class="border border-cream-200 sm:rounded-lg overflow-hidden flex flex-col">
-
-                    {{-- Card header --}}
-                    <div class="relative {{ $meta['headerBg'] }} px-6 pt-6 pb-8">
-                        {{-- Top accent line --}}
-                        <div class="absolute top-0 left-0 right-0 h-1 {{ $meta['accent'] }}"></div>
-
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-widest {{ $meta['badgeBg'] }} mb-3">
-                                    {{ $meta['label'] }}
-                                </span>
-                                <p class="text-[11px] {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/60' }} uppercase tracking-wide font-medium">
-                                    Current plan
-                                </p>
-                            </div>
-                            <div class="text-right">
-                                <span class="font-serif text-4xl font-bold {{ $meta['headerText'] }}">{{ $meta['price'] }}</span>
-                                <span class="text-xs {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/50' }} ml-1">{{ $meta['period'] }}</span>
-                            </div>
-                        </div>
-
-                        <p class="mt-3 text-sm {{ $plan === 'free' ? 'text-ink-muted' : 'text-white/70' }}">
-                            {{ $meta['desc'] }}
-                        </p>
-                    </div>
-
-                    {{-- Features list --}}
-                    <div class="bg-white flex-1 px-6 py-5">
-                        <ul class="space-y-2.5">
-                            @foreach($meta['perks'] as $perk)
-                                <li class="flex items-center gap-2.5 text-sm text-ink">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-100 shrink-0">
-                                        <i class="fas fa-check text-green-600" style="font-size:9px;"></i>
-                                    </span>
-                                    {{ $perk }}
-                                </li>
-                            @endforeach
-                            @foreach($meta['missing'] as $miss)
-                                <li class="flex items-center gap-2.5 text-sm text-ink-muted/40">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-cream-100 shrink-0">
-                                        <i class="fas fa-xmark text-ink-muted/40" style="font-size:9px;"></i>
-                                    </span>
-                                    {{ $miss }}
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-
-                    {{-- CTA --}}
-                    <div class="bg-white border-t border-cream-200 px-6 py-4">
-                        @if($plan === 'studio')
-                            <div class="flex flex-col gap-2">
-                                <a href="/pricing"
-                                   class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
-                                          bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
-                                    <i class="fas fa-repeat text-xs"></i>
-                                    Change plan
-                                </a>
-                                <form method="POST" action="{{ route('subscription.cancel.confirm') }}"
-                                      x-data
-                                      @submit.prevent="if(confirm('Are you sure you want to cancel your subscription? You will be moved to the Free plan immediately.')) $el.submit()">
-                                    @csrf
-                                    <button type="submit"
-                                            class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-lg
-                                                   border border-red-200 text-red-600 text-sm font-medium
-                                                   hover:bg-red-50 transition-colors">
-                                        <i class="fas fa-circle-xmark text-xs"></i>
-                                        Cancel subscription
-                                    </button>
-                                </form>
-                            </div>
-                        @elseif($plan === 'pro')
-                            <div class="flex flex-col gap-2">
-                                <a href="/pricing"
-                                   class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
-                                          bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
-                                    <i class="fas fa-repeat text-xs"></i>
-                                    Change plan
-                                </a>
-                                <form method="POST" action="{{ route('subscription.cancel.confirm') }}"
-                                      x-data
-                                      @submit.prevent="if(confirm('Are you sure you want to cancel your subscription? You will be moved to the Free plan immediately.')) $el.submit()">
-                                    @csrf
-                                    <button type="submit"
-                                            class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-lg
-                                                   border border-red-200 text-red-600 text-sm font-medium
-                                                   hover:bg-red-50 transition-colors">
-                                        <i class="fas fa-circle-xmark text-xs"></i>
-                                        Cancel subscription
-                                    </button>
-                                </form>
-                            </div>
-                        @else
+                {{-- CTA --}}
+                <div class="bg-white border-t border-cream-200 px-6 py-4">
+                    @if($plan === 'studio')
+                        <div class="flex flex-col gap-2">
                             <a href="/pricing"
                                class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
                                       bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
-                                <i class="fas fa-arrow-up text-xs"></i>
-                                Upgrade plan
+                                <i class="fas fa-repeat text-xs"></i>
+                                Change plan
                             </a>
-                        @endif
-                    </div>
-
+                            <form method="POST" action="{{ route('subscription.cancel.confirm') }}"
+                                  x-data
+                                  @submit.prevent="if(confirm('Are you sure you want to cancel your subscription? You will be moved to the Free plan immediately.')) $el.submit()">
+                                @csrf
+                                <button type="submit"
+                                        class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-lg
+                                               border border-red-200 text-red-600 text-sm font-medium
+                                               hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-circle-xmark text-xs"></i>
+                                    Cancel subscription
+                                </button>
+                            </form>
+                        </div>
+                    @elseif($plan === 'pro')
+                        <div class="flex flex-col gap-2">
+                            <a href="/pricing"
+                               class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
+                                      bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
+                                <i class="fas fa-repeat text-xs"></i>
+                                Change plan
+                            </a>
+                            <form method="POST" action="{{ route('subscription.cancel.confirm') }}"
+                                  x-data
+                                  @submit.prevent="if(confirm('Are you sure you want to cancel your subscription? You will be moved to the Free plan immediately.')) $el.submit()">
+                                @csrf
+                                <button type="submit"
+                                        class="inline-flex w-full items-center justify-center gap-2 px-5 py-2 rounded-lg
+                                               border border-red-200 text-red-600 text-sm font-medium
+                                               hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-circle-xmark text-xs"></i>
+                                    Cancel subscription
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <a href="/pricing"
+                           class="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg
+                                  bg-ink text-white text-sm font-semibold hover:bg-ink-light transition-colors">
+                            <i class="fas fa-arrow-up text-xs"></i>
+                            Upgrade plan
+                        </a>
+                    @endif
                 </div>
 
             </div>
