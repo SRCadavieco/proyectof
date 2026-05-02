@@ -93,7 +93,7 @@
             One prompt. A hundred designs. Pick the plan that fits your creative output.
         </p>
         <p class="text-white/30 text-sm mt-3 max-w-lg mx-auto">
-            Unused credits carry over every month — they never expire.
+            Unused Spools carry over every month — they never expire.
         </p>
     </div>
 </section>
@@ -112,7 +112,7 @@
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-5">Free</p>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$0</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
                 <div class="mb-4">
-                    <p class="text-white/50 text-sm font-medium">5 credits to start</p>
+                    <p class="text-white/50 text-sm font-medium">5 Spools to start</p>
                     <p class="text-white/25 text-xs mt-0.5">No daily refill &middot; no rollover</p>
                 </div>
                 <p class="text-white/30 text-xs mb-6">Perfect to explore and test ideas.</p>
@@ -143,8 +143,8 @@
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-5">Starter</p>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$5</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
                 <div class="mb-4">
-                    <p class="text-white/50 text-sm font-medium">50 credits on day 1</p>
-                    <p class="text-white/25 text-xs mt-0.5">+1 credit / day &mdash; up to 80 / month</p>
+                    <p class="text-white/50 text-sm font-medium">50 Spools on day 1</p>
+                    <p class="text-white/25 text-xs mt-0.5">+1 Spool / day &mdash; up to 80 / month</p>
                 </div>
                 <p class="text-white/30 text-xs mb-6">For creators getting serious about their designs.</p>
                 <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
@@ -180,8 +180,8 @@
                 </div>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$10</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
                 <div class="mb-4">
-                    <p class="text-white/70 text-sm font-medium">80 credits on day 1</p>
-                    <p class="text-white/35 text-xs mt-0.5">+4 credits / day &mdash; up to 200 / month</p>
+                    <p class="text-white/70 text-sm font-medium">80 Spools on day 1</p>
+                    <p class="text-white/35 text-xs mt-0.5">+4 Spools / day &mdash; up to 200 / month</p>
                 </div>
                 <p class="text-white/40 text-xs mb-6">For freelancers who design regularly.</p>
                 <ul class="space-y-2.5 text-sm text-white/70 mb-8 flex-1">
@@ -214,8 +214,8 @@
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-5">Business</p>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$20</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
                 <div class="mb-4">
-                    <p class="text-white/50 text-sm font-medium">200 credits on day 1</p>
-                    <p class="text-white/25 text-xs mt-0.5">+10 credits / day &mdash; up to 500 / month</p>
+                    <p class="text-white/50 text-sm font-medium">200 Spools on day 1</p>
+                    <p class="text-white/25 text-xs mt-0.5">+10 Spools / day &mdash; up to 500 / month</p>
                 </div>
                 <p class="text-white/30 text-xs mb-6">For studios and teams with high-volume needs.</p>
                 <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
@@ -262,10 +262,10 @@
                 <tbody>
                     @php
                     $rows = [
-                        ['Credits on day 1',     '5',                  '50',                 '80',                 '200'],
+                        ['Spools on day 1',     '5',                  '50',                 '80',                 '200'],
                         ['Daily refill',         false,                '+1 / day',           '+4 / day',           '+10 / day'],
                         ['Monthly cap',          '5',                  '80',                 '200',                '500'],
-                        ['Credits roll over',    false,                true,                 true,                 true],
+                        ['Spools roll over',    false,                true,                 true,                 true],
                         ['All AI models',        true,                 true,                 true,                 true],
                         ['Background removal',   true,                 true,                 true,                 true],
                         ['Printify integration', true,                 true,                 true,                 true],

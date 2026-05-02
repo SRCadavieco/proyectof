@@ -15,7 +15,7 @@
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen {{ $bodyClass ?? 'bg-cream-50' }}">
-            @include('layouts.navigation')
+            @include('layouts.navigation', ['navDarkHero' => isset($navDarkHero) && $navDarkHero])
 
             <!-- Page Content -->
             <main class="pt-20">

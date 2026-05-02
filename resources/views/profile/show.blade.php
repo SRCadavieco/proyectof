@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="title">My Profile</x-slot>
     <x-slot name="bodyClass">bg-[#0d0d0d]</x-slot>
+    <x-slot name="navDarkHero">true</x-slot>
 
     {{-- ── Hero banner ── --}}
     <div class="bg-ink">
@@ -23,7 +24,10 @@
                         {{ in_array(strtolower($user->plan ?? 'free'), ['pro', 'studio']) ? 'bg-purple-500/30 text-purple-200' : 'bg-white/10 text-white/60' }}">
                         {{ ucfirst($user->plan ?? 'Free') }}
                     </span>
-                    <span class="text-white/40 text-xs">{{ number_format($user->tokens ?? 0) }} tokens remaining</span>
+                    <span class="inline-flex items-center gap-1 text-white/40 text-xs">
+                        <img src="/images/spool.webp" class="w-3.5 h-3.5 object-contain opacity-60" alt="">
+                        {{ number_format($user->tokens ?? 0) }} Spools remaining
+                    </span>
                     <a href="{{ route('profile.edit') }}"
                        class="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors">
                         <i class="fas fa-pen text-[10px]"></i> Edit profile
@@ -41,7 +45,7 @@
                 </div>
                 <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
                     <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['tokens_used']) }}</p>
-                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Credits used</p>
+                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Spools used</p>
                 </div>
                 <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
                     <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['products_pushed']) }}</p>
@@ -122,10 +126,10 @@
             @php
                 $plan = strtolower($user->plan ?? 'free');
                 $planMeta = [
-                    'free'     => ['label' => 'Free',     'price' => '$0',  'accent' => '#444',   'perks' => ['5 credits to start', 'All AI models', 'Printify integration'], 'desc' => 'Perfect for exploring FabricAI.'],
-                    'starter'  => ['label' => 'Starter',  'price' => '$5',  'accent' => '#7c3ca0','perks' => ['Up to 80 credits/month', 'Daily refill', 'All AI models', 'Printify integration', 'Choose 1 garment color per upload'], 'desc' => 'For creators getting serious.'],
-                    'pro'      => ['label' => 'Pro',      'price' => '$10', 'accent' => '#c084fc','perks' => ['Up to 200 credits/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For freelancers who design regularly.'],
-                    'business' => ['label' => 'Business', 'price' => '$20', 'accent' => '#a855f7','perks' => ['Up to 500 credits/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For studios with high-volume needs.'],
+                    'free'     => ['label' => 'Free',     'price' => '$0',  'accent' => '#444',   'perks' => ['5 Spools to start', 'All AI models', 'Printify integration'], 'desc' => 'Perfect for exploring FabricAI.'],
+                    'starter'  => ['label' => 'Starter',  'price' => '$5',  'accent' => '#7c3ca0','perks' => ['Up to 80 Spools/month', 'Daily refill', 'All AI models', 'Printify integration', 'Choose 1 garment color per upload'], 'desc' => 'For creators getting serious.'],
+                    'pro'      => ['label' => 'Pro',      'price' => '$10', 'accent' => '#c084fc','perks' => ['Up to 200 Spools/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For freelancers who design regularly.'],
+                    'business' => ['label' => 'Business', 'price' => '$20', 'accent' => '#a855f7','perks' => ['Up to 500 Spools/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For studios with high-volume needs.'],
                 ];
                 $meta = $planMeta[$plan] ?? $planMeta['free'];
             @endphp

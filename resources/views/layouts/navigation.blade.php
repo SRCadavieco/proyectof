@@ -81,27 +81,29 @@
                          x-transition:leave="transition ease-in duration-100"
                          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                          x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                         class="absolute right-0 mt-2 w-48 bg-white border border-cream-300
-                         rounded-lg shadow-lg shadow-black/5 py-1 z-50"
-                         style="display:none;">
-                         <div class="px-4 py-3 border-b border-cream-200">
-                             <p class="text-sm font-medium text-ink truncate">{{ Auth::user()->name }}</p>
-                             <p class="text-xs text-ink-muted truncate">{{ Auth::user()->email }}</p>
+                         class="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 z-50"
+                         style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);display:none;">
+                         <div class="px-4 py-3" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+                             <p class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</p>
+                             <p class="text-xs text-white/40 truncate">{{ Auth::user()->email }}</p>
                             </div>
                             <a href="{{ route('profile.show') }}"
-                               class="block px-4 py-2.5 text-sm text-ink-light hover:text-ink hover:bg-cream-100 transition-colors">
+                               class="block px-4 py-2.5 text-sm text-white/60 hover:text-white transition-colors"
+                               style="transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background=''">
                                 <i class="fas fa-user mr-2"></i>My Profile
                             </a>
                             @if(Auth::user()->is_admin)
                                 <a href="{{ route('admin.dashboard') }}"
-                                   class="block px-4 py-2.5 text-sm text-ink-light hover:text-ink hover:bg-cream-100 transition-colors">
+                                   class="block px-4 py-2.5 text-sm text-white/60 hover:text-white transition-colors"
+                                   onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background=''">
                                     <i class="fas fa-shield-halved mr-2"></i>Admin Panel
                                 </a>
                             @endif
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"
-                                class="w-full text-left px-4 py-2.5 text-sm text-ink-muted hover:text-ink hover:bg-cream-100 transition-colors">
+                                class="w-full text-left px-4 py-2.5 text-sm text-white/40 hover:text-white transition-colors"
+                                onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background=''">
                                 Log out
                             </button>
                         </form>

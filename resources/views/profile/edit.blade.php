@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="title">Edit Profile</x-slot>
     <x-slot name="bodyClass">bg-[#0d0d0d]</x-slot>
+    <x-slot name="navDarkHero">true</x-slot>
 
     <style>
         /* Dark form inputs for profile edit */

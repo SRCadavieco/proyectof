@@ -183,15 +183,17 @@
         <!-- Footer -->
         <div class="px-4 pt-4 pb-6 space-y-3" style="border-top:1px solid rgba(255,255,255,0.07)">
 
-            <!-- Design credits -->
+            <!-- Spools -->
             <div class="flex items-center justify-between px-3 py-2.5 rounded-xl" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)">
-                <span class="text-xs text-white/40 tracking-wide">Design Credits</span>
+                <div class="flex items-center gap-1.5">
+                    <img src="/images/spool.webp" class="w-4 h-4 object-contain opacity-70" alt="Spools">
+                    <span class="text-xs text-white/40 tracking-wide">Spools</span>
+                </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
-                        <span id="token-icon" class="text-sm" style="color:#7c3ca0">⚡</span>
                         <span id="token-count" class="text-sm font-semibold text-white">{{ Auth::user()->tokens ?? 0 }}</span>
                     </div>
-                    <button onclick="openCreditPacksModal()" title="Buy more credits"
+                    <button onclick="openCreditPacksModal()" title="Buy more Spools"
                             class="text-[10px] px-2 py-0.5 rounded-full font-semibold leading-none transition-colors"
                             style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc"
                             onmouseover="this.style.background='rgba(124,60,160,0.35)'" onmouseout="this.style.background='rgba(124,60,160,0.2)'">+</button>
@@ -304,15 +306,15 @@
                 <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
                      style="background:rgba(124,60,160,0.08);border:1px solid rgba(124,60,160,0.25);">
                     <div class="flex items-center gap-2">
-                        <span style="color:#7c3ca0;font-size:16px;">⚡</span>
-                        <span class="text-sm font-medium" style="color:#5a2275;">You've used all your design credits</span>
+                        <img src="/images/spool.webp" class="w-4 h-4 object-contain" style="opacity:0.8" alt="Spools">
+                        <span class="text-sm font-medium" style="color:#5a2275;">You've used all your Spools</span>
                     </div>
                     <a href="#" onclick="openCreditPacksModal(); return false;"
                        class="shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold text-white transition-colors"
                        style="background:#7c3ca0;"
                        onmouseover="this.style.background='#5a2275'"
                        onmouseout="this.style.background='#7c3ca0'">
-                        Get more credits
+                        Get more Spools
                     </a>
                 </div>
             </div>
@@ -323,7 +325,7 @@
                     <span class="w-1.5 h-1.5 rounded-full dot-2" style="background:#7c3ca0"></span>
                     <span class="w-1.5 h-1.5 rounded-full dot-3" style="background:#7c3ca0"></span>
                 </div>
-                <span id="loader-text">Creating your design…</span>
+
             </div>
             <form id="design-form" class="max-w-2xl mx-auto">
                 <!-- Edit mode banner -->
@@ -929,7 +931,7 @@
             const sendBtn  = document.getElementById('submit-btn');
             if (!countEl) return;
             countEl.textContent = n;
-            if (iconEl) iconEl.textContent = '⚡';
+            if (iconEl) iconEl.innerHTML = '<img src="/images/spool.webp" class="w-4 h-4 object-contain opacity-70" alt="Spools">';
             if (banner) banner.classList.toggle('hidden', n > 0);
             if (textarea) textarea.disabled = n <= 0;
             if (sendBtn)  sendBtn.disabled  = n <= 0;
@@ -1127,28 +1129,12 @@
     });
 
     // ─── Loader ───────────────────────────────────────────────────────
-    const ATELIER_MESSAGES = [
-        'Creating your design…', 'Stitching your idea together…', 'Cutting the pattern…',
-        'The atelier is at work…', 'Draping the fabric…', 'Fitting your design…',
-        'Pinning the details…', 'Pressing the seams…',
-    ];
     let _loaderInterval = null;
     function setLoading(loading) {
         submitBtn.disabled = loading;
         loader.classList.toggle('hidden', !loading);
         loader.classList.toggle('flex', loading);
         errorEl.classList.add('hidden');
-        const textEl = document.getElementById('loader-text');
-        if (loading && textEl) {
-            let idx = Math.floor(Math.random() * ATELIER_MESSAGES.length);
-            textEl.textContent = ATELIER_MESSAGES[idx];
-            _loaderInterval = setInterval(() => {
-                idx = (idx + 1) % ATELIER_MESSAGES.length;
-                textEl.textContent = ATELIER_MESSAGES[idx];
-            }, 2800);
-        } else {
-            clearInterval(_loaderInterval); _loaderInterval = null;
-        }
     }
     function showError(msg) {
         errorEl.textContent = msg; errorEl.classList.remove('hidden');
@@ -3381,7 +3367,7 @@
 <div id="credit-packs-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
     <div class="w-full max-w-sm rounded-2xl p-6" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
         <div class="flex items-center justify-between mb-5">
-            <h2 class="text-base font-semibold text-white">Get more credits</h2>
+            <h2 class="text-base font-semibold text-white">Get more Spools</h2>
             <button onclick="closeCreditPacksModal()" class="text-white/30 hover:text-white/70 transition-colors text-lg leading-none">&times;</button>
         </div>
         <div class="space-y-3">
@@ -3401,7 +3387,7 @@
                         onmouseover="this.style.background='rgba(124,60,160,0.15)';this.style.borderColor='rgba(124,60,160,0.4)'"
                         onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.08)'">
                     <div>
-                        <span class="block text-sm font-medium text-white">{{ $pack['credits'] }} credits</span>
+                        <span class="block text-sm font-medium text-white">{{ $pack['credits'] }} Spools</span>
                         <span class="block text-xs text-white/40">{{ $pack['label'] }}</span>
                     </div>
                     <div class="flex items-center gap-2">
@@ -3414,15 +3400,15 @@
             </form>
             @endforeach
         </div>
-        <p class="text-[10px] text-white/20 text-center mt-4">Credits never expire. Secure checkout via Stripe.</p>
+        <p class="text-[10px] text-white/20 text-center mt-4">Spools never expire. Secure checkout via Stripe.</p>
     </div>
 </div>
 
 @if(session('credits_purchased'))
 <div id="credits-success-toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl"
      style="background:#1a1a1a;border:1px solid rgba(124,60,160,0.4)">
-    <span style="color:#c084fc;font-size:18px">⚡</span>
-    <span class="text-sm text-white font-medium">{{ session('credits_purchased') }} credits added to your account!</span>
+    <img src="/images/spool.webp" class="w-5 h-5 object-contain" alt="Spools">
+    <span class="text-sm text-white font-medium">{{ session('credits_purchased') }} Spools added to your account!</span>
     <button onclick="this.parentElement.remove()" class="text-white/30 hover:text-white ml-2">&times;</button>
 </div>
 <script>setTimeout(()=>{ const t=document.getElementById('credits-success-toast'); if(t) t.remove(); }, 5000);</script>
