@@ -117,7 +117,7 @@
         #chat-container {
             background-image:
                 linear-gradient(rgba(13,13,13,0.82), rgba(13,13,13,0.82)),
-                url('/images/fitting-room.jpg');
+                url('/images/fitting-room.png');
             background-size: cover;
             background-position: center;
         }
@@ -539,9 +539,16 @@
                         <label class="flex items-center gap-2 text-xs text-white/60">
                             <input type="checkbox" id="turbo-front" checked class="accent-[#7c3ca0]"> Front
                         </label>
+                        @if(in_array(Auth::user()->plan ?? 'free', ['pro', 'business']))
                         <label class="flex items-center gap-2 text-xs text-white/60">
                             <input type="checkbox" id="turbo-back" class="accent-[#7c3ca0]"> Back
                         </label>
+                        @else
+                        <label class="flex items-center gap-2 text-xs text-white/25 cursor-not-allowed" title="Available from Pro plan">
+                            <input type="checkbox" id="turbo-back" class="accent-[#7c3ca0]" disabled> Back
+                            <span class="text-[10px] text-[#c084fc] font-medium">Pro</span>
+                        </label>
+                        @endif
                     </div>
                 </div>
                 <div id="turbo-back-selector" class="hidden mb-3">
@@ -2931,11 +2938,6 @@
     });
 
     function openTurboUpdateModal(chatImageSrc) {
-        if (userPlan !== 'pro' && userPlan !== 'business') {
-            showToast('El Turbo Update está disponible desde el plan Pro. Actualiza tu plan para usarlo.', 'error');
-            setTimeout(() => window.location.href = '/pricing', 2800);
-            return;
-        }
         _turboFrontImageSrc = chatImageSrc || null;
         if (!chatImageSrc && !_layers.front.length) {
             showToast('Carga un diseño en el canvas primero.', 'error'); return;

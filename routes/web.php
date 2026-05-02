@@ -16,6 +16,11 @@ Route::get('/faq', function () {
     return view('faq');
 });
 
+// Terms of Use page
+Route::get('/terms', function () {
+    return view('terms');
+});
+
 // Pricing page
 Route::get('/pricing', function () {
     return view('pricing');

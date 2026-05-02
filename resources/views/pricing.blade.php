@@ -122,6 +122,7 @@
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Background removal</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Printify integration</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Design history</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Turbo upload (front only)</li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'free')
@@ -147,11 +148,13 @@
                 </div>
                 <p class="text-white/30 text-xs mb-6">For creators getting serious about their designs.</p>
                 <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
+                <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Up to 80 designs / month</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>All AI models</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Background removal</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Printify integration</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Design history</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Turbo upload (front only)</li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'starter')
@@ -266,7 +269,8 @@
                         ['Printify integration', true,                 true,                 true,                 true],
                         ['Design history',       true,                 true,                 true,                 true],
                         ['AI chats / month',     false,                false,                '10',                 '30'],
-                        ['Turbo front & back',   false,                false,                true,                 true],
+                        ['Turbo upload (front)',      true,  true,  true,  true],
+                        ['Turbo back placement',      false, false, true,  true],
                     ];
                     @endphp
                     @foreach($rows as $i => $row)

@@ -22,7 +22,7 @@
                 <div class="space-y-3">
                     <p class="font-medium text-ink uppercase tracking-widest text-xs">Legal</p>
                     <a href="#" class="block text-ink-muted hover:text-accent transition-colors">Privacy</a>
-                    <a href="#" class="block text-ink-muted hover:text-accent transition-colors">Terms</a>
+                    <a href="/terms" class="block text-ink-muted hover:text-accent transition-colors">Terms</a>
                 </div>
             </div>
         </div>
