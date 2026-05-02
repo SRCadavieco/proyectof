@@ -44,8 +44,9 @@ Route::middleware('auth')->group(function () {
     })->name('api.tokens');
 
     // Printify
-    Route::post('/printify/connect',    [PrintifyController::class, 'connect'])->name('printify.connect');
-    Route::delete('/printify/disconnect', [PrintifyController::class, 'disconnect'])->name('printify.disconnect');
+    Route::post('/printify/connect',         [PrintifyController::class, 'connect'])->name('printify.connect');
+    Route::post('/printify/dismiss-popup',   [PrintifyController::class, 'dismissPopup'])->name('printify.dismiss-popup');
+    Route::delete('/printify/disconnect',    [PrintifyController::class, 'disconnect'])->name('printify.disconnect');
     Route::get('/printify/garments',       [PrintifyController::class, 'garments'])->name('printify.garments');
     Route::get('/printify/status',         [PrintifyController::class, 'status'])->name('printify.status');
     Route::get('/printify/shops',       [PrintifyController::class, 'shops'])->name('printify.shops');

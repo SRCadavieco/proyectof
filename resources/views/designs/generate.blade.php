@@ -3153,5 +3153,6 @@
     }
 </script>
 
+@include('layouts.printify-popup')
 </body>
 </html>

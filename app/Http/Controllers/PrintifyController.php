@@ -48,6 +48,13 @@ class PrintifyController extends Controller
         return back()->with('printify_success', 'Printify account disconnected.');
     }
 
+    // POST /printify/dismiss-popup
+    public function dismissPopup()
+    {
+        session(['printify_popup_dismissed' => true]);
+        return response()->json(['ok' => true]);
+    }
+
     // GET /printify/status
     public function status()
     {

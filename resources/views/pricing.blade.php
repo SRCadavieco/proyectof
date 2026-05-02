@@ -4,6 +4,7 @@
     <link rel="icon" href="/images/logo.png" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Pricing — FabricAI</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -82,12 +83,7 @@
     <div x-data="{ show: false }" x-init="setTimeout(() => show = true, 80)"
          :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
          class="relative z-10 max-w-3xl mx-auto px-6 transition-all duration-1000 ease-out">
-        <div class="mb-8">
-            <span class="tag-pill">
-                <span class="pulse-dot w-1.5 h-1.5 rounded-full inline-block" style="background:#9d5bc7"></span>
-                Pricing
-            </span>
-        </div>
+
         <h1 class="font-serif leading-tight mb-6" style="font-size:clamp(2.8rem,7vw,6rem)">
             <span class="text-white">Simple,</span><br>
             <span class="italic gradient-text">transparent</span><br>
@@ -95,6 +91,9 @@
         </h1>
         <p class="text-white/50 text-lg max-w-xl mx-auto">
             One prompt. A hundred designs. Pick the plan that fits your creative output.
+        </p>
+        <p class="text-white/30 text-sm mt-3 max-w-lg mx-auto">
+            Unused credits carry over every month — they never expire.
         </p>
     </div>
 </section>
@@ -112,9 +111,13 @@
                  style="background:#111;border:1px solid rgba(255,255,255,0.07);">
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-5">Free</p>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$0</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
+                <div class="mb-4">
+                    <p class="text-white/50 text-sm font-medium">5 credits to start</p>
+                    <p class="text-white/25 text-xs mt-0.5">No daily refill &middot; no rollover</p>
+                </div>
                 <p class="text-white/30 text-xs mb-6">Perfect to explore and test ideas.</p>
                 <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
-                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>5 designs / month</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>5 designs total</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>All AI models</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Background removal</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Printify integration</li>
@@ -138,9 +141,13 @@
                  style="background:#111;border:1px solid rgba(255,255,255,0.07);">
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-5">Starter</p>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$5</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
+                <div class="mb-4">
+                    <p class="text-white/50 text-sm font-medium">50 credits on day 1</p>
+                    <p class="text-white/25 text-xs mt-0.5">+1 credit / day &mdash; up to 80 / month</p>
+                </div>
                 <p class="text-white/30 text-xs mb-6">For creators getting serious about their designs.</p>
                 <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
-                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>80 designs / month</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Up to 80 designs / month</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>All AI models</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Background removal</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Printify integration</li>
@@ -168,9 +175,13 @@
                     <span class="text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-white" style="background:#7c3ca0">Most popular</span>
                 </div>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$10</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
+                <div class="mb-4">
+                    <p class="text-white/70 text-sm font-medium">80 credits on day 1</p>
+                    <p class="text-white/35 text-xs mt-0.5">+4 credits / day &mdash; up to 200 / month</p>
+                </div>
                 <p class="text-white/40 text-xs mb-6">For freelancers who design regularly.</p>
                 <ul class="space-y-2.5 text-sm text-white/70 mb-8 flex-1">
-                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>200 designs / month</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>Up to 200 designs / month</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>All AI models</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>Background removal</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#c084fc"></span>Printify integration</li>
@@ -197,9 +208,13 @@
                  style="background:#111;border:1px solid rgba(255,255,255,0.07);">
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-5">Business</p>
                 <div class="mb-1"><span class="font-serif text-4xl text-white">$20</span><span class="text-white/30 text-sm ml-1">/ month</span></div>
+                <div class="mb-4">
+                    <p class="text-white/50 text-sm font-medium">200 credits on day 1</p>
+                    <p class="text-white/25 text-xs mt-0.5">+10 credits / day &mdash; up to 500 / month</p>
+                </div>
                 <p class="text-white/30 text-xs mb-6">For studios and teams with high-volume needs.</p>
                 <ul class="space-y-2.5 text-sm text-white/55 mb-8 flex-1">
-                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>500 designs / month</li>
+                    <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Up to 500 designs / month</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>All AI models</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Background removal</li>
                     <li class="flex items-center gap-2.5"><span class="w-1 h-1 rounded-full flex-shrink-0" style="background:#7c3ca0"></span>Printify integration</li>
@@ -242,13 +257,16 @@
                 <tbody>
                     @php
                     $rows = [
-                        ['Credits / month',     '5',   '80',   '200',  '500'],
-                        ['All AI models',        true,  true,   true,   true],
-                        ['Background removal',   true,  true,   true,   true],
-                        ['Printify integration', true,  true,   true,   true],
-                        ['Design history',       true,  true,   true,   true],
-                        ['AI chats / month',     false, false,  '10',   '30'],
-                        ['Turbo front & back',   false, false,  true,   true],
+                        ['Credits on day 1',     '5',                  '50',                 '80',                 '200'],
+                        ['Daily refill',         false,                '+1 / day',           '+4 / day',           '+10 / day'],
+                        ['Monthly cap',          '5',                  '80',                 '200',                '500'],
+                        ['Credits roll over',    false,                true,                 true,                 true],
+                        ['All AI models',        true,                 true,                 true,                 true],
+                        ['Background removal',   true,                 true,                 true,                 true],
+                        ['Printify integration', true,                 true,                 true,                 true],
+                        ['Design history',       true,                 true,                 true,                 true],
+                        ['AI chats / month',     false,                false,                '10',                 '30'],
+                        ['Turbo front & back',   false,                false,                true,                 true],
                     ];
                     @endphp
                     @foreach($rows as $i => $row)

@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Reset every user's monthly credits on the 1st of each month at midnight UTC.
 Schedule::command('credits:reset-monthly')->monthlyOn(1, '00:00');
+
+// Grant daily tokens to paid users every day at 06:00 UTC.
+Schedule::command('credits:give-daily')->dailyAt('06:00');

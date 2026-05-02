@@ -12,11 +12,11 @@ class ResetMonthlyCredits extends Command
 
     public function handle(): int
     {
-        $now = now();
-
-        // Only reset users whose last reset was in a previous month/year (or never set)
+        $now   = now();
         $count = 0;
 
+        // Grant upfront tokens for users whose last reset was in a previous month/year (or never).
+        // Tokens are ADDED to the existing balance — they never expire or reset.
         User::query()
             ->where(function ($q) use ($now) {
                 $q->whereNull('tokens_reset_at')
@@ -24,14 +24,17 @@ class ResetMonthlyCredits extends Command
                   ->orWhereRaw('MONTH(tokens_reset_at) < ? AND YEAR(tokens_reset_at) = ?', [$now->month, $now->year]);
             })
             ->each(function (User $user) use ($now, &$count) {
+                $upfront = User::upfrontCreditsForPlan($user->plan ?? 'free');
                 $user->update([
-                    'tokens'          => User::creditsForPlan($user->plan ?? 'free'),
-                    'tokens_reset_at' => $now->copy()->startOfMonth(),
+                    'tokens'                  => $user->tokens + $upfront,
+                    'tokens_given_this_month' => $upfront,
+                    'tokens_reset_at'         => $now->copy()->startOfMonth(),
+                    'daily_tokens_given_at'   => null,
                 ]);
                 $count++;
             });
 
-        $this->info("Reset credits for {$count} user(s).");
+        $this->info("Granted upfront monthly tokens to {$count} user(s).");
 
         return self::SUCCESS;
     }

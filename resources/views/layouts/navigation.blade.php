@@ -169,3 +169,5 @@
     </div>
 </nav>
 
+@include('layouts.printify-popup')
+
