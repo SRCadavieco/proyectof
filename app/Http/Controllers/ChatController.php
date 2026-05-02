@@ -74,4 +74,10 @@ class ChatController extends Controller
         $chat->delete();
         return response()->json(['success' => true]);
     }
+
+    public function destroyAll()
+    {
+        Auth::user()->chats()->delete();
+        return response()->json(['success' => true]);
+    }
 }

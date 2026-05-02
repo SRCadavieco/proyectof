@@ -191,6 +191,7 @@ class PrintifyController extends Controller
             'shop_id'      => 'required|integer',
             'image_source' => 'required|string',
             'title'        => 'required|string|max:140',
+            'color'        => 'nullable|string|max:50',
             'pos_x'        => 'nullable|numeric|min:0|max:1',
             'pos_y'        => 'nullable|numeric|min:0|max:1',
             'design_scale' => 'nullable|numeric|min:0.1|max:3',
@@ -204,7 +205,8 @@ class PrintifyController extends Controller
                 $data['image_source'],
                 (float) ($data['pos_x']        ?? 0.5),
                 (float) ($data['pos_y']        ?? 0.5),
-                (float) ($data['design_scale'] ?? 1.0)
+                (float) ($data['design_scale'] ?? 1.0),
+                $data['color']                 ?? ''
             );
 
             $successCount = count(array_filter($results, fn($r) => $r['success']));

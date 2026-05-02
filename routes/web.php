@@ -210,6 +210,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/chats/{chat}', [ChatController::class, 'show']);
     Route::patch('/chats/{chat}', [ChatController::class, 'rename']);
     Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
+    Route::delete('/chats', [ChatController::class, 'destroyAll']);
 });
 require __DIR__.'/auth.php';
 

@@ -25,25 +25,34 @@ class BackgroundRemovalService
         $binary = $this->base64ToBinary($imageBase64);
         if ($binary === null) return null;
 
-        try {
-            $response = Http::withToken($this->token)
-                ->timeout(60)
-                ->attach('file', $binary, 'image.png')
-                ->post("{$this->apiUrl}/remove-bg");
+        $lastError = null;
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                $response = Http::withToken($this->token)
+                    ->timeout(60)
+                    ->attach('file', $binary, 'image.png')
+                    ->post("{$this->apiUrl}/remove-bg");
 
-            if (!$response->successful()) {
-                Log::error('RnBulkTools remove-bg failed', [
-                    'status' => $response->status(),
-                    'body'   => $response->body(),
-                ]);
-                return null;
+                if (!$response->successful()) {
+                    $lastError = 'HTTP ' . $response->status() . ': ' . $response->body();
+                    Log::warning("RnBulkTools remove-bg attempt {$attempt} failed", [
+                        'status' => $response->status(),
+                        'body'   => substr($response->body(), 0, 300),
+                    ]);
+                    if ($attempt < 2) continue;
+                    Log::error('RnBulkTools remove-bg failed after retries', ['last_error' => $lastError]);
+                    return null;
+                }
+
+                return $this->parseImageResponse($response, 'image/png');
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+                Log::warning("RnBulkTools remove-bg attempt {$attempt} exception", ['message' => $e->getMessage()]);
             }
-
-            return $this->parseImageResponse($response, 'image/png');
-        } catch (\Throwable $e) {
-            Log::error('RnBulkTools remove-bg exception', ['message' => $e->getMessage()]);
-            return null;
         }
+
+        Log::error('RnBulkTools remove-bg failed after retries', ['last_error' => $lastError]);
+        return null;
     }
 
     /**

@@ -164,11 +164,18 @@
         <div class="flex-1 overflow-y-auto py-3 scrollbar-hide">
             <div class="flex items-center justify-between px-4 mb-2">
                 <p class="text-[9px] uppercase tracking-[0.2em] text-white/30">My Designs</p>
-                <button onclick="newChat()" title="New design session"
-                        class="w-5 h-5 flex items-center justify-center bg-ink text-white
-                               hover:bg-[#7c3ca0] transition-colors rounded-full shrink-0">
-                    <i class="fas fa-plus" style="font-size:8px"></i>
-                </button>
+                <div class="flex items-center gap-1">
+                    <button onclick="showDeleteAllModal()" title="Delete all sessions"
+                            class="w-5 h-5 flex items-center justify-center text-white/30
+                                   hover:text-red-400 transition-colors rounded-full shrink-0">
+                        <i class="fas fa-trash-alt" style="font-size:8px"></i>
+                    </button>
+                    <button onclick="newChat()" title="New design session"
+                            class="w-5 h-5 flex items-center justify-center bg-ink text-white
+                                   hover:bg-[#7c3ca0] transition-colors rounded-full shrink-0">
+                        <i class="fas fa-plus" style="font-size:8px"></i>
+                    </button>
+                </div>
             </div>
             <div id="chat-list" class="space-y-0.5 px-2"></div>
         </div>
@@ -449,6 +456,31 @@
     </div>
 </div>
 
+<!-- ═══════════ DELETE ALL MODAL ═══════════ -->
+<div id="delete-all-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style="background:rgba(239,68,68,0.1)">
+            <i class="fas fa-trash text-red-400 text-lg"></i>
+        </div>
+        <h3 class="font-semibold text-white text-base mb-1">Delete all sessions?</h3>
+        <p class="text-sm text-white/50 mb-6 leading-relaxed">
+            All design sessions and their messages will be permanently removed. This cannot be undone.
+        </p>
+        <div class="flex gap-3">
+            <button id="delete-all-cancel-btn"
+                    class="flex-1 py-2.5 text-sm font-medium text-white/60 hover:text-white transition-colors rounded-xl" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
+                Cancel
+            </button>
+            <button id="delete-all-confirm-btn"
+                    class="flex-1 py-2.5 bg-red-500 text-white text-sm font-medium
+                           hover:bg-red-600 transition-colors rounded-xl">
+                Delete All
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════ BULK UPLOAD MODAL ═══════════ -->
 <div id="bulk-upload-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -488,6 +520,34 @@
                                class="w-10 h-10 rounded-lg cursor-pointer bg-transparent" style="border:1px solid rgba(255,255,255,0.12)">
                         <span id="bulk-color-name" class="text-xs text-white/70 font-medium">White</span>
                     </div>
+                </div>
+                <div class="mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    @if(in_array(Auth::user()->plan ?? 'free', ['pro', 'studio', 'business']))
+                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" id="bulk-all-colors" class="sr-only peer">
+                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
+                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Upload in all available colors</span>
+                            <span class="ml-1.5 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider">Pro</span>
+                        </div>
+                    </label>
+                    <p id="bulk-all-colors-note" class="text-[10px] text-white/30 mt-1.5 ml-11 hidden">
+                        Creates one product per garment with every available color variant enabled.
+                    </p>
+                    @else
+                    <div class="flex items-center gap-2.5 opacity-50 cursor-not-allowed" title="Available from Pro plan">
+                        <div class="w-9 h-5 rounded-full" style="background:rgba(255,255,255,0.12)">
+                            <div class="w-4 h-4 bg-white/40 rounded-full mt-0.5 ml-0.5"></div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-white/40 font-medium">Upload in all available colors</span>
+                            <a href="/pricing" class="ml-1.5 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider hover:underline">Upgrade</a>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
             <div id="bulk-progress-section" class="hidden space-y-3">
@@ -942,6 +1002,41 @@
         if (e.target === this) { hideDeleteModal(); pendingDeleteId = null; }
     });
 
+    // ─── Delete All modal ────────────────────────────────────────────
+    function showDeleteAllModal() {
+        const m = document.getElementById('delete-all-modal');
+        m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function hideDeleteAllModal() {
+        const m = document.getElementById('delete-all-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    document.getElementById('delete-all-cancel-btn').addEventListener('click', () => hideDeleteAllModal());
+    document.getElementById('delete-all-confirm-btn').addEventListener('click', async () => {
+        hideDeleteAllModal();
+        const btn = document.getElementById('delete-all-confirm-btn');
+        try {
+            const res = await fetch('/chats', {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            // Clear everything and start fresh
+            currentChatId = null;
+            chats = [];
+            document.getElementById('chat-list').innerHTML = '';
+            document.getElementById('chat-title').textContent = 'New Design';
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            await newChat();
+        } catch (e) {
+            console.error('Delete all failed', e);
+        }
+    });
+    document.getElementById('delete-all-modal').addEventListener('click', function (e) {
+        if (e.target === this) hideDeleteAllModal();
+    });
+
 
 
     // ─── Char counter & dynamic maxlength ───────────────────────────
@@ -1227,13 +1322,15 @@
     // ─── Chat management ──────────────────────────────────────────────
     async function loadChats() {
         const chatList = document.getElementById('chat-list');
-        chatList.innerHTML = '';
         try {
             const res = await fetch('/chats');
             chats = await res.json();
         } catch (err) {
             showError('Could not load sessions'); return;
         }
+
+        // Build into a fragment first to avoid flash
+        const frag = document.createDocumentFragment();
 
         chats.forEach(chat => {
             const wrapper = document.createElement('div');
@@ -1322,8 +1419,12 @@
             actions.appendChild(renameBtn); actions.appendChild(delBtn);
             wrapper.appendChild(thumb); wrapper.appendChild(content);
             wrapper.appendChild(input); wrapper.appendChild(actions);
-            chatList.appendChild(wrapper);
+            frag.appendChild(wrapper);
         });
+
+        // Single DOM swap — no visible flash
+        chatList.innerHTML = '';
+        chatList.appendChild(frag);
     }
 
     async function deleteChat(chatId) {
@@ -1465,9 +1566,21 @@
         await TokenManager.sync();
         syncPromptLimit();
         await loadChats();
-        const res  = await fetch('/chats');
-        const list = await res.json();
-        if (list.length === 0) await newChat();
+        if (chats.length === 0) {
+            // Create the first chat without re-rendering the sidebar (it's empty anyway)
+            try {
+                const res = await fetch('/chats', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                });
+                const data = await res.json();
+                if (res.ok && data.id) {
+                    currentChatId = data.id;
+                    chats = [data];
+                    await loadChats();
+                }
+            } catch(e) { /* non-critical */ }
+        }
         updateWelcomeScreen();
     });
 
@@ -1572,6 +1685,7 @@
 
         try {
             const res  = await fetch('/designs/saved');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
             loading.classList.add('hidden');
             if (!data.length) {
@@ -1582,7 +1696,7 @@
             data.forEach(d => {
                 const wrap = document.createElement('div');
                 wrap.dataset.designId = d.id;
-                wrap.className = 'group relative rounded-xl overflow-hidden bg-transparent hover:border-[#7c3ca0] transition-colors' + (active ? ' ring-2 ring-[#7c3ca0]' : '');
+                wrap.className = 'group relative rounded-xl overflow-hidden bg-transparent hover:border-[#7c3ca0] transition-colors';
                 wrap.style.cssText = 'border:1px solid rgba(255,255,255,0.09)';
 
                 // Bottom bar: inline editable title + action buttons
@@ -2568,6 +2682,22 @@
         document.getElementById('bulk-color-hex').value = hexSrc;
         document.getElementById('bulk-color-name').textContent = hexToColorName(hexSrc);
 
+        // Wire up all-colors toggle
+        const allColorsChk  = document.getElementById('bulk-all-colors');
+        const allColorsNote = document.getElementById('bulk-all-colors-note');
+        const colorRow      = document.getElementById('bulk-color-hex')?.closest('.flex.flex-col.gap-1');
+        if (allColorsChk) {
+            allColorsChk.checked = false;
+            if (allColorsNote) allColorsNote.classList.add('hidden');
+            if (colorRow) { colorRow.style.opacity = '1'; colorRow.style.pointerEvents = ''; }
+            allColorsChk.onchange = () => {
+                const on = allColorsChk.checked;
+                if (allColorsNote) allColorsNote.classList.toggle('hidden', !on);
+                if (colorRow) colorRow.style.opacity = on ? '0.35' : '1';
+                if (colorRow) colorRow.style.pointerEvents = on ? 'none' : '';
+            };
+        }
+
         // Show modal
         const modal = document.getElementById('bulk-upload-modal');
         modal.classList.remove('hidden');
@@ -2607,9 +2737,10 @@
     }
 
     async function startBulkUpload() {
-        const shopId = document.getElementById('bulk-shop').value;
-        const title  = document.getElementById('bulk-title').value.trim();
-        const color  = hexToColorName(document.getElementById('bulk-color-hex').value);
+        const shopId    = document.getElementById('bulk-shop').value;
+        const title     = document.getElementById('bulk-title').value.trim();
+        const allColors = document.getElementById('bulk-all-colors')?.checked ?? false;
+        const color     = allColors ? '' : hexToColorName(document.getElementById('bulk-color-hex').value);
         if (!shopId)  { alert('Please select a Printify store.'); return; }
         if (!title)   { alert('Please enter a product name.'); return; }
         if (!_bulkUploadImageSrc) { alert('No image selected.'); return; }
