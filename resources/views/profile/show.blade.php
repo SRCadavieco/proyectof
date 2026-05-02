@@ -1,11 +1,60 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-serif text-xl text-ink leading-tight">
-            My Profile
-        </h2>
-    </x-slot>
+    <x-slot name="title">My Profile</x-slot>
 
-    <div class="py-12" x-data="{ showPrintifyModal: false }">
+    {{-- ── Hero banner ── --}}
+    <div class="bg-ink">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            {{-- Avatar --}}
+            @if($user->avatar)
+                <img src="{{ $user->avatar }}" alt="{{ $user->name }}"
+                     class="w-20 h-20 rounded-full object-cover border-2 border-white/20 shadow-lg shrink-0">
+            @else
+                <div class="w-20 h-20 rounded-full border-2 border-white/20 bg-white/10 flex items-center justify-center text-white text-3xl font-bold select-none shrink-0">
+                    {{ strtoupper(mb_substr($user->name, 0, 1)) }}
+                </div>
+            @endif
+
+            <div class="flex-1 min-w-0">
+                <h1 class="font-serif text-3xl text-white">{{ $user->name }}</h1>
+                <p class="text-white/50 text-sm mt-1 truncate">{{ $user->email }}</p>
+                <div class="flex flex-wrap items-center gap-3 mt-3">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-widest
+                        {{ in_array(strtolower($user->plan ?? 'free'), ['pro', 'studio']) ? 'bg-purple-500/30 text-purple-200' : 'bg-white/10 text-white/60' }}">
+                        {{ ucfirst($user->plan ?? 'Free') }}
+                    </span>
+                    <span class="text-white/40 text-xs">{{ number_format($user->tokens ?? 0) }} tokens remaining</span>
+                    <a href="{{ route('profile.edit') }}"
+                       class="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors">
+                        <i class="fas fa-pen text-[10px]"></i> Edit profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {{-- Stats row --}}
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 pb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
+                    <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['images_generated']) }}</p>
+                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Designs created</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
+                    <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['tokens_used']) }}</p>
+                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Tokens used</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
+                    <p class="text-2xl font-serif font-bold text-white">{{ number_format($stats['products_pushed']) }}</p>
+                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Products pushed</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
+                    <p class="text-lg font-bold text-white truncate">{{ $stats['most_used_model'] }}</p>
+                    <p class="text-[11px] text-white/40 mt-0.5 uppercase tracking-wider">Top model</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-8" x-data="{ showPrintifyModal: false }">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if(session('subscription_cancelled'))
@@ -14,42 +63,6 @@
                     {{ session('subscription_cancelled') }}
                 </div>
             @endif
-
-            {{-- ── Profile Card ── --}}
-            <div class="bg-white border border-cream-200 sm:rounded-lg p-6 sm:p-8">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-
-                    {{-- Left: name & email --}}
-                    <div class="flex-1">
-                        <h3 class="font-serif text-2xl text-ink">{{ $user->name }}</h3>
-                        <p class="text-sm text-ink-muted mt-1">{{ $user->email }}</p>
-                        <p class="text-xs text-ink-muted mt-1">
-                            Plan: <span class="font-semibold capitalize">{{ $user->plan ?? 'Free' }}</span>
-                            &nbsp;·&nbsp;
-                            Tokens remaining: <span class="font-semibold">{{ $user->tokens ?? 0 }}</span>
-                        </p>
-                        <div class="mt-4 flex flex-wrap gap-3">
-                            <a href="{{ route('profile.edit') }}"
-                               class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted border border-cream-300 px-4 py-2 rounded hover:bg-cream-100 transition-colors">
-                                <i class="fas fa-pen-to-square"></i> Edit Profile
-                            </a>
-                        </div>
-                    </div>
-
-                    {{-- Right: avatar --}}
-                    <div class="shrink-0">
-                        @if($user->avatar)
-                            <img src="{{ $user->avatar }}"
-                                 alt="{{ $user->name }}"
-                                 class="w-24 h-24 rounded-full object-cover border-2 border-cream-300 shadow-sm">
-                        @else
-                            <div class="w-24 h-24 rounded-full bg-ink flex items-center justify-center text-white text-3xl font-bold select-none shadow-sm">
-                                {{ strtoupper(mb_substr($user->name, 0, 1)) }}
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
 
             {{-- ── Printify Integration Card ── --}}
             <div class="bg-white border border-cream-200 sm:rounded-lg p-6 sm:p-8">

@@ -1,8 +1,30 @@
 <x-app-layout>
-    <div class="min-h-screen bg-cream-50">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 pt-28 space-y-6">
+    <x-slot name="title">Edit Profile</x-slot>
 
-            <h1 class="text-2xl font-serif text-ink">Edit Profile</h1>
+    {{-- ── Page header ── --}}
+    <div class="bg-ink">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex items-center justify-between">
+            <div>
+                <a href="{{ route('profile.show') }}"
+                   class="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors mb-3">
+                    <i class="fas fa-arrow-left text-[10px]"></i> Back to profile
+                </a>
+                <h1 class="font-serif text-2xl text-white">Edit Profile</h1>
+                <p class="text-white/50 text-sm mt-1">Update your account information</p>
+            </div>
+            @if($user->avatar)
+                <img src="{{ $user->avatar }}" alt="{{ $user->name }}"
+                     class="w-12 h-12 rounded-full object-cover border-2 border-white/20 shrink-0 hidden sm:block">
+            @else
+                <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 flex items-center justify-center text-white text-xl font-bold select-none shrink-0 hidden sm:block">
+                    {{ strtoupper(mb_substr($user->name, 0, 1)) }}
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="min-h-screen bg-cream-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
             {{-- ── Block 1: Account Info ── --}}
             <div class="bg-white border border-cream-200 p-6 sm:p-8">

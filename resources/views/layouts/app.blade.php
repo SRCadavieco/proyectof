@@ -5,25 +5,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name') }}</title>
+        <title>{{ isset($title) ? $title . ' — ' : '' }}{{ config('app.name', 'FabricAI') }}</title>
 
         <link rel="icon" href="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" type="image/png">
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-cream-50">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white border-b border-cream-200 pt-20">
-                </header>
-            @endisset
-
             <!-- Page Content -->
-            <main class="{{ isset($header) ? '' : 'pt-20' }}">
+            <main class="pt-20">
                 {{ $slot }}
             </main>
         </div>
