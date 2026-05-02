@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -7,7 +7,7 @@
 
         <title>{{ config('app.name', 'FabricAI') }}</title>
 
-        <link rel="icon" href="/images/logo.png" type="image/png">
+        <link rel="icon" href="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" type="image/png">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -27,7 +27,7 @@
                 </div>
                 <div class="relative z-10 text-center px-16">
                     <a href="/">
-                        <img src="/images/logo.png" alt="FabricAI" class="h-20 w-20 mx-auto mb-10">
+                        <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-20 w-20 mx-auto mb-10">
                     </a>
                     <h2 class="font-serif text-4xl text-white mb-4 leading-tight">
                         Design the future<br>
@@ -46,7 +46,7 @@
                 <!-- Mobile logo -->
                 <div class="lg:hidden mb-8">
                     <a href="/" class="flex items-center gap-3">
-                        <img src="/images/logo.png" alt="FabricAI" class="h-12 w-12">
+                        <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-12 w-12">
                         <span class="font-serif text-xl text-ink">FabricAI</span>
                     </a>
                 </div>

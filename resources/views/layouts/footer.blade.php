@@ -1,11 +1,11 @@
-<!-- ================= FOOTER ================= -->
+﻿<!-- ================= FOOTER ================= -->
 <footer class="border-t border-cream-300 bg-cream-100">
     <div class="max-w-7xl mx-auto px-6 py-16">
         <div class="flex flex-col md:flex-row justify-between items-start gap-10">
             <!-- Brand -->
             <div class="space-y-4">
                 <a href="/" class="flex items-center gap-3">
-                    <img src="/images/logo.png" alt="FabricAI" class="h-10 w-10">
+                    <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-10 w-10">
                     <span class="font-serif text-xl text-ink">FabricAI</span>
                 </a>
                 <p class="text-sm text-ink-muted max-w-xs">AI-powered clothing design, crafted for creators.</p>

@@ -1,4 +1,4 @@
-<!-- ================= NAVBAR ================= -->
+﻿<!-- ================= NAVBAR ================= -->
 <style>
     nav.nav-dark-hero .nav-link       { color: rgba(255,255,255,0.72); }
     nav.nav-dark-hero .nav-link:hover { color: #fff; }
@@ -16,7 +16,7 @@
         <!-- Logo -->
         <div class="flex items-center">
             <a href="/" class="flex items-center gap-3">
-                <img src="/images/logo.png" alt="FabricAI" class="h-12 w-12">
+                <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-12 w-12">
                 <span class="font-serif text-xl hidden sm:block transition-colors duration-500"
                       :class="darkHero ? 'text-white' : 'text-ink'">FabricAI</span>
             </a>

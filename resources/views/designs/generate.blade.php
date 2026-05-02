@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#f5f0e8">
 <head>
-    <link rel="icon" href="/images/logo.png" type="image/png">
+    <link rel="icon" href="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -152,7 +152,7 @@
         <!-- Logo + New Design button -->
         <div class="px-4 py-4 border-b border-cream-300 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2.5 min-w-0">
-                <img src="/images/logo.png" alt="FabricAI" class="h-8 w-8 object-contain shrink-0">
+                <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-8 w-8 object-contain shrink-0">
                 <div class="min-w-0">
                     <span class="font-serif text-sm text-ink block leading-tight">fabricAI</span>
                     <span class="text-[9px] tracking-[0.22em] uppercase" style="color:#7c3ca0">atelier</span>
@@ -1074,7 +1074,7 @@
         div.innerHTML = `
             <div class="w-8 h-8 rounded-full bg-white border border-cream-300 shadow-sm
                         flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5">
-                <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
+                <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="w-full h-full object-contain">
             </div>
             <div class="bg-white border border-cream-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-sm">
                 <div id="${uniqueId}" class="bg-cream-100 p-2.5 relative">
@@ -1137,7 +1137,7 @@
             <div style="width:32px;height:32px;border-radius:50%;background:white;border:1px solid #e8e3d9;
                         box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:center;
                         justify-content:center;flex-shrink:0;overflow:hidden;padding:4px;margin-top:2px;">
-                <img src="/images/logo.png" alt="FabricAI" style="width:100%;height:100%;object-fit:contain;">
+                <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" style="width:100%;height:100%;object-fit:contain;">
             </div>
             <div style="background:white;border:1px solid #e8e3d9;border-radius:0 16px 16px 16px;
                         box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;width:260px;">
@@ -1176,7 +1176,7 @@
         div.innerHTML = `
             <div class="w-8 h-8 rounded-full bg-white border border-cream-300 shadow-sm
                         flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5">
-                <img src="/images/logo.png" alt="FabricAI" class="w-full h-full object-contain">
+                <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="w-full h-full object-contain">
             </div>
             <div class="bg-red-50 border border-red-200 rounded-2xl rounded-tl-sm px-4 py-3
                         text-red-700 text-sm leading-relaxed max-w-xs md:max-w-md">

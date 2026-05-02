@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" style="background:#1a1a1a">
 <head>
-    <link rel="icon" href="/images/logo.png" type="image/png">
+    <link rel="icon" href="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -188,7 +188,7 @@
     </style>
 </head>
 
-<body class="bg-cream-50 text-ink font-sans antialiased overflow-x-hidden grain">
+<body class="bg-ink text-ink font-sans antialiased overflow-x-hidden grain">
 @php $navDarkHero = true; @endphp
 @include('layouts.navigation')
 

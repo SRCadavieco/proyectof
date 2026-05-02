@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="/images/logo.png" type="image/png">
+    <link rel="icon" href="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -19,7 +19,7 @@
         <button @click="open = true" class="w-9 h-9 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-cream-100 transition">
             <i class="fas fa-bars"></i>
         </button>
-        <a href="/"><img src="/images/logo.png" alt="FabricAI" class="h-7 w-7"></a>
+        <a href="/"><img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-7 w-7"></a>
         <span class="font-serif font-bold text-sm">FabricAI Admin</span>
     </header>
 
@@ -42,7 +42,7 @@
 
         {{-- Logo --}}
         <div class="p-6 border-b border-cream-200 flex items-center gap-3">
-            <a href="/"><img src="/images/logo.png" alt="FabricAI" class="h-12 w-12"></a>
+            <a href="/"><img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="h-12 w-12"></a>
             <div class="flex-1 min-w-0">
                 <p class="font-serif font-bold text-sm">FabricAI</p>
                 <p class="text-xs text-ink-muted uppercase tracking-wider">Admin Panel</p>
