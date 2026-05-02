@@ -186,9 +186,15 @@
             <!-- Design credits -->
             <div class="flex items-center justify-between px-3 py-2.5 rounded-xl" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)">
                 <span class="text-xs text-white/40 tracking-wide">Design Credits</span>
-                <div class="flex items-center gap-1.5">
-                    <span id="token-icon" class="text-sm" style="color:#7c3ca0">⚡</span>
-                    <span id="token-count" class="text-sm font-semibold text-white">{{ Auth::user()->tokens ?? 0 }}</span>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <span id="token-icon" class="text-sm" style="color:#7c3ca0">⚡</span>
+                        <span id="token-count" class="text-sm font-semibold text-white">{{ Auth::user()->tokens ?? 0 }}</span>
+                    </div>
+                    <button onclick="openCreditPacksModal()" title="Buy more credits"
+                            class="text-[10px] px-2 py-0.5 rounded-full font-semibold leading-none transition-colors"
+                            style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc"
+                            onmouseover="this.style.background='rgba(124,60,160,0.35)'" onmouseout="this.style.background='rgba(124,60,160,0.2)'">+</button>
                 </div>
             </div>
 
@@ -2187,7 +2193,12 @@
         // Single non-rotated layer: return raw src, Printify handles positioning itself
         if (layers.length === 1 && !layers[0].rotation) return layers[0].src;
         const garment = GARMENTS[document.getElementById('garment-select').value];
-        const pw = garment.printW; const ph = garment.printH;
+        // Cap at 2000 px on the longest side to keep the POST body under PHP limits
+        const MAX_DIM = 2000;
+        const origW = garment.printW, origH = garment.printH;
+        const dimScale = Math.min(1, MAX_DIM / Math.max(origW, origH));
+        const pw = Math.round(origW * dimScale);
+        const ph = Math.round(origH * dimScale);
         const flat = document.createElement('canvas');
         flat.width = pw; flat.height = ph;
         const ctx = flat.getContext('2d');
@@ -2212,7 +2223,7 @@
                 img.src = layer.src;
             });
         }
-        return flat.toDataURL('image/png');
+        return flat.toDataURL('image/jpeg', 0.92);
     }
 
     function renderGarment() {

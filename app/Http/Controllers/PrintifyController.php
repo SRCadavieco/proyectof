@@ -130,6 +130,9 @@ class PrintifyController extends Controller
 
     // POST /printify/products
     public function createProduct(Request $request)    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
         $conn = auth()->user()->printifyConnection;
         if (!$conn) {
             return response()->json(['error' => 'Printify not connected'], 401);
@@ -182,6 +185,9 @@ class PrintifyController extends Controller
     // POST /printify/products/bulk
     public function createProductBulk(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(180);
+
         $conn = auth()->user()->printifyConnection;
         if (!$conn) {
             return response()->json(['error' => 'Printify not connected'], 401);
