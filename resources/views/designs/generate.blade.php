@@ -114,10 +114,10 @@
         .gen-shimmer { animation: shimmer 1.6s linear infinite; }
 
         /* ── Chat area background ── */
-        #chat-container {
+        main {
             background-image:
                 linear-gradient(rgba(13,13,13,0.82), rgba(13,13,13,0.82)),
-                url('/images/fitting-room.png');
+                url('/images/fitting-room.webp');
             background-size: cover;
             background-position: center;
         }
@@ -287,25 +287,7 @@
                         <a href="/profile" class="underline ml-1 text-yellow-300/60 hover:text-yellow-300 transition-colors">Connect →</a>
                     </div>
                     @endif
-                    <!-- Sample design prompts -->
-                    <div class="mt-8 w-full max-w-lg">
-                        <p class="text-[10px] uppercase tracking-widest text-white/20 mb-4">Inspiration</p>
-                        <div class="grid grid-cols-2 gap-3 text-left">
-                            @foreach([
-                                ['Minimalist lotus in soft ink wash', 'Spiritual / Zen'],
-                                ['Y2K chrome butterfly on dark bg', 'Retro / Pop'],
-                                ['Vintage surf club patch design', 'Lifestyle'],
-                                ['Abstract geometric mountain range', 'Nature / Minimal'],
-                            ] as [$prompt, $tag])
-                            <button type="button" onclick="document.getElementById('prompt-input').value = '{{ addslashes($prompt) }}'; document.getElementById('prompt-input').focus()"
-                                    class="text-left px-3.5 py-3 rounded-xl transition-colors"
-                                    style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07)" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-                                <span class="block text-xs text-white/70 mb-1">{{ $prompt }}</span>
-                                <span class="text-[10px] text-white/25">{{ $tag }}</span>
-                            </button>
-                            @endforeach
-                        </div>
-                    </div>
+
                 </div>
 
                 <!-- Dynamic messages -->
@@ -315,7 +297,7 @@
         </div>
 
         <!-- Input area -->
-        <div class="backdrop-blur-sm px-4 pt-3 pb-5 relative z-10 shrink-0" style="background:rgba(17,17,17,0.95);border-top:1px solid rgba(255,255,255,0.07)">
+        <div class="backdrop-blur-sm px-4 pt-3 pb-5 relative z-10 shrink-0" style="background:rgba(17,17,17,0.50);border-top:1px solid rgba(255,255,255,0.07)">
             <div id="error" class="hidden text-red-500 text-xs mb-2 px-1"></div>
             <!-- No credits banner -->
             <div id="no-credits-banner" class="hidden mb-3">
@@ -2190,8 +2172,8 @@
     async function getFlattenedSrc(layers) {
         layers = layers ?? _layers[_activeSide];
         if (!layers.length) return null;
-        // Single non-rotated layer: return raw src, Printify handles positioning itself
-        if (layers.length === 1 && !layers[0].rotation) return layers[0].src;
+        // Single non-rotated layer with HTTP URL: pass directly, Printify will fetch it
+        if (layers.length === 1 && !layers[0].rotation && !layers[0].src.startsWith('data:')) return layers[0].src;
         const garment = GARMENTS[document.getElementById('garment-select').value];
         // Cap at 2000 px on the longest side to keep the POST body under PHP limits
         const MAX_DIM = 2000;
@@ -2223,7 +2205,7 @@
                 img.src = layer.src;
             });
         }
-        return flat.toDataURL('image/jpeg', 0.92);
+        return flat.toDataURL('image/png');
     }
 
     function renderGarment() {

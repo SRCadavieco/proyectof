@@ -16,7 +16,7 @@ class PrintifyService
         'tanktop'     => 39,   // Unisex Jersey Tank
         'longsleeve'  => 41,   // Unisex Jersey Long Sleeve Tee
         'sweatshirt'  => 49,   // Unisex Heavy Blend™ Crewneck Sweatshirt
-        'vneck'       => 71,   // Unisex Jersey V-Neck Tee (Bella+Canvas 3005)
+        'vneck'       => 61,   // Unisex Jersey Short Sleeve V-Neck Tee (Bella+Canvas 3005)
         'womens_tee'  => 9,    // Women's Jersey Short Sleeve Tee (Bella+Canvas 6004)
     ];
 
