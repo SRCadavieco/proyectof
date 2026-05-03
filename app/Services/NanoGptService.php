@@ -154,17 +154,24 @@ class NanoGptService
 
     private function buildStandaloneArtworkPrompt(string $userPrompt): string
     {
-        $clean = trim($userPrompt);
+        $subject = $this->normalizeArtworkSubject($userPrompt);
 
-        return "USER REQUEST:\n"
-            . $clean
-            . "\n\nNON-NEGOTIABLE OUTPUT RULES:\n"
-            . "- Return only the standalone printable graphic artwork.\n"
-            . "- Do NOT generate or show any t-shirt, hoodie, garment, mockup, model, person, mannequin, hanger, collar, sleeves, labels, seams, folds, or print preview.\n"
-            . "- Do NOT place the artwork on clothing or on a body.\n"
-            . "- No product scene, studio photo, ecommerce card, wall frame, or contextual mockup.\n"
-            . "- Keep background plain and unobtrusive; artwork must be the main subject filling most of the frame.\n"
-            . "\nSTYLE:\n"
-            . "clean vector-like illustration, bold outlines, flat colors, high contrast, print-ready composition.";
+        return "Create only a standalone printable graphic of {$subject}. "
+            . "Show the isolated artwork itself, not a product mockup. "
+            . "Do not generate any t-shirt, hoodie, garment, apparel, person, mannequin, body, collar, sleeves, seams, folds, hanger, label, print preview, ecommerce mockup, or studio scene. "
+            . "Do not include any letters, words, captions, slogans, typography, or readable text unless the user explicitly requested text as part of the artwork. "
+            . "The composition must be centered and filled mostly by the graphic itself, on a plain unobtrusive background. "
+            . "Style: clean vector-like illustration, bold outlines, flat colors, high contrast, print-ready composition.";
+    }
+
+    private function normalizeArtworkSubject(string $prompt): string
+    {
+        $clean = trim(preg_replace('/\s+/u', ' ', $prompt));
+
+        $clean = preg_replace('/^(haz|hace|crea|genera|diseña|disena|make|create|generate|design)\s+/iu', '', $clean);
+        $clean = preg_replace('/^(un|una|el|la|the|a|an)\s+/iu', '', $clean);
+        $clean = trim($clean, " \t\n\r\0\x0B.,;:!?");
+
+        return $clean !== '' ? $clean : 'a standalone printable graphic';
     }
 }
