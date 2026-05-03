@@ -56,9 +56,8 @@ class NanoGptService
 
         $finalPrompt = $prompt;
 
-        // Safety guard for Juggernaut: force standalone design output and avoid garment/mockup renders.
         if ($model === 'juggernaut_z' || str_contains(strtolower($modelName), 'juggernaut')) {
-            $finalPrompt = $this->buildStandaloneArtworkPrompt($finalPrompt);
+            $finalPrompt = $this->normalizeArtworkPrompt($finalPrompt);
         }
 
         if (!empty($backgroundColor)) {
@@ -152,19 +151,7 @@ class NanoGptService
         }
     }
 
-    private function buildStandaloneArtworkPrompt(string $userPrompt): string
-    {
-        $subject = $this->normalizeArtworkSubject($userPrompt);
-
-        return "Create only a standalone printable graphic of {$subject}. "
-            . "Show the isolated artwork itself, not a product mockup. "
-            . "Do not generate any t-shirt, hoodie, garment, apparel, person, mannequin, body, collar, sleeves, seams, folds, hanger, label, print preview, ecommerce mockup, or studio scene. "
-            . "Do not include any letters, words, captions, slogans, typography, or readable text unless the user explicitly requested text as part of the artwork. "
-            . "The composition must be centered and filled mostly by the graphic itself, on a plain unobtrusive background. "
-            . "Style: clean vector-like illustration, bold outlines, flat colors, high contrast, print-ready composition.";
-    }
-
-    private function normalizeArtworkSubject(string $prompt): string
+    private function normalizeArtworkPrompt(string $prompt): string
     {
         $clean = trim(preg_replace('/\s+/u', ' ', $prompt));
 
@@ -172,6 +159,6 @@ class NanoGptService
         $clean = preg_replace('/^(un|una|el|la|the|a|an)\s+/iu', '', $clean);
         $clean = trim($clean, " \t\n\r\0\x0B.,;:!?");
 
-        return $clean !== '' ? $clean : 'a standalone printable graphic';
+        return $clean !== '' ? $clean : $prompt;
     }
 }
