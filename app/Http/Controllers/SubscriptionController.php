@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BillingEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -62,6 +63,17 @@ class SubscriptionController extends Controller
                 'tokens_reset_at' => now()->startOfMonth(),
             ]);
 
+            BillingEvent::create([
+                'user_id'     => $user->id,
+                'source'      => 'stripe',
+                'event_type'  => 'plan_purchase',
+                'description' => 'Usuario compra plan ' . strtoupper($resolved['plan']),
+                'plan'        => $resolved['plan'],
+                'tokens'      => self::tokensForPlan($resolved['plan']),
+                'reference'   => 'swap_' . now()->timestamp . '_' . $user->id,
+                'meta'        => ['mode' => 'swap_checkout_bypass'],
+            ]);
+
             return redirect()->route('subscription.success');
         }
 
@@ -105,11 +117,31 @@ class SubscriptionController extends Controller
                 $plan = $priceId ? self::planFromPriceId($priceId) : null;
 
                 if ($plan) {
+                    $sessionRef = (string) ($request->get('session_id') ?: ('sub_' . ($subscription->stripe_id ?? 'unknown') . '_' . $plan));
+
                     $user->update([
                         'plan'            => $plan,
                         'tokens'          => self::tokensForPlan($plan),
                         'tokens_reset_at' => now()->startOfMonth(),
                     ]);
+
+                    BillingEvent::firstOrCreate(
+                        [
+                            'source' => 'stripe',
+                            'event_type' => 'plan_purchase',
+                            'reference' => $sessionRef,
+                        ],
+                        [
+                            'user_id' => $user->id,
+                            'description' => 'Usuario compra plan ' . strtoupper($plan),
+                            'plan' => $plan,
+                            'tokens' => self::tokensForPlan($plan),
+                            'meta' => [
+                                'session_id' => $request->get('session_id'),
+                                'source' => 'subscription.success:active_subscription',
+                            ],
+                        ]
+                    );
                 }
             } else {
                 // Fallback: read session metadata from Stripe
@@ -125,6 +157,24 @@ class SubscriptionController extends Controller
                             'tokens'          => self::tokensForPlan($plan),
                             'tokens_reset_at' => now()->startOfMonth(),
                         ]);
+
+                        BillingEvent::firstOrCreate(
+                            [
+                                'source' => 'stripe',
+                                'event_type' => 'plan_purchase',
+                                'reference' => (string) $sessionId,
+                            ],
+                            [
+                                'user_id' => $user->id,
+                                'description' => 'Usuario compra plan ' . strtoupper($plan),
+                                'plan' => $plan,
+                                'tokens' => self::tokensForPlan($plan),
+                                'meta' => [
+                                    'session_id' => $sessionId,
+                                    'source' => 'subscription.success:session_metadata',
+                                ],
+                            ]
+                        );
                     }
                 }
             }

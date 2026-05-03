@@ -83,6 +83,8 @@
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Tokens</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Chats</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Has Printify</th>
+                    <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Recent Transactions</th>
+                    <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Recent Activity</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Joined</th>
                     <th class="text-right px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -144,6 +146,34 @@
                                 </span>
                             @endif
                         </td>
+                        <td class="px-6 py-4 text-xs text-white/60 align-top min-w-[260px]">
+                            @if(($user->recentTransactions ?? collect())->isNotEmpty())
+                                <div class="space-y-2">
+                                    @foreach($user->recentTransactions as $tx)
+                                        <div class="rounded-lg px-2.5 py-2" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+                                            <p class="text-white/80 leading-tight">{{ $tx->description }}</p>
+                                            <p class="text-[11px] text-white/35 mt-1">{{ $tx->created_at?->diffForHumans() }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-white/30">No purchases yet</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-xs text-white/55 align-top min-w-[280px]">
+                            @if(($user->recentActivity ?? collect())->isNotEmpty())
+                                <ul class="space-y-2">
+                                    @foreach($user->recentActivity as $activity)
+                                        <li class="leading-tight">
+                                            <span class="text-white/75">{{ $activity->description ?? ucfirst(str_replace('_', ' ', $activity->event_type)) }}</span>
+                                            <span class="text-white/30">· {{ $activity->created_at?->diffForHumans() }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <span class="text-white/30">No recent activity</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 text-white/40 text-xs">{{ $user->created_at->format('M d, Y') }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
@@ -169,7 +199,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-white/35">
+                        <td colspan="9" class="px-6 py-12 text-center text-white/35">
                             <i class="fas fa-users text-3xl mb-3 block"></i>
                             No users found.
                         </td>

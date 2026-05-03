@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BillingEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -29,6 +30,7 @@ class StripeWebhookController extends CashierWebhookController
         }
 
         $plan = $this->planFromPriceId($stripeSubscription['items']['data'][0]['price']['id'] ?? '');
+        $subscriptionId = (string) ($stripeSubscription['id'] ?? '');
 
         if ($stripeSubscription['status'] === 'active' && $plan) {
             // On plan change, always grant the full new plan's token amount immediately.
@@ -38,6 +40,24 @@ class StripeWebhookController extends CashierWebhookController
                 'tokens'          => SubscriptionController::tokensForPlan($plan),
                 'tokens_reset_at' => now(),
             ]);
+
+            BillingEvent::firstOrCreate(
+                [
+                    'source' => 'stripe',
+                    'event_type' => 'plan_purchase',
+                    'reference' => $subscriptionId ?: ('sub_updated_' . $user->id . '_' . now()->timestamp),
+                ],
+                [
+                    'user_id' => $user->id,
+                    'description' => 'Usuario compra plan ' . strtoupper($plan),
+                    'plan' => $plan,
+                    'tokens' => SubscriptionController::tokensForPlan($plan),
+                    'meta' => [
+                        'webhook' => 'customer.subscription.updated',
+                        'stripe_status' => $stripeSubscription['status'] ?? null,
+                    ],
+                ]
+            );
         }
     }
 
@@ -96,6 +116,29 @@ class StripeWebhookController extends CashierWebhookController
 
         $user = User::find($userId);
         $user?->increment('tokens', $credits);
+
+        if ($user) {
+            $amountUsd = isset($session['amount_total']) ? ((float) $session['amount_total']) / 100 : null;
+
+            BillingEvent::firstOrCreate(
+                [
+                    'source' => 'stripe',
+                    'event_type' => 'token_purchase',
+                    'reference' => (string) $sessionId,
+                ],
+                [
+                    'user_id' => $user->id,
+                    'description' => 'Usuario ha comprado ' . $credits . ' tokens',
+                    'tokens' => $credits,
+                    'amount_usd' => $amountUsd,
+                    'currency' => strtoupper((string) ($session['currency'] ?? 'USD')),
+                    'meta' => [
+                        'pack' => $session['metadata']['pack'] ?? null,
+                        'webhook' => 'checkout.session.completed',
+                    ],
+                ]
+            );
+        }
     }
 
     /**

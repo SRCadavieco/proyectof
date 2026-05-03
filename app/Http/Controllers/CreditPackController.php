@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BillingEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -78,6 +79,27 @@ class CreditPackController extends Controller
         }
 
         Auth::user()->increment('tokens', $credits);
+
+        $amountUsd = isset($session->amount_total) ? ((float) $session->amount_total) / 100 : null;
+
+        BillingEvent::firstOrCreate(
+            [
+                'source' => 'stripe',
+                'event_type' => 'token_purchase',
+                'reference' => (string) $sessionId,
+            ],
+            [
+                'user_id' => (int) $userId,
+                'description' => 'Usuario ha comprado ' . $credits . ' tokens',
+                'tokens' => $credits,
+                'amount_usd' => $amountUsd,
+                'currency' => strtoupper((string) ($session->currency ?? 'USD')),
+                'meta' => [
+                    'pack' => $session->metadata->pack ?? null,
+                    'source' => 'credits.success',
+                ],
+            ]
+        );
 
         return redirect()->route('designs.form')->with('credits_purchased', $credits);
     }

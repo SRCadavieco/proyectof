@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Models\ApiUsageLog;
+use App\Models\BillingEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -120,6 +121,31 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20)
             ->withQueryString();
+
+        $userIds = $users->getCollection()->pluck('id')->all();
+        $eventsByUser = collect();
+
+        if (!empty($userIds)) {
+            $eventsByUser = BillingEvent::whereIn('user_id', $userIds)
+                ->orderByDesc('created_at')
+                ->get()
+                ->groupBy('user_id');
+        }
+
+        $users->setCollection(
+            $users->getCollection()->map(function (User $user) use ($eventsByUser) {
+                $events = $eventsByUser->get($user->id, collect());
+
+                $user->setRelation(
+                    'recentTransactions',
+                    $events->whereIn('event_type', ['plan_purchase', 'token_purchase'])->take(3)->values()
+                );
+
+                $user->setRelation('recentActivity', $events->take(4)->values());
+
+                return $user;
+            })
+        );
 
         return view('admin.users', compact('users'));
     }

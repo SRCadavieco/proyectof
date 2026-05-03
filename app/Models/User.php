@@ -157,4 +157,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\PrintifyConnection::class);
     }
+
+    public function billingEvents()
+    {
+        return $this->hasMany(\App\Models\BillingEvent::class);
+    }
 }
