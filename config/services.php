@@ -63,6 +63,10 @@ return [
         'token' => env('RNBULKTOOLS_TOKEN'),
     ],
 
+    'replicate' => [
+        'token' => env('REPLICATE_API_TOKEN'),
+    ],
+
     'chutes' => [
         'token' => env('CHUTES_API_TOKEN'),
         'path'  => '/generate',

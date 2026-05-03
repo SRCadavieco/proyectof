@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\Log;
 
 class BackgroundRemovalService
 {
-    private string $apiUrl = 'https://rnbulktools.top';
+    private string $replicateApiUrl = 'https://api.replicate.com/v1';
+    private string $replicateModel  = '851-labs/background-remover';
     private string $token;
     private string $lastMethod = 'not_attempted';
 
     public function __construct()
     {
-        $this->token = config('services.rnbulktools.token', '');
+        $this->token = config('services.replicate.token', '');
     }
 
     public function getLastMethod(): string
@@ -22,7 +23,9 @@ class BackgroundRemovalService
     }
 
     /**
-     * Remove background using the RnBulkTools API.
+     * Remove background using the Replicate API (851-labs/background-remover).
+     * Falls back to local GD edge-sample remover if the API fails.
+     *
      * @param string $imageBase64 Base64 string or data URL
      * @return string|null data URL (data:image/png;base64,...) or null on failure
      */
@@ -30,50 +33,102 @@ class BackgroundRemovalService
     {
         $this->lastMethod = 'not_attempted';
 
-        $binary = $this->base64ToBinary($imageBase64);
-        if ($binary === null) {
-            $this->lastMethod = 'invalid_input';
-            return null;
+        // Ensure we have a proper data URL to send to Replicate
+        if (!str_starts_with($imageBase64, 'data:')) {
+            $imageBase64 = 'data:image/png;base64,' . $imageBase64;
         }
 
-        $lastError = null;
-        for ($attempt = 1; $attempt <= 2; $attempt++) {
-            try {
-                $response = Http::withToken($this->token)
-                    ->timeout(60)
-                    ->attach('file', $binary, 'image.png')
-                    ->post("{$this->apiUrl}/remove-bg");
+        try {
+            // Step 1: Create prediction
+            $createResponse = Http::withToken($this->token)
+                ->timeout(30)
+                ->post("{$this->replicateApiUrl}/models/{$this->replicateModel}/predictions", [
+                    'input' => ['image' => $imageBase64],
+                ]);
 
-                if (!$response->successful()) {
-                    $lastError = 'HTTP ' . $response->status() . ': ' . $response->body();
-                    Log::warning("RnBulkTools remove-bg attempt {$attempt} failed", [
-                        'status' => $response->status(),
-                        'body'   => substr($response->body(), 0, 300),
-                    ]);
-                    if ($attempt < 2) continue;
+            if (!$createResponse->successful()) {
+                Log::warning('Replicate remove-bg create failed', [
+                    'status' => $createResponse->status(),
+                    'body'   => substr($createResponse->body(), 0, 300),
+                ]);
+                throw new \RuntimeException('Create prediction failed: HTTP ' . $createResponse->status());
+            }
+
+            $prediction = $createResponse->json();
+            $predictionId = $prediction['id'] ?? null;
+
+            if (!$predictionId) {
+                throw new \RuntimeException('No prediction ID returned from Replicate');
+            }
+
+            // Step 2: Poll until succeeded or failed (max ~90 seconds)
+            $maxAttempts = 30;
+            $pollInterval = 3; // seconds
+            $output = null;
+
+            for ($i = 0; $i < $maxAttempts; $i++) {
+                sleep($pollInterval);
+
+                $pollResponse = Http::withToken($this->token)
+                    ->timeout(15)
+                    ->get("{$this->replicateApiUrl}/predictions/{$predictionId}");
+
+                if (!$pollResponse->successful()) {
+                    Log::warning('Replicate poll failed', ['status' => $pollResponse->status()]);
+                    continue;
+                }
+
+                $result = $pollResponse->json();
+                $status = $result['status'] ?? '';
+
+                if ($status === 'succeeded') {
+                    $output = $result['output'] ?? null;
                     break;
                 }
 
-                $this->lastMethod = 'api';
-                return $this->parseImageResponse($response, 'image/png');
-            } catch (\Throwable $e) {
-                $lastError = $e->getMessage();
-                Log::warning("RnBulkTools remove-bg attempt {$attempt} exception", ['message' => $e->getMessage()]);
+                if (in_array($status, ['failed', 'canceled'])) {
+                    Log::warning('Replicate remove-bg prediction failed', [
+                        'status' => $status,
+                        'error'  => $result['error'] ?? '',
+                    ]);
+                    throw new \RuntimeException('Replicate prediction ' . $status);
+                }
+                // still starting/processing — continue polling
             }
+
+            if (!$output) {
+                throw new \RuntimeException('Replicate remove-bg timed out or returned no output');
+            }
+
+            // Step 3: Download result image (output is a URL)
+            $outputUrl = is_array($output) ? ($output[0] ?? null) : $output;
+            if (!$outputUrl) {
+                throw new \RuntimeException('Replicate output URL is empty');
+            }
+
+            $imgResponse = Http::timeout(30)->get($outputUrl);
+            if (!$imgResponse->successful()) {
+                throw new \RuntimeException('Failed to download Replicate output image');
+            }
+
+            $ct   = $imgResponse->header('Content-Type') ?? 'image/png';
+            $mime = strtok($ct, ';');
+            $this->lastMethod = 'api';
+            return "data:{$mime};base64," . base64_encode($imgResponse->body());
+
+        } catch (\Throwable $e) {
+            Log::error('Replicate remove-bg failed', ['message' => $e->getMessage()]);
         }
 
-        Log::error('RnBulkTools remove-bg failed after retries', ['last_error' => $lastError]);
-
-        // Fallback: use the local GD-based remover when external API fails/rate-limits.
+        // Fallback: local GD-based remover
         $fallback = $this->removeBackgroundByEdgeSample($imageBase64, 38);
         if ($fallback !== null) {
-            Log::warning('RnBulkTools remove-bg fallback used: local edge-sample remover');
+            Log::warning('Replicate remove-bg fallback used: local edge-sample remover');
             $this->lastMethod = 'laravel_local';
             return $fallback;
         }
 
         $this->lastMethod = 'failed';
-
         return null;
     }
 
