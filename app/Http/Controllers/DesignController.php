@@ -524,11 +524,20 @@ if ($isEdit) {
 private function buildHybridPrompt(string $userPrompt, ?string $provider = null): string
 {
     $cleanPrompt = trim($userPrompt);
-    $styleGuide = "print-ready apparel graphic, centered composition, clean vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject, no text unless explicitly requested.";
+    $styleGuide = "print-ready standalone graphic for garment printing, centered composition, clean vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject, no text unless explicitly requested.";
 
-    // Juggernaut sometimes drifts into mockup/clothing outputs, so force strict negative constraints.
     if ($provider === 'nanogpt') {
-        $styleGuide .= " Output only the standalone artwork to be printed. Do NOT generate a t-shirt, hoodie, garment mockup, model, person, mannequin, hanger, fabric folds, seams, collar, sleeves, labels, or print preview scene. Background must stay clean and simple, focused only on the graphic.";
+        return "USER REQUEST:\n"
+            . $cleanPrompt
+            . "\n\nNON-NEGOTIABLE OUTPUT RULES:\n"
+            . "- Return only the standalone printable graphic asset.\n"
+            . "- Do NOT generate or show any t-shirt, hoodie, garment, mockup, person, mannequin, hanger, fabric folds, seams, collar, sleeves, labels, or product preview.\n"
+            . "- Do NOT place the art on clothing or on a body.\n"
+            . "- No photo scene, studio setup, table, wall, or ecommerce mockup context.\n"
+            . "- Keep the background plain and unobtrusive so only the graphic is featured.\n"
+            . "- Fill most of the frame with the graphic itself.\n"
+            . "\nSTYLE AND QUALITY:\n"
+            . $styleGuide;
     }
 
     return $cleanPrompt . "\n\nStyle and quality guidance: " . $styleGuide;
