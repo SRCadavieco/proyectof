@@ -38,6 +38,10 @@ class ApiUsageLog extends Model
             'fabric_pro'   => 0.0,
             'default'      => 0.0,
         ],
+        'nanogpt' => [
+            'gpt_image_2' => 0.066,
+            'default'     => 0.066,
+        ],
         'rnbulktools' => [
             'remove_bg'  => 0.01,
             'default'    => 0.01,

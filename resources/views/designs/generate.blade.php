@@ -1528,7 +1528,6 @@
             const data = await res.json();
             if (!res.ok && data.error) {
                 showError(data.error);
-                if (data.upgrade_url) setTimeout(() => window.location.href = data.upgrade_url, 2500);
                 return;
             }
             currentChatId = data.id;

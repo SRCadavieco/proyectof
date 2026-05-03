@@ -49,6 +49,7 @@
                     'together'    => 'background:rgba(124,60,160,0.2);color:#c084fc;border:1px solid rgba(124,60,160,0.35)',
                     'chutes'      => 'background:rgba(59,130,246,0.2);color:#93c5fd;border:1px solid rgba(59,130,246,0.35)',
                     'gemini'      => 'background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.35)',
+                    'nanogpt'     => 'background:rgba(244,114,182,0.2);color:#f9a8d4;border:1px solid rgba(244,114,182,0.35)',
                     'rnbulktools' => 'background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.35)',
                 ];
                 $badgeStyle = $serviceColors[$row->service] ?? 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.12)';
@@ -167,6 +168,15 @@
             </div>
             <p class="text-xs font-semibold text-white/80">remove_bg</p>
             <p class="text-xs text-white/40 leading-relaxed">Background removal called automatically on each generated image.</p>
+        </div>
+
+        <div class="rounded-xl p-4 flex flex-col gap-2" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.24)">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-mono px-2 py-0.5 rounded" style="background:rgba(244,114,182,0.18);color:#f9a8d4">nanogpt</span>
+                <span class="text-lg font-serif font-bold" style="color:#f9a8d4">$0.066 <span class="text-xs font-sans text-white/35">/ img</span></span>
+            </div>
+            <p class="text-xs font-semibold text-white/80">gpt_image_2</p>
+            <p class="text-xs text-white/40 leading-relaxed">High-quality text-to-image generation for business plan fallback/primary path.</p>
         </div>
     </div>
 
