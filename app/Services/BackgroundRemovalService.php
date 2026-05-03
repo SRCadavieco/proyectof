@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class BackgroundRemovalService
 {
     private string $replicateApiUrl = 'https://api.replicate.com/v1';
-    private string $replicateModel  = '851-labs/background-remover';
+    private string $replicateVersion = '851-labs/background-remover:a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc';
     private string $token;
     private string $lastMethod = 'not_attempted';
 
@@ -44,11 +44,17 @@ class BackgroundRemovalService
         }
 
         try {
-            // Step 1: Create prediction
+            // Community models must go through /v1/predictions with an explicit version.
             $createResponse = Http::withToken($this->token)
+                ->withHeaders(['Prefer' => 'wait=60'])
                 ->timeout(30)
-                ->post("{$this->replicateApiUrl}/models/{$this->replicateModel}/predictions", [
-                    'input' => ['image' => $imageBase64],
+                ->post("{$this->replicateApiUrl}/predictions", [
+                    'version' => $this->replicateVersion,
+                    'input' => [
+                        'image' => $imageBase64,
+                        'background_type' => 'rgba',
+                        'format' => 'png',
+                    ],
                 ]);
 
             if (!$createResponse->successful()) {
@@ -116,7 +122,9 @@ class BackgroundRemovalService
                 return $outputUrl;
             }
 
-            $imgResponse = Http::timeout(30)->get($outputUrl);
+            $imgResponse = Http::withToken($this->token)
+                ->timeout(30)
+                ->get($outputUrl);
             if (!$imgResponse->successful()) {
                 throw new \RuntimeException('Failed to download Replicate output image');
             }

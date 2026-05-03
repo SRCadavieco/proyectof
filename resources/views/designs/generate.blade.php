@@ -1654,7 +1654,7 @@
 
             if (data.bg_removal_method) {
                 const bgMethodSource = data.bg_removal_method === 'api'
-                    ? 'RnBulkTools API'
+                    ? 'Replicate API'
                     : (data.bg_removal_method === 'laravel_local' ? 'Laravel local fallback' : 'No background removal result');
                 console.info('[FabricAI] Background removal method', {
                     method: data.bg_removal_method,
@@ -1720,7 +1720,7 @@
 
                         if (data.bg_removal_method) {
                             const bgMethodSource = data.bg_removal_method === 'api'
-                                ? 'RnBulkTools API'
+                                ? 'Replicate API'
                                 : (data.bg_removal_method === 'laravel_local' ? 'Laravel local fallback' : 'No background removal result');
                             console.info('[FabricAI] Background removal method (async)', {
                                 method: data.bg_removal_method,
