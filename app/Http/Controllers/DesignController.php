@@ -524,9 +524,9 @@ if ($isEdit) {
 private function buildHybridPrompt(string $userPrompt, ?string $provider = null): string
 {
     $cleanPrompt = trim($userPrompt);
-    $styleGuide = "print-ready standalone, centered composition, clean vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject, no text unless explicitly requested.";
+    $styleGuide = "centered composition,  vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject.";
 
-    return $cleanPrompt . "\n\nStyle and quality guidance: " . $styleGuide;
+    return $cleanPrompt .  $styleGuide;
 }
 
     /**
