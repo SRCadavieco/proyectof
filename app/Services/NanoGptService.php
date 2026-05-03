@@ -55,10 +55,19 @@ class NanoGptService
         }
 
         $finalPrompt = $prompt;
+
+        // Safety guard for Juggernaut: force standalone design output and avoid garment/mockup renders.
+        if ($model === 'juggernaut_z' || str_contains(strtolower($modelName), 'juggernaut')) {
+            $finalPrompt = $this->buildStandaloneArtworkPrompt($finalPrompt);
+        }
+
         if (!empty($backgroundColor)) {
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         }
+
+        // Keep payload bounded for stability with image models.
+        $finalPrompt = mb_substr($finalPrompt, 0, 1800);
 
         $payload = [
             'model' => $modelName,
@@ -141,5 +150,21 @@ class NanoGptService
                 'status' => 500,
             ];
         }
+    }
+
+    private function buildStandaloneArtworkPrompt(string $userPrompt): string
+    {
+        $clean = trim($userPrompt);
+
+        return "USER REQUEST:\n"
+            . $clean
+            . "\n\nNON-NEGOTIABLE OUTPUT RULES:\n"
+            . "- Return only the standalone printable graphic artwork.\n"
+            . "- Do NOT generate or show any t-shirt, hoodie, garment, mockup, model, person, mannequin, hanger, collar, sleeves, labels, seams, folds, or print preview.\n"
+            . "- Do NOT place the artwork on clothing or on a body.\n"
+            . "- No product scene, studio photo, ecommerce card, wall frame, or contextual mockup.\n"
+            . "- Keep background plain and unobtrusive; artwork must be the main subject filling most of the frame.\n"
+            . "\nSTYLE:\n"
+            . "clean vector-like illustration, bold outlines, flat colors, high contrast, print-ready composition.";
     }
 }
