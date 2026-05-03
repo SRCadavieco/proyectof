@@ -526,6 +526,13 @@ if ($isEdit) {
 private function buildHybridPrompt(string $userPrompt, string $provider, ?string $model = null): string
 {
     $cleanPrompt = trim($userPrompt);
+
+    // Keep Z-Image/Together behavior aligned with the legacy prompt strategy.
+    if (in_array($provider, ['chutes', 'together'], true)) {
+        $legacyStyleGuide = 'vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject.';
+        return trim($cleanPrompt . ' ' . $legacyStyleGuide);
+    }
+
     $baseGuide = implode(', ', [
         'isolated main subject',
         'clean composition',
@@ -537,27 +544,20 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
         'no watermark',
     ]) . '.';
 
-    $styleGuide = match ($provider) {
-        'nanogpt' => implode(', ', [
-            'premium digital illustration',
-            'accurate anatomy and proportions',
-            'clear separation between elements',
-            'realistic lighting and reflections',
-            'high fidelity edges',
-            'avoid duplicated objects',
-            'avoid random typography',
-        ]) . '.',
-        default => implode(', ', [
-            'vector-like illustration',
-            'flat colors',
-            'bold outlines',
-            'minimal gradients',
-            'controlled shadows',
-            'high contrast',
-        ]) . '.',
-    };
+    $stylePriorityGuide = 'If the user explicitly asks for a style (for example: realistic, photorealistic, svg, vector, anime, 3d, watercolor), prioritize that style request over default style guidance.';
 
-    return trim($cleanPrompt . ' ' . $baseGuide . ' ' . $styleGuide);
+    $styleGuide = implode(', ', [
+        'semi-realistic illustration',
+        'stylized drawing look (not hyperrealistic)',
+        'accurate anatomy and proportions',
+        'clear separation between elements',
+        'natural but simplified lighting',
+        'high fidelity edges',
+        'avoid duplicated objects',
+        'avoid random typography',
+    ]) . '.';
+
+    return trim($cleanPrompt . ' ' . $baseGuide . ' ' . $stylePriorityGuide . ' ' . $styleGuide);
 }
 
     /**
