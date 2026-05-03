@@ -366,8 +366,16 @@
                         <i class="fas fa-arrow-up text-sm"></i>
                     </button>
                 </div>
-                <!-- Char counter -->
-                <div id="char-counter" class="flex justify-end text-[10px] pr-1 mt-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
+                <div class="mt-2 flex items-center justify-between gap-2">
+                    @if(in_array(strtolower(Auth::user()->plan ?? 'free'), ['business', 'studio']))
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] uppercase tracking-wider text-white/35">Model</span>
+                        <span class="text-[11px] px-2 py-0.5 rounded font-mono" style="background:rgba(244,114,182,0.15);color:#f9a8d4;border:1px solid rgba(244,114,182,0.25)">Juggernaut Z</span>
+                    </div>
+                    @endif
+                    <!-- Char counter -->
+                    <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
+                </div>
             </form>
         </div>
 
@@ -936,6 +944,7 @@
     const userAvatarUrl = @json(Auth::user()->avatar);
     const userPlan      = @json(Auth::user()->plan ?? 'free');
 
+
     // ─── Token Manager ────────────────────────────────────────────────
     const TokenManager = {
         MAX: 10,
@@ -1110,6 +1119,19 @@
     function syncPromptLimit() {
         promptInput.setAttribute('maxlength', LIMIT_DIFFUSION);
         updateCharCounter();
+    }
+
+    function resolveGenerationEngine(snapshotImage) {
+        if (snapshotImage || isEditMode) {
+            return { provider: 'together', model: 'flux_dev' };
+        }
+
+        const plan = String(userPlan || '').toLowerCase();
+        if (plan === 'business' || plan === 'studio') {
+            return { provider: 'nanogpt', model: 'juggernaut_z' };
+        }
+
+        return { provider: 'chutes', model: 'z_image_turbo' };
     }
 
     // ─── Textarea auto-resize ─────────────────────────────────────────
@@ -1582,6 +1604,7 @@
 
         const snapshotImage = uploadedImageBase64;
         const snapshotMime  = uploadedImageMime;
+        const generationEngine = resolveGenerationEngine(snapshotImage);
         clearImagePreview();
         setLoading(true);
 
@@ -1595,8 +1618,8 @@
                 body: JSON.stringify({
                     prompt, chat_id: currentChatId,
                     imageBase64: snapshotImage, mimeType: snapshotMime,
-                    model: (snapshotImage || isEditMode) ? 'flux_dev' : 'z_image_turbo',
-                    provider: (snapshotImage || isEditMode) ? 'together' : 'chutes',
+                    model: generationEngine.model,
+                    provider: generationEngine.provider,
                     is_edit: isEditMode,
                 }),
             });
@@ -1616,7 +1639,7 @@
                 plan: userPlan,
                 provider: data.provider || 'unknown',
                 model: data.model || 'unknown',
-                usedFallback: (data.provider || '') !== ((snapshotImage || isEditMode) ? 'together' : 'chutes')
+                usedFallback: (data.provider || '') !== generationEngine.provider
             });
 
             if (data.bg_removal_failed) {
@@ -1670,7 +1693,7 @@
                         const base64   = data.imageBase64 || data.image_base64 || data.base64;
 
                         console.info('[FabricAI] Generation engine (async)', {
-                            plan: userPlan, provider: data.provider || 'nanogpt', model: data.model || 'gpt_image_2',
+                            plan: userPlan, provider: data.provider || 'nanogpt', model: data.model || 'juggernaut_z',
                         });
 
                         if (data.bg_removal_failed) showBgRemovalWarning();

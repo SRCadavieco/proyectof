@@ -80,7 +80,7 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
-           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_dev,gpt_image_2'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_dev,juggernaut_z'],
            'provider' => ['nullable', 'string', 'in:gemini,chutes,together,nanogpt'],
            'is_edit' => ['nullable', 'boolean'],
        ]);
@@ -108,6 +108,8 @@ class DesignController extends Controller
         $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
     } elseif ($provider === 'together') {
         $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
+    } elseif ($provider === 'nanogpt') {
+        $prompt = $this->buildHybridPrompt($userPrompt);
     } else {
         $prompt = $userPrompt;
     }
@@ -150,7 +152,11 @@ class DesignController extends Controller
         ->toArray();
     $imageBase64 = $validated['imageBase64'] ?? null;
     $mimeType = $validated['mimeType'] ?? 'image/png';
-    $model = $validated['model'] ?? ($provider === 'chutes' ? 'z_image_turbo' : ($provider === 'together' ? 'flux_dev' : 'fabric_light'));
+    $model = $validated['model'] ?? ($provider === 'chutes'
+        ? 'z_image_turbo'
+        : ($provider === 'together'
+            ? 'flux_dev'
+            : ($provider === 'nanogpt' ? 'juggernaut_z' : 'fabric_light')));
 
     // Resize user-uploaded image before sending to AI backends (they reject large payloads)
     if ($imageBase64) {
@@ -173,22 +179,21 @@ $ai = match($provider) {
 // (multimodal LLM) which actually reads and follows instructions about the image.
 $needsImg2Img = !empty($imageBase64) || $isEdit;
 if ($needsImg2Img) {
-    // Together: use it directly — FLUX.2-dev supports img2img via image_url
-    // Chutes: fall back to Gemini (text-to-image only, ignores the image)
-    if ($provider === 'chutes') {
+    // Together supports img2img. Chutes/NanoGPT text-to-image models do not.
+    if (in_array($provider, ['chutes', 'nanogpt'], true)) {
         $ai    = $gemini;
         $model = 'fabric_light';
     }
 }
 
-// Business plan uses NanoGPT GPT-Image-2 instead of Chutes z-image for text-to-image.
+// Business plan uses NanoGPT models for text-to-image.
 $effectivePlan = strtolower((string) ($user->plan ?? 'free'));
 if ($effectivePlan === 'studio') {
     $effectivePlan = 'business';
 }
 if (!$needsImg2Img && $effectivePlan === 'business' && $provider === 'chutes' && $model === 'z_image_turbo') {
     $provider = 'nanogpt';
-    $model = 'gpt_image_2';
+    $model = 'juggernaut_z';
     $prompt = $this->buildHybridPrompt($userPrompt);
     $ai = $nanogpt;
 }
@@ -262,7 +267,7 @@ if ($isEdit) {
 
 } else {
 
-    // NanoGPT (gpt-image-2) is slow (60-120s) — dispatch an async job and return
+    // NanoGPT (juggernaut-z) is slow (60-120s) — dispatch an async job and return
     // a generation_id immediately so the frontend can poll for the result.
     if ($provider === 'nanogpt') {
         $generationId = (string) Str::uuid();

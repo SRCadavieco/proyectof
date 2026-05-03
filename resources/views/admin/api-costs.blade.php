@@ -175,8 +175,8 @@
                 <span class="text-xs font-mono px-2 py-0.5 rounded" style="background:rgba(244,114,182,0.18);color:#f9a8d4">nanogpt</span>
                 <span class="text-lg font-serif font-bold" style="color:#f9a8d4">$0.066 <span class="text-xs font-sans text-white/35">/ img</span></span>
             </div>
-            <p class="text-xs font-semibold text-white/80">gpt_image_2</p>
-            <p class="text-xs text-white/40 leading-relaxed">High-quality text-to-image generation for business plan fallback/primary path.</p>
+            <p class="text-xs font-semibold text-white/80">gpt_image_2 · juggernaut_z</p>
+            <p class="text-xs text-white/40 leading-relaxed">High-quality text-to-image generation for business plan (NanoGPT model selector).</p>
         </div>
     </div>
 

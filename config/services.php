@@ -80,7 +80,7 @@ return [
         'key' => env('NANOGPT_API_KEY'),
         'image_url' => env('NANOGPT_IMAGE_URL', 'https://nano-gpt.com/v1/images/generations'),
         'models' => [
-            'gpt_image_2' => env('NANOGPT_IMAGE_MODEL', 'gpt-image-2'),
+            'juggernaut_z' => env('NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z', 'juggernaut-z'),
         ],
     ],
 

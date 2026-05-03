@@ -39,8 +39,8 @@ class ApiUsageLog extends Model
             'default'      => 0.0,
         ],
         'nanogpt' => [
-            'gpt_image_2' => 0.066,
-            'default'     => 0.066,
+            'juggernaut_z' => 0.066,
+            'default'      => 0.066,
         ],
         'rnbulktools' => [
             'remove_bg'  => 0.01,
