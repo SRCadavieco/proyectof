@@ -1652,6 +1652,18 @@
                 usedFallback: (data.provider || '') !== generationEngine.provider
             });
 
+            if (data.bg_removal_method) {
+                const bgMethodSource = data.bg_removal_method === 'api'
+                    ? 'RnBulkTools API'
+                    : (data.bg_removal_method === 'laravel_local' ? 'Laravel local fallback' : 'No background removal result');
+                console.info('[FabricAI] Background removal method', {
+                    method: data.bg_removal_method,
+                    source: bgMethodSource,
+                    provider: data.provider || 'unknown',
+                    model: data.model || 'unknown',
+                });
+            }
+
             if (data.bg_removal_failed) {
                 console.warn('[FabricAI] Background removal failed for this generation. The raw image is being shown instead.', {
                     provider: data.provider || 'unknown',
@@ -1705,6 +1717,18 @@
                         console.info('[FabricAI] Generation engine (async)', {
                             plan: userPlan, provider: data.provider || 'nanogpt', model: data.model || 'juggernaut_z',
                         });
+
+                        if (data.bg_removal_method) {
+                            const bgMethodSource = data.bg_removal_method === 'api'
+                                ? 'RnBulkTools API'
+                                : (data.bg_removal_method === 'laravel_local' ? 'Laravel local fallback' : 'No background removal result');
+                            console.info('[FabricAI] Background removal method (async)', {
+                                method: data.bg_removal_method,
+                                source: bgMethodSource,
+                                provider: data.provider || 'nanogpt',
+                                model: data.model || 'juggernaut_z',
+                            });
+                        }
 
                         if (data.bg_removal_failed) showBgRemovalWarning();
 

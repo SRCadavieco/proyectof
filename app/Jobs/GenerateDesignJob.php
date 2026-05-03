@@ -46,6 +46,7 @@ class GenerateDesignJob implements ShouldQueue
 
             $imageValue      = null;
             $bgRemovalFailed = false;
+            $bgRemovalMethod = null;
 
             if (is_array($result)) {
                 $base64   = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null;
@@ -53,6 +54,7 @@ class GenerateDesignJob implements ShouldQueue
 
                 if ($base64) {
                     $noBg = $backgrounds->removeBackground($base64);
+                    $bgRemovalMethod = $backgrounds->getLastMethod();
                     try {
                         ApiUsageLog::record('rnbulktools', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
                     } catch (\Throwable) {}
@@ -97,6 +99,7 @@ class GenerateDesignJob implements ShouldQueue
                     'provider'          => $this->provider,
                     'model'             => $this->model,
                     'bg_removal_failed' => $bgRemovalFailed,
+                    'bg_removal_method' => $bgRemovalMethod,
                 ], now()->addMinutes(10));
             } else {
                 $aiError = is_array($result) ? ($result['error'] ?? 'No image in response') : 'Invalid result';

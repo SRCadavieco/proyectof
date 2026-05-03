@@ -9,10 +9,16 @@ class BackgroundRemovalService
 {
     private string $apiUrl = 'https://rnbulktools.top';
     private string $token;
+    private string $lastMethod = 'not_attempted';
 
     public function __construct()
     {
         $this->token = config('services.rnbulktools.token', '');
+    }
+
+    public function getLastMethod(): string
+    {
+        return $this->lastMethod;
     }
 
     /**
@@ -22,8 +28,13 @@ class BackgroundRemovalService
      */
     public function removeBackground(string $imageBase64): ?string
     {
+        $this->lastMethod = 'not_attempted';
+
         $binary = $this->base64ToBinary($imageBase64);
-        if ($binary === null) return null;
+        if ($binary === null) {
+            $this->lastMethod = 'invalid_input';
+            return null;
+        }
 
         $lastError = null;
         for ($attempt = 1; $attempt <= 2; $attempt++) {
@@ -43,6 +54,7 @@ class BackgroundRemovalService
                     break;
                 }
 
+                $this->lastMethod = 'api';
                 return $this->parseImageResponse($response, 'image/png');
             } catch (\Throwable $e) {
                 $lastError = $e->getMessage();
@@ -56,8 +68,11 @@ class BackgroundRemovalService
         $fallback = $this->removeBackgroundByEdgeSample($imageBase64, 38);
         if ($fallback !== null) {
             Log::warning('RnBulkTools remove-bg fallback used: local edge-sample remover');
+            $this->lastMethod = 'laravel_local';
             return $fallback;
         }
+
+        $this->lastMethod = 'failed';
 
         return null;
     }
