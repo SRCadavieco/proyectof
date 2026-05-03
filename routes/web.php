@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/design', [DesignController::class, 'form']);
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
+    Route::get('/designs/generation/{id}', [DesignController::class, 'generationStatus'])->name('designs.generation.status');
 
     // Credit packs (one-time purchases)
     Route::post('/credits/checkout', [CreditPackController::class, 'checkout'])->name('credits.checkout');

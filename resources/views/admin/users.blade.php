@@ -62,11 +62,11 @@
     <select name="plan"
             class="px-4 py-2.5 rounded-xl text-sm text-white focus:outline-none transition"
             style="background:#111;border:1px solid rgba(255,255,255,0.1)">
-        <option value="">All plans</option>
-        <option value="free" {{ request('plan') == 'free' ? 'selected' : '' }}>Free</option>
-        <option value="starter" {{ request('plan') == 'starter' ? 'selected' : '' }}>Starter</option>
-        <option value="pro" {{ request('plan') == 'pro' ? 'selected' : '' }}>Pro</option>
-        <option value="business" {{ request('plan') == 'business' ? 'selected' : '' }}>Business</option>
+        <option value="" style="color:#0f172a">All plans</option>
+        <option value="free" style="color:#0f172a" {{ request('plan') == 'free' ? 'selected' : '' }}>Free</option>
+        <option value="starter" style="color:#0f172a" {{ request('plan') == 'starter' ? 'selected' : '' }}>Starter</option>
+        <option value="pro" style="color:#0f172a" {{ request('plan') == 'pro' ? 'selected' : '' }}>Pro</option>
+        <option value="business" style="color:#0f172a" {{ request('plan') == 'business' ? 'selected' : '' }}>Business</option>
     </select>
     <button type="submit" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition" style="background:#7c3ca0">
         <i class="fas fa-filter mr-2"></i>Filter
@@ -223,10 +223,10 @@
                 <select name="plan" x-model="currentUser.plan"
                         class="w-full px-4 py-2.5 rounded-xl text-white text-sm focus:outline-none transition"
                         style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
-                    <option value="free">Free</option>
-                    <option value="starter">Starter</option>
-                    <option value="pro">Pro</option>
-                    <option value="business">Business</option>
+                    <option value="free" style="color:#0f172a">Free</option>
+                    <option value="starter" style="color:#0f172a">Starter</option>
+                    <option value="pro" style="color:#0f172a">Pro</option>
+                    <option value="business" style="color:#0f172a">Business</option>
                 </select>
             </div>
             <div class="mb-5">

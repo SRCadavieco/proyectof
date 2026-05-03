@@ -25,5 +25,8 @@ fi
 # Ejecutar migraciones automáticas en cada arranque (Cloud Run)
 php artisan migrate --force || true
 
+# Iniciar queue worker en background para procesar jobs de generación (NanoGPT, etc.)
+php artisan queue:work --sleep=3 --tries=1 --timeout=300 --queue=default &
+
 # Ejecutar Apache en foreground (requerido por Cloud Run)
 apache2-foreground

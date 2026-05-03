@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Services\GeminiService;
 use App\Services\ChutesService;
 use App\Services\TogetherService;
+use App\Services\NanoGptService;
 use App\Services\BackgroundRemovalService;
 use App\Jobs\GenerateDesignJob;
 use App\Models\ApiUsageLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Chat;
 use App\Models\SavedDesign;
 
@@ -22,6 +24,26 @@ use Illuminate\Support\Str;
  */
 class DesignController extends Controller
 {
+    /**
+     * Poll the status of an async NanoGPT generation.
+     * GET /designs/generation/{id}
+     */
+    public function generationStatus(string $id, Request $request): \Illuminate\Http\JsonResponse
+    {
+        // Only alphanumeric + hyphens (UUID format) — reject anything else
+        if (!preg_match('/^[a-f0-9\-]{36}$/', $id)) {
+            return response()->json(['status' => 'error', 'error' => 'Invalid generation ID'], 400);
+        }
+
+        $result = Cache::get('generation:' . $id);
+
+        if (!$result) {
+            return response()->json(['status' => 'pending']);
+        }
+
+        return response()->json($result);
+    }
+
     /**
      * Muestra el formulario simple para solicitar el diseño.
      *
@@ -46,6 +68,7 @@ class DesignController extends Controller
     GeminiService $gemini,
     ChutesService $chutes,
     TogetherService $together,
+    NanoGptService $nanogpt,
     BackgroundRemovalService $backgrounds
 ) {
    set_time_limit(300); // Chutes models can take up to ~3 min on cold start
@@ -57,8 +80,8 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
-           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_dev'],
-           'provider' => ['nullable', 'string', 'in:gemini,chutes,together'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_dev,gpt_image_2'],
+           'provider' => ['nullable', 'string', 'in:gemini,chutes,together,nanogpt'],
            'is_edit' => ['nullable', 'boolean'],
        ]);
    } catch (\Illuminate\Validation\ValidationException $e) {
@@ -72,30 +95,21 @@ class DesignController extends Controller
    try {
 
     $userPrompt = trim($validated['prompt']);
+    $prompt = $userPrompt;
     $provider = $validated['provider'] ?? 'gemini';
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
-    // Diffusion models (Chutes/Together) use CLIP with ~77 token limit (~350 chars).
-    // Truncate the user prompt before adding the boilerplate prefix.
-    $userPromptForDiffusion = mb_substr($userPrompt, 0, 270); // 270 + ~80 prefix ≈ 350 total
+    // Diffusion models are sensitive to long prompts, keep user intent concise.
+    $userPromptForDiffusion = mb_substr($userPrompt, 0, 270);
 
     if ($hasReferenceImage) {
         $prompt = $userPrompt;
     } elseif ($provider === 'chutes') {
-        // Text-to-image: add graphic design boilerplate so diffusion models output clean prints
-        $prompt = "print-ready graphic design, centered on white background, "
-                . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
-                . "no text unless specified, high contrast, isolated subject, "
-                . $userPromptForDiffusion;
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
     } elseif ($provider === 'together') {
-        $prompt = "print-ready graphic design, centered on white background, "
-                . "clean vector illustration, flat colors, bold outlines, no gradients, no shadows, "
-                . "no text unless specified, high contrast, isolated subject, "
-                . $userPromptForDiffusion;
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
     } else {
-        // Gemini (LLM): entiende instrucciones en lenguaje natural
-        $systemPrompt = "You are a professional fashion and apparel designer.\nCreate a print-ready, high-quality design suitable for clothing.\n\nDesign requirements:\n\nCentered composition\nPlain color background (no shadows)\nNo use of gradients\nBackground must be a color you haven't used for the design\nClean vector style with crisp, well-defined lines\nScalable without loss of quality\nDo not create any text unless the user specifies so. Create only the words the user has mentioned\n\n";
-        $prompt = $systemPrompt . $userPrompt;
+        $prompt = $userPrompt;
     }
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
@@ -150,6 +164,7 @@ class DesignController extends Controller
 $ai = match($provider) {
     'chutes'   => $chutes,
     'together' => $together,
+    'nanogpt'  => $nanogpt,
     default    => $gemini,
 };
 
@@ -164,6 +179,18 @@ if ($needsImg2Img) {
         $ai    = $gemini;
         $model = 'fabric_light';
     }
+}
+
+// Business plan uses NanoGPT GPT-Image-2 instead of Chutes z-image for text-to-image.
+$effectivePlan = strtolower((string) ($user->plan ?? 'free'));
+if ($effectivePlan === 'studio') {
+    $effectivePlan = 'business';
+}
+if (!$needsImg2Img && $effectivePlan === 'business' && $provider === 'chutes' && $model === 'z_image_turbo') {
+    $provider = 'nanogpt';
+    $model = 'gpt_image_2';
+    $prompt = $this->buildHybridPrompt($userPrompt);
+    $ai = $nanogpt;
 }
 
 if ($isEdit) {
@@ -235,12 +262,51 @@ if ($isEdit) {
 
 } else {
 
+    // NanoGPT (gpt-image-2) is slow (60-120s) — dispatch an async job and return
+    // a generation_id immediately so the frontend can poll for the result.
+    if ($provider === 'nanogpt') {
+        $generationId = (string) Str::uuid();
+
+        GenerateDesignJob::dispatch(
+            $generationId,
+            $chat->id,
+            $user->id,
+            $prompt,
+            $userPrompt,
+            $backgroundColor,
+            $model,
+            $provider,
+        );
+
+        return response()->json([
+            'success'       => true,
+            'status'        => 'generating',
+            'generation_id' => $generationId,
+            'provider'      => $provider,
+            'model'         => $model,
+        ]);
+    }
+
     $result = $ai->generateDesignWithContext(
         $prompt,
         $context,
         $backgroundColor,
         $model
     );
+
+    // Safety fallback: if NanoGPT fails for business text-to-image, retry with z-image.
+    $hasGeneratedImage = is_array($result) && (
+        !empty($result['imageBase64'] ?? $result['image_base64'] ?? $result['base64'] ?? null)
+        || !empty($result['imageUrl'] ?? $result['image_url'] ?? $result['url'] ?? null)
+    );
+    if ($provider === 'nanogpt' && !$hasGeneratedImage) {
+        $fallback = $chutes->generateDesignWithContext($prompt, $context, $backgroundColor, 'z_image_turbo');
+        if (is_array($fallback)) {
+            $result = $fallback;
+            $provider = 'chutes';
+            $model = 'z_image_turbo';
+        }
+    }
 }
 
     // Log AI generation call
@@ -348,6 +414,13 @@ if ($isEdit) {
             : 500;
     }
 
+    // Expose the effective provider/model used (after any runtime fallback)
+    // so the frontend can confirm exactly which engine generated the image.
+    if (is_array($result)) {
+        $result['provider'] = $provider;
+        $result['model'] = $model;
+    }
+
     return response()->json($result, $status);
 
    } catch (\Throwable $e) {
@@ -437,6 +510,17 @@ if ($isEdit) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+ * Build a hybrid prompt: preserve user intent and add concise style/quality guidance.
+ */
+private function buildHybridPrompt(string $userPrompt): string
+{
+    $cleanPrompt = trim($userPrompt);
+    $styleGuide = "print-ready apparel graphic, centered composition, clean vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject, no text unless explicitly requested.";
+
+    return $cleanPrompt . "\n\nStyle and quality guidance: " . $styleGuide;
+}
 
     /**
  * Resize a base64 image to max 1024px on the longest side, JPEG quality 85.

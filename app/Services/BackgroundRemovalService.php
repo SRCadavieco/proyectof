@@ -40,8 +40,7 @@ class BackgroundRemovalService
                         'body'   => substr($response->body(), 0, 300),
                     ]);
                     if ($attempt < 2) continue;
-                    Log::error('RnBulkTools remove-bg failed after retries', ['last_error' => $lastError]);
-                    return null;
+                    break;
                 }
 
                 return $this->parseImageResponse($response, 'image/png');
@@ -52,6 +51,14 @@ class BackgroundRemovalService
         }
 
         Log::error('RnBulkTools remove-bg failed after retries', ['last_error' => $lastError]);
+
+        // Fallback: use the local GD-based remover when external API fails/rate-limits.
+        $fallback = $this->removeBackgroundByEdgeSample($imageBase64, 38);
+        if ($fallback !== null) {
+            Log::warning('RnBulkTools remove-bg fallback used: local edge-sample remover');
+            return $fallback;
+        }
+
         return null;
     }
 

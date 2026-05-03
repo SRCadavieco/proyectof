@@ -1604,8 +1604,21 @@
             const data = await res.json().catch(() => ({ success: false, error: 'Invalid server response' }));
             if (!res.ok) throw new Error(data?.message || data?.error || `Error ${res.status}`);
 
+            // NanoGPT returns immediately with a generation_id — poll for the result
+            if (data.status === 'generating' && data.generation_id) {
+                await pollGeneration(data.generation_id, placeholderId);
+                return; // finally block handled inside pollGeneration
+            }
+
             const imageUrl = data.imageUrl || data.image_url || data.url;
             const base64   = data.imageBase64 || data.image_base64 || data.base64;
+
+            console.info('[FabricAI] Generation engine', {
+                plan: userPlan,
+                provider: data.provider || 'unknown',
+                model: data.model || 'unknown',
+                usedFallback: (data.provider || '') !== ((snapshotImage || isEditMode) ? 'together' : 'chutes')
+            });
 
             if (data.bg_removal_failed) {
                 console.warn('[FabricAI] Background removal failed for this generation. The raw image is being shown instead.', {
@@ -1634,6 +1647,77 @@
             isSubmitting = false; setLoading(false); exitEditMode(); clearImagePreview();
         }
     });
+
+    // ─── NanoGPT async polling ────────────────────────────────────────
+    async function pollGeneration(generationId, placeholderId) {
+        const POLL_INTERVAL = 4000; // 4 seconds between polls
+        const MAX_POLLS     = 60;   // max 4 min wait
+        let   polls         = 0;
+
+        return new Promise((resolve) => {
+            const interval = setInterval(async () => {
+                polls++;
+                try {
+                    const res  = await fetch(`/designs/generation/${generationId}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = await res.json().catch(() => ({}));
+
+                    if (data.status === 'done') {
+                        clearInterval(interval);
+                        const ph = document.getElementById(placeholderId); if (ph) ph.remove();
+
+                        const imageUrl = data.imageUrl || data.image_url || data.url;
+                        const base64   = data.imageBase64 || data.image_base64 || data.base64;
+
+                        console.info('[FabricAI] Generation engine (async)', {
+                            plan: userPlan, provider: data.provider || 'nanogpt', model: data.model || 'gpt_image_2',
+                        });
+
+                        if (data.bg_removal_failed) showBgRemovalWarning();
+
+                        if (imageUrl) {
+                            addBotResponse(imageUrl); TokenManager.deduct();
+                        } else if (base64) {
+                            addBotResponse(base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64);
+                            TokenManager.deduct();
+                        } else {
+                            addBotError('No image in response');
+                            await TokenManager.sync();
+                        }
+
+                        isSubmitting = false; setLoading(false); exitEditMode(); clearImagePreview();
+                        resolve();
+                    } else if (data.status === 'error') {
+                        clearInterval(interval);
+                        const ph = document.getElementById(placeholderId); if (ph) ph.remove();
+                        addBotError(data.error || 'Generation failed');
+                        await TokenManager.sync();
+                        isSubmitting = false; setLoading(false); exitEditMode(); clearImagePreview();
+                        resolve();
+                    } else if (polls >= MAX_POLLS) {
+                        clearInterval(interval);
+                        const ph = document.getElementById(placeholderId); if (ph) ph.remove();
+                        addBotError('Generation timed out. Please try again.');
+                        await TokenManager.sync();
+                        isSubmitting = false; setLoading(false); exitEditMode(); clearImagePreview();
+                        resolve();
+                    }
+                    // status === 'pending' → keep polling
+                } catch (err) {
+                    // Network error during polling — keep trying unless max reached
+                    if (polls >= MAX_POLLS) {
+                        clearInterval(interval);
+                        const ph = document.getElementById(placeholderId); if (ph) ph.remove();
+                        addBotError('Network error during generation polling.');
+                        await TokenManager.sync();
+                        isSubmitting = false; setLoading(false); exitEditMode(); clearImagePreview();
+                        resolve();
+                    }
+                }
+            }, POLL_INTERVAL);
+        });
+    }
 
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') TokenManager.sync();

@@ -76,6 +76,14 @@ return [
         'key' => env('TOGETHER_API_KEY'),
     ],
 
+    'nanogpt' => [
+        'key' => env('NANOGPT_API_KEY'),
+        'image_url' => env('NANOGPT_IMAGE_URL', 'https://nano-gpt.com/v1/images/generations'),
+        'models' => [
+            'gpt_image_2' => env('NANOGPT_IMAGE_MODEL', 'gpt-image-2'),
+        ],
+    ],
+
     'stripe' => [
         'prices' => [
             'starter_monthly'  => env('STRIPE_STARTER_MONTHLY_PRICE'),
