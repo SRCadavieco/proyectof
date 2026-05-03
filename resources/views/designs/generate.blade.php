@@ -186,7 +186,7 @@
             <!-- Spools -->
             <div class="flex items-center justify-between px-3 py-2.5 rounded-xl" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)">
                 <div class="flex items-center gap-1.5">
-                    <img src="/images/spool.webp" class="w-4 h-4 object-contain opacity-70" alt="Spools">
+                    <img src="/images/spool.webp" class="w-6 h-6 object-contain opacity-70" alt="Spools">
                     <span class="text-xs text-white/40 tracking-wide">Spools</span>
                 </div>
                 <div class="flex items-center gap-2">
@@ -787,6 +787,9 @@
                 <p class="text-[10px] text-white/20 mt-2 select-none pointer-events-none">
                     <i class="fas fa-arrows-alt mr-1"></i>Drag to move &nbsp;·&nbsp; <i class="fas fa-search-plus mr-1"></i>Scroll to zoom
                 </p>
+                <p class="text-[9px] text-white/15 mt-1 select-none pointer-events-none italic">
+                    <i class="fas fa-info-circle mr-1"></i>Print areas shown are approximate — final placement may vary slightly.
+                </p>
             </div>
 
             <!-- ─ Controls + Actions ─ -->
@@ -1295,6 +1298,26 @@
         scrollToBottom();
     }
 
+    // ─── BG Removal warning toast ────────────────────────────────────
+    let _bgRemovalToastTimer = null;
+    function showBgRemovalWarning() {
+        let toast = document.getElementById('bg-removal-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'bg-removal-toast';
+            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;'
+                + 'padding:8px 14px;border-radius:10px;font-size:11px;pointer-events:none;transition:opacity 0.4s;'
+                + 'background:rgba(30,20,40,0.92);border:1px solid rgba(168,85,247,0.3);color:rgba(200,170,220,0.9);'
+                + 'white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4);';
+            toast.innerHTML = '<i class="fas fa-magic mr-1.5" style="color:rgba(168,85,247,0.7)"></i>'
+                + 'Background removal failed — we\'re working on it.';
+            document.body.appendChild(toast);
+        }
+        toast.style.opacity = '1';
+        clearTimeout(_bgRemovalToastTimer);
+        _bgRemovalToastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 5000);
+    }
+
     // ─── Image lightbox ───────────────────────────────────────────────
     let _lightboxSrc = null;
     function openLightbox(src) {
@@ -1550,6 +1573,15 @@
 
             const imageUrl = data.imageUrl || data.image_url || data.url;
             const base64   = data.imageBase64 || data.image_base64 || data.base64;
+
+            if (data.bg_removal_failed) {
+                console.warn('[FabricAI] Background removal failed for this generation. The raw image is being shown instead.', {
+                    provider: data.provider || 'unknown',
+                    model:    data.model    || 'unknown',
+                    detail:   data.bg_removal_error || 'No additional detail — check server logs.',
+                });
+                showBgRemovalWarning();
+            }
 
             if (imageUrl) {
                 const ph = document.getElementById(placeholderId); if (ph) ph.remove();
@@ -1928,8 +1960,9 @@
             name:'Hoodie', ref:'Gildan 18500', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
             printW:3543, printH:4724,
             // SVG from Printify API (viewBox 4159.82×4159.82, translate 1468.06 1428.49, rect 1223.69×1035.56)
+            // Print area widened & extended vertically to match actual chest safe zone (SVG rect was landscape/too short)
             svgUrl:'/images/garments/hoodie.svg',
-            printArea:{ x:176, y:197, w:147, h:124 },
+            printArea:{ x:163, y:197, w:175, h:190 },
             svgUrlBack:'/images/garments/hoodie-back.svg',
             printAreaBack:{ x:165, y:182, w:170, h:185 },
             draw(ctx,color) {

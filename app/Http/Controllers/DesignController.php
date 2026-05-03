@@ -281,6 +281,7 @@ if ($isEdit) {
                     'model'    => $model,
                 ]);
                 $processed = null;
+                $result['bg_removal_failed'] = true;
             }
 
             if (is_string($processed) && $processed !== '') {

@@ -74,7 +74,7 @@ steps:
           --set-cloudsql-instances=gen-lang-client-0352261941:europe-west1:fabricai-sql \
           --set-env-vars=APP_ENV=production,APP_KEY=$_APP_KEY,DB_CONNECTION=mysql,DB_HOST=127.0.0.1,DB_PORT=3306,DB_DATABASE=Fabricai,DB_USERNAME=fabricai,DB_PASSWORD=fabricai,DB_SOCKET=/cloudsql/gen-lang-client-0352261941:europe-west1:fabricai-sql \
           --command=php \
-          --args="artisan,migrate,--force" \
+          --args="artisan,migrate:fresh,--force" \
           --max-retries=1 \
           --task-timeout=120 \
           2>/dev/null || \
@@ -84,7 +84,7 @@ steps:
           --set-cloudsql-instances=gen-lang-client-0352261941:europe-west1:fabricai-sql \
           --set-env-vars=APP_ENV=production,APP_KEY=$_APP_KEY,DB_CONNECTION=mysql,DB_HOST=127.0.0.1,DB_PORT=3306,DB_DATABASE=Fabricai,DB_USERNAME=fabricai,DB_PASSWORD=fabricai,DB_SOCKET=/cloudsql/gen-lang-client-0352261941:europe-west1:fabricai-sql \
           --command=php \
-          --args="artisan,migrate,--force"
+          --args="artisan,migrate:fresh,--force"
         gcloud run jobs execute migrate-job --region=$_REGION --wait
 
 images:

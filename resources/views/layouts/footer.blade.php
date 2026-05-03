@@ -28,9 +28,7 @@
         </div>
         <div class="mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs" style="border-top:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.25)">
             <span>&copy; {{ date('Y') }} FabricAI. All rights reserved.</span>
-            <span class="flex items-center gap-2">
-                Made with <span class="text-accent">&#9679;</span> for creators
-            </span>
+
         </div>
     </div>
 </footer>
