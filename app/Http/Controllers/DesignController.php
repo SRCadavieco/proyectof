@@ -105,11 +105,11 @@ class DesignController extends Controller
     if ($hasReferenceImage) {
         $prompt = $userPrompt;
     } elseif ($provider === 'chutes') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider);
     } elseif ($provider === 'together') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider);
     } elseif ($provider === 'nanogpt') {
-        $prompt = $this->buildHybridPrompt($userPrompt);
+        $prompt = $this->buildHybridPrompt($userPrompt, $provider);
     } else {
         $prompt = $userPrompt;
     }
@@ -521,10 +521,15 @@ if ($isEdit) {
     /**
  * Build a hybrid prompt: preserve user intent and add concise style/quality guidance.
  */
-private function buildHybridPrompt(string $userPrompt): string
+private function buildHybridPrompt(string $userPrompt, ?string $provider = null): string
 {
     $cleanPrompt = trim($userPrompt);
     $styleGuide = "print-ready apparel graphic, centered composition, clean vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject, no text unless explicitly requested.";
+
+    // Juggernaut sometimes drifts into mockup/clothing outputs, so force strict negative constraints.
+    if ($provider === 'nanogpt') {
+        $styleGuide .= " Output only the standalone artwork to be printed. Do NOT generate a t-shirt, hoodie, garment mockup, model, person, mannequin, hanger, fabric folds, seams, collar, sleeves, labels, or print preview scene. Background must stay clean and simple, focused only on the graphic.";
+    }
 
     return $cleanPrompt . "\n\nStyle and quality guidance: " . $styleGuide;
 }
