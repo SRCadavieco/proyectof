@@ -12,6 +12,8 @@ substitutions:
   _NANOGPT_IMAGE_URL: https://nano-gpt.com/v1/images/generations
   _NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z: juggernaut-z
 
+  # Replicate token — gestionado manualmente en Cloud Run Console, nunca en el deploy
+
   # RnBulkTools — token se fija UNA VEZ manualmente en Cloud Run Console, nunca en el deploy
 
   # Stripe secrets — gestionados manualmente en Cloud Run Console, nunca en el deploy

@@ -64,7 +64,7 @@ return [
     ],
 
     'replicate' => [
-        'token' => env('REPLICATE_API_TOKEN'),
+        'token' => env('REPLICATE_API_TOKEN', env('_REPLICATE_API_TOKEN')),
     ],
 
     'chutes' => [
