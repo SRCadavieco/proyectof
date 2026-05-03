@@ -46,6 +46,10 @@ class ApiUsageLog extends Model
             'remove_bg'  => 0.01,
             'default'    => 0.01,
         ],
+        'replicate' => [
+            'remove_bg'  => 0.01,
+            'default'    => 0.01,
+        ],
     ];
 
     public static function estimateCost(string $service, ?string $model): float

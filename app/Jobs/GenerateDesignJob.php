@@ -56,7 +56,7 @@ class GenerateDesignJob implements ShouldQueue
                     $noBg = $backgrounds->removeBackground($base64);
                     $bgRemovalMethod = $backgrounds->getLastMethod();
                     try {
-                        ApiUsageLog::record('rnbulktools', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
+                        ApiUsageLog::record('replicate', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
                     } catch (\Throwable) {}
 
                     if ($noBg) {

@@ -38,6 +38,11 @@ class BackgroundRemovalService
             $imageBase64 = 'data:image/png;base64,' . $imageBase64;
         }
 
+        if (trim($this->token) === '') {
+            Log::warning('Replicate remove-bg skipped: missing REPLICATE_API_TOKEN');
+            return $this->runLocalFallback($imageBase64);
+        }
+
         try {
             // Step 1: Create prediction
             $createResponse = Http::withToken($this->token)
@@ -102,8 +107,13 @@ class BackgroundRemovalService
 
             // Step 3: Download result image (output is a URL)
             $outputUrl = is_array($output) ? ($output[0] ?? null) : $output;
-            if (!$outputUrl) {
+            if (!is_string($outputUrl) || $outputUrl === '') {
                 throw new \RuntimeException('Replicate output URL is empty');
+            }
+
+            if (str_starts_with($outputUrl, 'data:')) {
+                $this->lastMethod = 'api';
+                return $outputUrl;
             }
 
             $imgResponse = Http::timeout(30)->get($outputUrl);
@@ -120,12 +130,20 @@ class BackgroundRemovalService
             Log::error('Replicate remove-bg failed', ['message' => $e->getMessage()]);
         }
 
-        // Fallback: local GD-based remover
-        $fallback = $this->removeBackgroundByEdgeSample($imageBase64, 38);
-        if ($fallback !== null) {
-            Log::warning('Replicate remove-bg fallback used: local edge-sample remover');
-            $this->lastMethod = 'laravel_local';
-            return $fallback;
+        return $this->runLocalFallback($imageBase64);
+    }
+
+    private function runLocalFallback(string $imageBase64): ?string
+    {
+        try {
+            $fallback = $this->removeBackgroundByEdgeSample($imageBase64, 38);
+            if ($fallback !== null) {
+                Log::warning('Replicate remove-bg fallback used: local edge-sample remover');
+                $this->lastMethod = 'laravel_local';
+                return $fallback;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Local background fallback failed', ['message' => $e->getMessage()]);
         }
 
         $this->lastMethod = 'failed';
@@ -139,31 +157,8 @@ class BackgroundRemovalService
      */
     public function convertToWebp(string $imageBase64): ?string
     {
-        $binary = $this->base64ToBinary($imageBase64);
-        if ($binary === null) return null;
-
-        try {
-            $response = Http::withToken($this->token)
-                ->timeout(60)
-                ->asMultipart()
-                ->post("{$this->apiUrl}/convert", [
-                    ['name' => 'file',          'contents' => $binary, 'filename' => 'image.png'],
-                    ['name' => 'target_format', 'contents' => 'webp'],
-                ]);
-
-            if (!$response->successful()) {
-                Log::error('RnBulkTools convert failed', [
-                    'status' => $response->status(),
-                    'body'   => $response->body(),
-                ]);
-                return null;
-            }
-
-            return $this->parseImageResponse($response, 'image/webp');
-        } catch (\Throwable $e) {
-            Log::error('RnBulkTools convert exception', ['message' => $e->getMessage()]);
-            return null;
-        }
+        // Legacy method kept for compatibility; conversion is currently disabled.
+        return $imageBase64;
     }
 
     /**
