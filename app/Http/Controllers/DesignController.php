@@ -125,14 +125,17 @@ class DesignController extends Controller
     // Verificar y descontar token del usuario (con reset mensual lazy)
     $user = $request->user();
     $user->refreshCreditsIfNeeded();
-    if ($user->tokens <= 0) {
+    $tokenCost = ($provider === 'nanogpt' && empty($validated['is_edit'])) ? 2 : 1;
+    if ($user->tokens < $tokenCost) {
         return response()->json([
             'success' => false,
-            'error' => 'No tienes tokens disponibles. Consigue más para seguir diseñando.',
+            'error' => $tokenCost > 1
+                ? "Necesitas {$tokenCost} Spools para usar Fabric Max. Consigue más para seguir diseñando."
+                : 'No tienes tokens disponibles. Consigue más para seguir diseñando.',
         ], 403);
     }
-    $user->decrement('tokens');
-    $user->increment('tokens_used');
+    $user->decrement('tokens', $tokenCost);
+    $user->increment('tokens_used', $tokenCost);
 
     // Guardar solo el prompt del usuario (sin el prefijo del sistema)
     $chat->messages()->create([
@@ -186,16 +189,15 @@ if ($needsImg2Img) {
     }
 }
 
-// Business plan uses NanoGPT models for text-to-image.
+// Guard: nanogpt is only available for pro/business plans
 $effectivePlan = strtolower((string) ($user->plan ?? 'free'));
 if ($effectivePlan === 'studio') {
     $effectivePlan = 'business';
 }
-if (!$needsImg2Img && $effectivePlan === 'business' && $provider === 'chutes' && $model === 'z_image_turbo') {
-    $provider = 'nanogpt';
-    $model = 'juggernaut_z';
-    $prompt = $this->buildHybridPrompt($userPrompt);
-    $ai = $nanogpt;
+if ($provider === 'nanogpt' && !in_array($effectivePlan, ['pro', 'business'], true)) {
+    $provider = 'chutes';
+    $model = 'z_image_turbo';
+    $ai = $chutes;
 }
 
 if ($isEdit) {

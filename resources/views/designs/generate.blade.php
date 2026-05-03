@@ -367,10 +367,13 @@
                     </button>
                 </div>
                 <div class="mt-2 flex items-center justify-between gap-2">
-                    @if(in_array(strtolower(Auth::user()->plan ?? 'free'), ['business', 'studio']))
+                    @if(in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'business', 'studio']))
                     <div class="flex items-center gap-2">
                         <span class="text-[10px] uppercase tracking-wider text-white/35">Model</span>
-                        <span class="text-[11px] px-2 py-0.5 rounded font-mono" style="background:rgba(244,114,182,0.15);color:#f9a8d4;border:1px solid rgba(244,114,182,0.25)">Juggernaut Z</span>
+                        <select id="model-selector" class="text-[11px] rounded font-mono px-2 py-0.5 outline-none cursor-pointer" style="background:rgba(255,255,255,0.07);color:#e2c9f7;border:1px solid rgba(180,100,220,0.25)">
+                            <option value="flash"> Fabric Flash · 1 spool</option>
+                            <option value="max"> Fabric Max · 2 spools</option>
+                        </select>
                     </div>
                     @endif
                     <!-- Char counter -->
@@ -951,10 +954,10 @@
         _cache: {{ Auth::user()->tokens ?? 5 }},
         get()    { return this._cache; },
         set(n)   { this._cache = Math.max(0, n); this._render(this._cache); },
-        deduct() {
+        deduct(amount = 1) {
             const cur = this.get();
-            if (cur <= 0) return false;
-            this.set(cur - 1);
+            if (cur < amount) return false;
+            this.set(cur - amount);
             return true;
         },
         refill() { window.location.href = '/pricing'; },
@@ -1123,15 +1126,18 @@
 
     function resolveGenerationEngine(snapshotImage) {
         if (snapshotImage || isEditMode) {
-            return { provider: 'together', model: 'flux_dev' };
+            return { provider: 'together', model: 'flux_dev', cost: 1 };
         }
 
         const plan = String(userPlan || '').toLowerCase();
-        if (plan === 'business' || plan === 'studio') {
-            return { provider: 'nanogpt', model: 'juggernaut_z' };
+        if (['pro', 'business', 'studio'].includes(plan)) {
+            const sel = document.getElementById('model-selector')?.value || 'flash';
+            if (sel === 'max') {
+                return { provider: 'nanogpt', model: 'juggernaut_z', cost: 2 };
+            }
         }
 
-        return { provider: 'chutes', model: 'z_image_turbo' };
+        return { provider: 'chutes', model: 'z_image_turbo', cost: 1 };
     }
 
     // ─── Textarea auto-resize ─────────────────────────────────────────
@@ -1594,7 +1600,11 @@
         if (isSubmitting) return;
         const prompt = promptInput.value.trim();
         if (!prompt) { showError('Please enter a prompt'); return; }
-        if (TokenManager.get() <= 0) { window.location.href = '/pricing'; return; }
+        const peekCost = resolveGenerationEngine(uploadedImageBase64).cost;
+        if (TokenManager.get() < peekCost) {
+            showError(peekCost > 1 ? `Necesitas ${peekCost} Spools para usar Fabric Max` : 'No tienes Spools disponibles');
+            return;
+        }
 
         isSubmitting = true;
         if (!currentChatId) currentChatId = await newChat();
@@ -1628,7 +1638,7 @@
 
             // NanoGPT returns immediately with a generation_id — poll for the result
             if (data.status === 'generating' && data.generation_id) {
-                await pollGeneration(data.generation_id, placeholderId);
+                await pollGeneration(data.generation_id, placeholderId, generationEngine.cost);
                 return; // finally block handled inside pollGeneration
             }
 
@@ -1653,11 +1663,11 @@
 
             if (imageUrl) {
                 const ph = document.getElementById(placeholderId); if (ph) ph.remove();
-                addBotResponse(imageUrl); TokenManager.deduct();
+                addBotResponse(imageUrl); TokenManager.deduct(generationEngine.cost);
             } else if (base64) {
                 const ph = document.getElementById(placeholderId); if (ph) ph.remove();
                 addBotResponse(base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64);
-                TokenManager.deduct();
+                TokenManager.deduct(generationEngine.cost);
             } else {
                 throw new Error('No image in response');
             }
@@ -1671,7 +1681,7 @@
     });
 
     // ─── NanoGPT async polling ────────────────────────────────────────
-    async function pollGeneration(generationId, placeholderId) {
+    async function pollGeneration(generationId, placeholderId, cost = 1) {
         const POLL_INTERVAL = 4000; // 4 seconds between polls
         const MAX_POLLS     = 60;   // max 4 min wait
         let   polls         = 0;
@@ -1699,10 +1709,10 @@
                         if (data.bg_removal_failed) showBgRemovalWarning();
 
                         if (imageUrl) {
-                            addBotResponse(imageUrl); TokenManager.deduct();
+                            addBotResponse(imageUrl); TokenManager.deduct(cost);
                         } else if (base64) {
                             addBotResponse(base64.startsWith('data:') ? base64 : 'data:image/png;base64,' + base64);
-                            TokenManager.deduct();
+                            TokenManager.deduct(cost);
                         } else {
                             addBotError('No image in response');
                             await TokenManager.sync();
