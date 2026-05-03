@@ -105,10 +105,9 @@ class DesignController extends Controller
     if ($hasReferenceImage) {
         $prompt = $userPrompt;
     } elseif ($provider === 'chutes' || $provider === 'nanogpt') {
-        // Chutes and NanoGPT share the exact same base prompt strategy.
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $model ?? null);
     } elseif ($provider === 'together') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $model ?? null);
     } else {
         $prompt = $userPrompt;
     }
@@ -521,14 +520,44 @@ if ($isEdit) {
     // ─────────────────────────────────────────────────────────────────────────────
 
     /**
- * Build a hybrid prompt: preserve user intent and add concise style/quality guidance.
+ * Build a provider-aware hybrid prompt that keeps the product's visual essence
+ * while adapting quality guidance to each image model family.
  */
-private function buildHybridPrompt(string $userPrompt): string
+private function buildHybridPrompt(string $userPrompt, string $provider, ?string $model = null): string
 {
     $cleanPrompt = trim($userPrompt);
-    $styleGuide = "vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject.";
+    $baseGuide = implode(', ', [
+        'isolated main subject',
+        'clean composition',
+        'single coherent scene',
+        'sharp details',
+        'no text',
+        'no letters',
+        'no logos',
+        'no watermark',
+    ]) . '.';
 
-    return $cleanPrompt . " " . $styleGuide;
+    $styleGuide = match ($provider) {
+        'nanogpt' => implode(', ', [
+            'premium digital illustration',
+            'accurate anatomy and proportions',
+            'clear separation between elements',
+            'realistic lighting and reflections',
+            'high fidelity edges',
+            'avoid duplicated objects',
+            'avoid random typography',
+        ]) . '.',
+        default => implode(', ', [
+            'vector-like illustration',
+            'flat colors',
+            'bold outlines',
+            'minimal gradients',
+            'controlled shadows',
+            'high contrast',
+        ]) . '.',
+    };
+
+    return trim($cleanPrompt . ' ' . $baseGuide . ' ' . $styleGuide);
 }
 
     /**
