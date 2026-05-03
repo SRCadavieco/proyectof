@@ -130,26 +130,11 @@ class PrintifyService
             $backImageId = $backUpload['id'];
         }
 
-        // 2. Pick first print provider for this blueprint
+        // 2. Get all print providers for this blueprint and try them in order
         $providers = $this->getPrintProviders($token, $blueprintId);
         if (empty($providers)) {
             throw new \RuntimeException('No print providers available for this product type.');
         }
-        $providerId = $providers[0]['id'];
-
-        // 3. Get available variants, filter by color, limit to 10 sizes
-        $variantsData = $this->getVariants($token, $blueprintId, $providerId);
-        $available    = array_values(array_filter(
-            $variantsData['variants'] ?? [],
-            fn($v) => $v['is_available'] ?? true
-        ));
-        $variants = array_slice($this->filterVariantsByColor($available, $color), 0, 10);
-
-        if (empty($variants)) {
-            throw new \RuntimeException('No variants available for this product.');
-        }
-
-        $variantIds = array_column($variants, 'id');
 
         // 4. Build placeholders (front always, back only if image provided)
         $placeholders = [
@@ -181,27 +166,54 @@ class PrintifyService
             ];
         }
 
-        // 5. Build product payload
-        $payload = [
-            'title'             => $title,
-            'blueprint_id'      => $blueprintId,
-            'print_provider_id' => $providerId,
-            'variants'          => array_map(fn($v) => [
-                'id'         => $v['id'],
-                'price'      => 2500,
-                'is_enabled' => true,
-            ], $variants),
-            'print_areas' => [
-                [
-                    'variant_ids'  => $variantIds,
-                    'placeholders' => $placeholders,
-                ],
-            ],
-        ];
+        $lastError = 'No variants available for this product.';
 
-        $response = $this->http($token)->post(self::BASE_URL . "/shops/{$shopId}/products.json", $payload);
-        $response->throw();
-        return $response->json();
+        foreach ($providers as $provider) {
+            $providerId = $provider['id'];
+
+            try {
+                // 3. Get available variants, filter by color, limit to 10 sizes
+                $variantsData = $this->getVariants($token, $blueprintId, $providerId);
+                $available    = array_values(array_filter(
+                    $variantsData['variants'] ?? [],
+                    fn($v) => $v['is_available'] ?? true
+                ));
+                $variants = array_slice($this->filterVariantsByColor($available, $color), 0, 10);
+
+                if (empty($variants)) {
+                    $lastError = 'No variants available for this product.';
+                    continue;
+                }
+
+                $variantIds = array_column($variants, 'id');
+
+                // 5. Build product payload
+                $payload = [
+                    'title'             => $title,
+                    'blueprint_id'      => $blueprintId,
+                    'print_provider_id' => $providerId,
+                    'variants'          => array_map(fn($v) => [
+                        'id'         => $v['id'],
+                        'price'      => 2500,
+                        'is_enabled' => true,
+                    ], $variants),
+                    'print_areas' => [
+                        [
+                            'variant_ids'  => $variantIds,
+                            'placeholders' => $placeholders,
+                        ],
+                    ],
+                ];
+
+                $response = $this->http($token)->post(self::BASE_URL . "/shops/{$shopId}/products.json", $payload);
+                $response->throw();
+                return $response->json();
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+            }
+        }
+
+        throw new \RuntimeException('Could not create product with available print providers. Last error: ' . $lastError);
     }
 
     /**
@@ -242,6 +254,23 @@ class PrintifyService
             if ($c === $firstColor) $firstGroup[] = $v;
         }
         return !empty($firstGroup) ? $firstGroup : array_slice($variants, 0, 5);
+    }
+
+    public function publishProduct(string $token, int $shopId, string $productId): void
+    {
+        $response = $this->http($token)->post(
+            self::BASE_URL . "/shops/{$shopId}/products/{$productId}/publish.json",
+            [
+                'title'             => true,
+                'description'       => true,
+                'images'            => true,
+                'variants'          => true,
+                'tags'              => true,
+                'keyFeatures'       => true,
+                'shipping_template' => true,
+            ]
+        );
+        $response->throw();
     }
 
     public function sendDesignToAll(string $token, int $shopId, string $title, string $imageSource, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = ''): array

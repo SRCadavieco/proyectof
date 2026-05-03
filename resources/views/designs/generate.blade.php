@@ -566,6 +566,17 @@
                     </div>
                     @endif
                 </div>
+                <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" id="bulk-publish" class="sr-only peer">
+                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
+                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
+                        </div>
+                        <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Publish directly to store</span>
+                    </label>
+                    <p class="text-[10px] text-white/30 mt-1.5 ml-11">Makes products visible in your store immediately after creation.</p>
+                </div>
             </div>
             <div id="bulk-progress-section" class="hidden space-y-3">
                 <div class="flex justify-between text-xs text-white/40 mb-1">
@@ -659,11 +670,22 @@
                         <span id="turbo-color-name" class="text-xs text-white/70 font-medium">White</span>
                     </div>
                 </div>
+                <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" id="turbo-publish" class="sr-only peer">
+                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
+                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
+                        </div>
+                        <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Publish directly to store</span>
+                    </label>
+                    <p class="text-[10px] text-white/30 mt-1.5 ml-11">Makes products visible in your store immediately after creation.</p>
+                </div>
             </div>
             <div id="turbo-progress-section" class="hidden space-y-3">
                 <div class="flex justify-between text-xs text-white/40 mb-1">
                     <span id="turbo-progress-label">Uploading…</span>
-                    <span id="turbo-progress-count">0/5</span>
+                    <span id="turbo-progress-count">0/8</span>
                 </div>
                 <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
                     <div id="turbo-progress-bar" class="bg-[#7c3ca0] h-2 rounded-full transition-all duration-300" style="width:0%"></div>
@@ -873,6 +895,17 @@
                                    oninput="onPrintifyColorChange(this.value)"
                                    class="w-8 h-8 rounded-lg cursor-pointer flex-shrink-0" style="border:1px solid rgba(255,255,255,0.12)">
                             <span id="printify-color-name" class="text-xs text-white/60">White</span>
+                        </div>
+                        <div class="pt-2.5" style="border-top:1px solid rgba(255,255,255,0.07);margin-top:4px">
+                            <label class="flex items-center gap-2.5 cursor-pointer group">
+                                <div class="relative">
+                                    <input type="checkbox" id="printify-publish" class="sr-only peer">
+                                    <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
+                                    <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
+                                </div>
+                                <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Publish directly to store</span>
+                            </label>
+                            <p class="text-[10px] text-white/30 mt-1.5 ml-11">Makes the product visible in your store immediately.</p>
                         </div>
                         <div id="printify-feedback" class="hidden text-xs py-1"></div>
                         <div class="flex gap-2">
@@ -2652,6 +2685,7 @@
                 pos_x:        isBakedFront ? 0.5 : 0.5+posX*0.5,
                 pos_y:        isBakedFront ? 0.5 : 0.5+posY*0.5,
                 design_scale: isBakedFront ? 1   : sc,
+                publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
             };
             if (backImageSrc) {
                 payload.back_image_source = backImageSrc;
@@ -2730,6 +2764,7 @@
                     title:title+' — '+label,
                     color:hexToColorName(document.getElementById('printify-color-hex').value),
                     pos_x:0.5+posX*0.5, pos_y:0.5+posY*0.5, design_scale:sc,
+                    publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
                 };
                 if (backImageSrc) {
                     payload.back_image_source = backImageSrc;
@@ -2770,6 +2805,8 @@
         document.getElementById('bulk-modal-close-btn').disabled = false;
         document.getElementById('bulk-progress-results').innerHTML = '';
         document.getElementById('bulk-progress-bar').style.width = '0%';
+        const bulkPublish = document.getElementById('bulk-publish');
+        if (bulkPublish) bulkPublish.checked = false;
 
         // Pre-fill title from current design
         const existing = document.getElementById('printify-title')?.value;
@@ -2894,6 +2931,7 @@
                         pos_x:        0.5,
                         pos_y:        0.5,
                         design_scale: 1,
+                        publish_after_create: document.getElementById('bulk-publish')?.checked ?? false,
                     }),
                 });
                 const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
@@ -3193,6 +3231,8 @@
         document.getElementById('turbo-modal-close-btn').disabled = false;
         document.getElementById('turbo-progress-results').innerHTML = '';
         document.getElementById('turbo-progress-bar').style.width = '0%';
+        const turboPublish = document.getElementById('turbo-publish');
+        if (turboPublish) turboPublish.checked = false;
         const existing = document.getElementById('printify-title')?.value;
         document.getElementById('turbo-title').value = existing || 'FabricAI — My Design';
         const hexSrc = document.getElementById('printify-color-hex')?.value || '#ffffff';
@@ -3328,10 +3368,12 @@
 
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         let successCount = 0, errorCount = 0;
+        const resultLines = [];
         const garments = [
             {type:'tshirt',label:'T-Shirt'},{type:'hoodie',label:'Hoodie'},
-            {type:'tanktop',label:'Tank Top'},{type:'longsleeve',label:'Long Sleeve'},
-            {type:'sweatshirt',label:'Sweatshirt'},
+            {type:'zip_hoodie',label:'Zip Hoodie'},{type:'tanktop',label:'Tank Top'},
+            {type:'longsleeve',label:'Long Sleeve'},{type:'sweatshirt',label:'Sweatshirt'},
+            {type:'vneck',label:'V-Neck Tee'},{type:'womens_tee',label:"Women's Tee"},
         ];
 
         const updateProgress = (cur, curLabel) => {
@@ -3350,6 +3392,7 @@
                     shop_id: parseInt(shopId), garment_type: type,
                     title: title + ' — ' + label, color,
                     pos_x: 0.5 + posX * 0.5, pos_y: 0.5 + posY * 0.5, design_scale: sc,
+                    publish_after_create: document.getElementById('turbo-publish')?.checked ?? false,
                 };
                 if (frontImageSrc) payload.image_source = frontImageSrc;
                 if (backImageSrc) {
@@ -3366,8 +3409,10 @@
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
                 successCount++;
+                resultLines.push(`<div class="text-green-700 text-xs">✓ ${label}</div>`);
             } catch (err) {
                 errorCount++;
+                resultLines.push(`<div class="text-red-600 text-xs">✗ ${label}: ${escapeHtml(err.message || 'Unknown error')}</div>`);
             }
         }
         updateProgress(garments.length, '');
@@ -3380,13 +3425,14 @@
                         <i class="fas fa-check-circle"></i>
                         <span>${successCount} product${successCount > 1 ? 's' : ''} created${errorCount > 0 ? ` (${errorCount} failed)` : ''}</span>
                     </div>
+                    <div class="w-full text-left space-y-0.5">${resultLines.join('')}</div>
                     <a href="https://printify.com/app/store/products" target="_blank" rel="noopener noreferrer"
                        class="px-4 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl hover:bg-[#5a2275] transition-colors flex items-center gap-1.5">
                         <i class="fas fa-external-link-alt text-[10px]"></i> View in Printify
                     </a>
                 </div>`;
         } else {
-            resultsEl.innerHTML = `<p class="text-xs text-red-600 text-center pt-2">All uploads failed. Please try again.</p>`;
+            resultsEl.innerHTML = `<div class="space-y-2 pt-2"><p class="text-xs text-red-600 text-center">All uploads failed. Please try again.</p><div class="text-left space-y-0.5">${resultLines.join('')}</div></div>`;
         }
         document.getElementById('turbo-cancel-btn').disabled = false;
         document.getElementById('turbo-modal-close-btn').disabled = false;

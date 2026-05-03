@@ -139,18 +139,19 @@ class PrintifyController extends Controller
         }
 
         $data = $request->validate([
-            'shop_id'           => 'required|integer',
-            'garment_type'      => 'required|string|in:tshirt,hoodie,zip_hoodie,tanktop,longsleeve,sweatshirt,vneck,womens_tee',
-            'image_source'      => 'required|string',
-            'title'             => 'required|string|max:140',
-            'color'             => 'nullable|string|max:50',
-            'pos_x'             => 'nullable|numeric|min:0|max:1',
-            'pos_y'             => 'nullable|numeric|min:0|max:1',
-            'design_scale'      => 'nullable|numeric|min:0.1|max:3',
-            'back_image_source' => 'nullable|string',
-            'back_pos_x'        => 'nullable|numeric|min:0|max:1',
-            'back_pos_y'        => 'nullable|numeric|min:0|max:1',
-            'back_design_scale' => 'nullable|numeric|min:0.1|max:3',
+            'shop_id'              => 'required|integer',
+            'garment_type'         => 'required|string|in:tshirt,hoodie,zip_hoodie,tanktop,longsleeve,sweatshirt,vneck,womens_tee',
+            'image_source'         => 'required|string',
+            'title'                => 'required|string|max:140',
+            'color'                => 'nullable|string|max:50',
+            'pos_x'                => 'nullable|numeric|min:0|max:1',
+            'pos_y'                => 'nullable|numeric|min:0|max:1',
+            'design_scale'         => 'nullable|numeric|min:0.1|max:3',
+            'back_image_source'    => 'nullable|string',
+            'back_pos_x'           => 'nullable|numeric|min:0|max:1',
+            'back_pos_y'           => 'nullable|numeric|min:0|max:1',
+            'back_design_scale'    => 'nullable|numeric|min:0.1|max:3',
+            'publish_after_create' => 'nullable|boolean',
         ]);
 
         try {
@@ -175,6 +176,14 @@ class PrintifyController extends Controller
             $url       = "https://printify.com/app/store/{$shopId}/products/{$productId}/edit";
 
             $conn->increment('products_pushed');
+
+            if (isset($data['publish_after_create']) && $data['publish_after_create']) {
+                try {
+                    $this->printify->publishProduct($conn->api_token, (int) $data['shop_id'], (string) $productId);
+                } catch (\Throwable $e) {
+                    \Log::warning('Printify publish failed for product ' . $productId . ': ' . $e->getMessage());
+                }
+            }
 
             return response()->json(['success' => true, 'printify_url' => $url, 'product' => $product]);
         } catch (\Throwable $e) {
