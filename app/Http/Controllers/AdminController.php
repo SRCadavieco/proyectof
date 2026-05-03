@@ -23,10 +23,16 @@ class AdminController extends Controller
         $totalChats = Chat::count();
         $totalMessages = Message::count();
 
-        // Users by plan
-        $usersByPlan = User::select('plan', DB::raw('count(*) as total'))
-            ->groupBy('plan')
-            ->pluck('total', 'plan');
+        // Users by plan (legacy values are normalised)
+        $planCase = "CASE
+            WHEN plan = 'studio' THEN 'business'
+            WHEN plan IN ('free', 'starter', 'pro', 'business') THEN plan
+            ELSE 'free'
+        END";
+
+        $usersByPlan = User::selectRaw("{$planCase} as normalized_plan, COUNT(*) as total")
+            ->groupBy('normalized_plan')
+            ->pluck('total', 'normalized_plan');
 
         // Model usage (fabric_light vs fabric_pro) from messages
         $modelUsage = Message::where('role', 'user')
@@ -96,10 +102,21 @@ class AdminController extends Controller
         }
 
         if ($plan = $request->input('plan')) {
-            $query->where('plan', $plan);
+            if (! in_array($plan, ['free', 'starter', 'pro', 'business'], true)) {
+                $plan = null;
+            }
+        }
+
+        if ($plan) {
+            if ($plan === 'business') {
+                $query->whereIn('plan', ['business', 'studio']);
+            } else {
+                $query->where('plan', $plan);
+            }
         }
 
         $users = $query->withCount('chats')
+            ->with('printifyConnection:id,user_id')
             ->orderBy('created_at', 'desc')
             ->paginate(20)
             ->withQueryString();
@@ -111,7 +128,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'tokens' => 'nullable|integer|min:0',
-            'plan' => 'nullable|in:free,pro,studio',
+            'plan' => 'nullable|in:free,starter,pro,business',
         ]);
 
         if (isset($validated['tokens'])) {
@@ -145,7 +162,7 @@ class AdminController extends Controller
         }
 
         $name = $user->name;
-        $user->chats()->each(function ($chat) {
+        $user->chats()->get()->each(function ($chat) {
             $chat->messages()->delete();
             $chat->delete();
         });
