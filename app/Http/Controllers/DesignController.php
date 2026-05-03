@@ -104,12 +104,11 @@ class DesignController extends Controller
 
     if ($hasReferenceImage) {
         $prompt = $userPrompt;
-    } elseif ($provider === 'chutes') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider);
+    } elseif ($provider === 'chutes' || $provider === 'nanogpt') {
+        // Chutes and NanoGPT share the exact same base prompt strategy.
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
     } elseif ($provider === 'together') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider);
-    } elseif ($provider === 'nanogpt') {
-        $prompt = $this->buildHybridPrompt($userPrompt, $provider);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion);
     } else {
         $prompt = $userPrompt;
     }
@@ -521,12 +520,12 @@ if ($isEdit) {
     /**
  * Build a hybrid prompt: preserve user intent and add concise style/quality guidance.
  */
-private function buildHybridPrompt(string $userPrompt, ?string $provider = null): string
+private function buildHybridPrompt(string $userPrompt): string
 {
     $cleanPrompt = trim($userPrompt);
     $styleGuide = "vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject.";
 
-    return $cleanPrompt .  $styleGuide;
+    return $cleanPrompt . " " . $styleGuide;
 }
 
     /**

@@ -56,10 +56,6 @@ class NanoGptService
 
         $finalPrompt = $prompt;
 
-        if ($model === 'juggernaut_z' || str_contains(strtolower($modelName), 'juggernaut')) {
-            $finalPrompt = $this->normalizeArtworkPrompt($finalPrompt);
-        }
-
         if (!empty($backgroundColor)) {
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
@@ -151,14 +147,4 @@ class NanoGptService
         }
     }
 
-    private function normalizeArtworkPrompt(string $prompt): string
-    {
-        $clean = trim(preg_replace('/\s+/u', ' ', $prompt));
-
-        $clean = preg_replace('/^(haz|hace|crea|genera|diseña|disena|make|create|generate|design)\s+/iu', '', $clean);
-        $clean = preg_replace('/^(un|una|el|la|the|a|an)\s+/iu', '', $clean);
-        $clean = trim($clean, " \t\n\r\0\x0B.,;:!?");
-
-        return $clean !== '' ? $clean : $prompt;
-    }
 }
