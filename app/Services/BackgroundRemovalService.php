@@ -29,7 +29,6 @@ class BackgroundRemovalService
 
     /**
      * Remove background using the Replicate API (cjwbw/rembg).
-     * Falls back to local GD edge-sample remover if the API fails.
      *
      * @param string $imageBase64 Base64 string or data URL
      * @return string|null data URL (data:image/png;base64,...) or null on failure
@@ -45,7 +44,8 @@ class BackgroundRemovalService
 
         if (trim($this->token) === '') {
             Log::warning('Replicate remove-bg skipped: missing REPLICATE_API_TOKEN');
-            return $this->runLocalFallback($imageBase64);
+            $this->lastMethod = 'failed';
+            return null;
         }
 
         try {
@@ -140,22 +140,6 @@ class BackgroundRemovalService
 
         } catch (\Throwable $e) {
             Log::error('Replicate remove-bg failed', ['message' => $e->getMessage()]);
-        }
-
-        return $this->runLocalFallback($imageBase64);
-    }
-
-    private function runLocalFallback(string $imageBase64): ?string
-    {
-        try {
-            $fallback = $this->removeBackgroundByEdgeSample($imageBase64, 38);
-            if ($fallback !== null) {
-                Log::warning('Replicate remove-bg fallback used: local edge-sample remover');
-                $this->lastMethod = 'laravel_local';
-                return $fallback;
-            }
-        } catch (\Throwable $e) {
-            Log::error('Local background fallback failed', ['message' => $e->getMessage()]);
         }
 
         $this->lastMethod = 'failed';
