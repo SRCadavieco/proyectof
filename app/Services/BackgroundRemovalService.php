@@ -14,7 +14,54 @@ class BackgroundRemovalService
 
     public function __construct()
     {
-        $this->token = config('services.replicate.token', '');
+        $this->token = $this->resolveReplicateToken();
+    }
+
+    /**
+     * Resolve Replicate token reliably even when config cache or worker state is stale.
+     */
+    private function resolveReplicateToken(): string
+    {
+        $candidates = [
+            config('services.replicate.token', ''),
+            env('REPLICATE_API_TOKEN'),
+            env('_REPLICATE_API_TOKEN'),
+            getenv('REPLICATE_API_TOKEN') ?: '',
+            getenv('_REPLICATE_API_TOKEN') ?: '',
+            $_ENV['REPLICATE_API_TOKEN'] ?? '',
+            $_ENV['_REPLICATE_API_TOKEN'] ?? '',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return trim($candidate);
+            }
+        }
+
+        // Final fallback: parse the project's .env directly.
+        $envPath = base_path('.env');
+        if (is_file($envPath) && is_readable($envPath)) {
+            $lines = @file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+            foreach ($lines as $line) {
+                if (!is_string($line) || str_starts_with(trim($line), '#')) {
+                    continue;
+                }
+                if (str_starts_with($line, 'REPLICATE_API_TOKEN=')) {
+                    $value = trim(substr($line, strlen('REPLICATE_API_TOKEN=')), " \t\n\r\0\x0B\"'");
+                    if ($value !== '') {
+                        return $value;
+                    }
+                }
+                if (str_starts_with($line, '_REPLICATE_API_TOKEN=')) {
+                    $value = trim(substr($line, strlen('_REPLICATE_API_TOKEN=')), " \t\n\r\0\x0B\"'");
+                    if ($value !== '') {
+                        return $value;
+                    }
+                }
+            }
+        }
+
+        return '';
     }
 
     public function getLastMethod(): string
