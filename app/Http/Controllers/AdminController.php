@@ -9,6 +9,7 @@ use App\Models\ApiUsageLog;
 use App\Models\BillingEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class AdminController extends Controller
 {
@@ -124,17 +125,31 @@ class AdminController extends Controller
 
         $userIds = $users->getCollection()->pluck('id')->all();
         $eventsByUser = collect();
+        $promptsByUser = collect();
 
         if (!empty($userIds)) {
             $eventsByUser = BillingEvent::whereIn('user_id', $userIds)
                 ->orderByDesc('created_at')
                 ->get()
                 ->groupBy('user_id');
+
+            $promptsByUser = Message::query()
+                ->select('messages.content', 'messages.created_at', 'chats.user_id')
+                ->join('chats', 'chats.id', '=', 'messages.chat_id')
+                ->whereIn('chats.user_id', $userIds)
+                ->where('messages.role', 'user')
+                ->whereNotNull('messages.content')
+                ->where('messages.content', '!=', '')
+                ->orderByDesc('messages.created_at')
+                ->get()
+                ->groupBy('user_id')
+                ->map(fn (Collection $messages) => $messages->take(5)->values());
         }
 
         $users->setCollection(
-            $users->getCollection()->map(function (User $user) use ($eventsByUser) {
+            $users->getCollection()->map(function (User $user) use ($eventsByUser, $promptsByUser) {
                 $events = $eventsByUser->get($user->id, collect());
+                $prompts = $promptsByUser->get($user->id, collect());
 
                 $user->setRelation(
                     'recentTransactions',
@@ -142,6 +157,7 @@ class AdminController extends Controller
                 );
 
                 $user->setRelation('recentActivity', $events->take(4)->values());
+                $user->setRelation('recentPrompts', $prompts);
 
                 return $user;
             })

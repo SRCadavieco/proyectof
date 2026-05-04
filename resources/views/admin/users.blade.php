@@ -9,7 +9,8 @@
             tokenModal: false,
             editModal: false,
             deleteModal: false,
-            currentUser: { id: null, name: '', plan: 'free', tokens: 0, tokensUrl: '', editUrl: '', deleteUrl: '' },
+            promptsModal: false,
+            currentUser: { id: null, name: '', plan: 'free', tokens: 0, tokensUrl: '', editUrl: '', deleteUrl: '', prompts: [] },
             init() {},
             openTokens(id, name, url) {
                 this.currentUser = { ...this.currentUser, id, name, tokensUrl: url };
@@ -22,6 +23,17 @@
             openDelete(id, name, url) {
                 this.currentUser = { ...this.currentUser, id, name, deleteUrl: url };
                 this.deleteModal = true;
+            },
+            openPrompts(id, name, prompts) {
+                this.currentUser = { ...this.currentUser, id, name, prompts };
+                this.promptsModal = true;
+            },
+            openPromptsFromDataset(button) {
+                const id = Number(button.dataset.userId || 0);
+                const name = button.dataset.userName || '';
+                const prompts = JSON.parse(button.dataset.prompts || '[]');
+
+                this.openPrompts(id, name, prompts);
             },
         }));
     });
@@ -81,6 +93,7 @@
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">User</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Plan</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Tokens</th>
+                    <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Spent</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Chats</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Has Printify</th>
                     <th class="text-left px-6 py-4 text-[11px] font-semibold text-white/35 uppercase tracking-wider">Recent Transactions</th>
@@ -134,6 +147,9 @@
                         <td class="px-6 py-4">
                             <span class="font-mono text-white/75">{{ $user->tokens ?? 0 }}</span>
                         </td>
+                        <td class="px-6 py-4">
+                            <span class="font-mono text-white/65">{{ number_format($user->tokens_used ?? 0) }}</span>
+                        </td>
                         <td class="px-6 py-4 text-white/45">{{ $user->chats_count }}</td>
                         <td class="px-6 py-4">
                             @if($user->printifyConnection)
@@ -177,6 +193,20 @@
                         <td class="px-6 py-4 text-white/40 text-xs">{{ $user->created_at->format('M d, Y') }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
+                                @php
+                                    $recentPrompts = ($user->recentPrompts ?? collect())->map(fn ($prompt) => [
+                                        'content' => $prompt->content,
+                                        'created_at' => optional($prompt->created_at)->diffForHumans(),
+                                    ])->all();
+                                @endphp
+                                <button type="button"
+                                    @click="openPromptsFromDataset($el)"
+                                    data-user-id="{{ $user->id }}"
+                                    data-user-name="{{ $user->name }}"
+                                    data-prompts='@json($recentPrompts)'
+                                    class="p-2 rounded-lg text-white/35 transition" style="border:1px solid rgba(255,255,255,0.08)" title="View latest prompts">
+                                    <i class="fas fa-comment-dots text-xs"></i>
+                                </button>
                                 <button type="button"
                                     @click="openTokens({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ route('admin.users.tokens', $user) }}')"
                                     class="p-2 rounded-lg text-white/35 transition" style="border:1px solid rgba(255,255,255,0.08)" title="Add tokens">
@@ -199,7 +229,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center text-white/35">
+                        <td colspan="10" class="px-6 py-12 text-center text-white/35">
                             <i class="fas fa-users text-3xl mb-3 block"></i>
                             No users found.
                         </td>
@@ -211,6 +241,34 @@
     @if($users->hasPages())
         <div class="px-6 py-4" style="border-top:1px solid rgba(255,255,255,0.08)">{{ $users->links() }}</div>
     @endif
+</div>
+
+<div x-show="promptsModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" style="display:none;" @click.self="promptsModal = false">
+    <div class="rounded-2xl p-6 w-full max-w-2xl shadow-2xl" style="background:#111;border:1px solid rgba(255,255,255,0.09)">
+        <div class="flex items-center justify-between mb-5 gap-4">
+            <div>
+                <h3 class="font-semibold text-white"><i class="fas fa-comment-dots mr-2" style="color:#c084fc"></i>Latest prompts</h3>
+                <p class="text-sm text-white/40 mt-1">User: <span class="text-white/80 font-medium" x-text="currentUser.name"></span></p>
+            </div>
+            <button @click="promptsModal = false" class="text-white/35 hover:text-white transition"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div x-show="currentUser.prompts.length" class="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+            <template x-for="(prompt, index) in currentUser.prompts" :key="index">
+                <div class="rounded-xl px-4 py-3" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <span class="text-xs uppercase tracking-wider text-white/30" x-text="`Prompt ${index + 1}`"></span>
+                        <span class="text-[11px] text-white/35" x-text="prompt.created_at"></span>
+                    </div>
+                    <p class="text-sm leading-6 text-white/80 whitespace-pre-wrap break-words" x-text="prompt.content"></p>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="!currentUser.prompts.length" class="rounded-xl px-4 py-6 text-center text-sm text-white/35" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            This user has no saved prompts yet.
+        </div>
+    </div>
 </div>
 
 <div x-show="tokenModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" style="display:none;" @click.self="tokenModal = false">
