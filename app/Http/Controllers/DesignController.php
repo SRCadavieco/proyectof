@@ -530,15 +530,15 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
 {
     $cleanPrompt = trim($userPrompt);
 
-    // Keep Z-Image/Together behavior aligned with the legacy prompt strategy.
+    // Chutes/Together are vector-style diffusion models — append style guidance.
     if (in_array($provider, ['chutes', 'together'], true)) {
-          $legacyStyleGuide =  'Style: vector illustration. Use flat colors and bold outlines.  Avoid gradients and heavy shadows.  Utilize an unused colour for the background ';
+        $legacyStyleGuide = 'Style: vector illustration. Use flat colors and bold outlines.  Avoid gradients and heavy shadows.  Utilize an unused colour for the background ';
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
-    // NanoGPT uses the same guide as chutes for consistent results.
-    $styleGuide = 'Style: vector illustration. Use flat colors and bold outlines. Avoid gradients and heavy shadows. Utilize an unused colour for the background';
-    return trim($cleanPrompt . ' ' . $styleGuide);
+    // NanoGPT (juggernaut-z / gpt-image-2) is a high-quality photorealistic/artistic
+    // model — adding vector style guidance produces wrong results. Send prompt as-is.
+    return $cleanPrompt;
 }
 
     /**
