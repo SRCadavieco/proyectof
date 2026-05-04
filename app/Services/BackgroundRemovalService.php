@@ -97,9 +97,11 @@ class BackgroundRemovalService
 
         try {
             // Community models must go through /v1/predictions with an explicit version.
+            // timeout must exceed the Prefer:wait value so the HTTP client doesn't cut
+            // the connection before Replicate returns the synchronous result.
             $createResponse = Http::withToken($this->token)
                 ->withHeaders(['Prefer' => 'wait=60'])
-                ->timeout(30)
+                ->timeout(70)
                 ->post("{$this->replicateApiUrl}/predictions", [
                     'version' => $this->replicateVersion,
                     'input' => [
