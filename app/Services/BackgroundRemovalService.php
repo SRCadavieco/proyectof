@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\Log;
 class BackgroundRemovalService
 {
     private string $replicateApiUrl = 'https://api.replicate.com/v1';
-    // Use the model-name endpoint so we always hit the latest deployed version
-    // without needing to pin a specific (possibly deprecated) version hash.
-    private string $replicateModel = 'cjwbw/rembg';
+    private string $replicateVersion = 'cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003';
     private string $token;
     private string $lastMethod = 'not_attempted';
 
@@ -73,7 +71,7 @@ class BackgroundRemovalService
 
     public function getEngineId(): string
     {
-        return $this->replicateModel;
+        return $this->replicateVersion;
     }
 
     /**
@@ -98,24 +96,28 @@ class BackgroundRemovalService
         }
 
         try {
-            // Use the model-name endpoint (/v1/models/{owner}/{name}/predictions) so we
-            // always use the latest deployed version without a pinned hash.
-            // Prefer:wait=60 asks Replicate to respond synchronously if it finishes in time;
-            // timeout(70) must be > Prefer:wait so PHP doesn't cut the connection first.
+            // Community models require /v1/predictions with explicit version hash.
+            // Prefer:wait=60 asks Replicate to respond synchronously;
+            // timeout(70) must exceed Prefer:wait so PHP doesn't cut first.
+            $tokenLen = strlen($this->token);
+            error_log("[FabricAI] Replicate remove-bg: token_len={$tokenLen}, version={$this->replicateVersion}");
+
             $createResponse = Http::withToken($this->token)
                 ->withHeaders(['Prefer' => 'wait=60'])
                 ->timeout(70)
-                ->post("{$this->replicateApiUrl}/models/{$this->replicateModel}/predictions", [
+                ->post("{$this->replicateApiUrl}/predictions", [
+                    'version' => 'fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003',
                     'input' => [
                         'image' => $imageBase64,
                     ],
                 ]);
 
             if (!$createResponse->successful()) {
+                $errBody = substr($createResponse->body(), 0, 500);
+                error_log("[FabricAI] Replicate create failed: HTTP {$createResponse->status()} — {$errBody}");
                 Log::warning('Replicate remove-bg create failed', [
                     'status' => $createResponse->status(),
-                    'body'   => substr($createResponse->body(), 0, 500),
-                    'model'  => $this->replicateModel,
+                    'body'   => $errBody,
                 ]);
                 throw new \RuntimeException('Create prediction failed: HTTP ' . $createResponse->status());
             }
@@ -128,6 +130,7 @@ class BackgroundRemovalService
             } else {
                 $predictionId = $prediction['id'] ?? null;
                 if (!$predictionId) {
+                    error_log('[FabricAI] Replicate remove-bg: no prediction ID — ' . json_encode($prediction));
                     Log::warning('Replicate remove-bg: no prediction ID', ['body' => $prediction]);
                     throw new \RuntimeException('No prediction ID returned from Replicate');
                 }
@@ -158,6 +161,7 @@ class BackgroundRemovalService
                     }
 
                     if (in_array($status, ['failed', 'canceled'])) {
+                        error_log('[FabricAI] Replicate prediction ' . $status . ': ' . ($result['error'] ?? ''));
                         Log::warning('Replicate remove-bg prediction failed', [
                             'status' => $status,
                             'error'  => $result['error'] ?? '',
@@ -169,6 +173,7 @@ class BackgroundRemovalService
             }
 
             if (!$output) {
+                error_log('[FabricAI] Replicate remove-bg timed out or empty output');
                 throw new \RuntimeException('Replicate remove-bg timed out or returned no output');
             }
 
@@ -197,6 +202,7 @@ class BackgroundRemovalService
             return $this->featherAlphaEdges($dataUrl);
 
         } catch (\Throwable $e) {
+            error_log('[FabricAI] Replicate remove-bg exception: ' . $e->getMessage());
             Log::error('Replicate remove-bg failed', ['message' => $e->getMessage()]);
         }
 
