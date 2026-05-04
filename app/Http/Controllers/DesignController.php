@@ -344,7 +344,9 @@ if ($isEdit) {
         if ($base64) {
             $noBg = $backgrounds->removeBackground($base64);
             $bgRemovalMethod = $backgrounds->getLastMethod();
+            $bgRemovalEngine = $backgrounds->getEngineId();
             $result['bg_removal_method'] = $bgRemovalMethod;
+            $result['bg_removal_engine'] = $bgRemovalEngine;
             try { ApiUsageLog::record('replicate', 'remove_bg', 'remove_bg', $user->id, $noBg !== null); } catch (\Throwable $logEx) { \Illuminate\Support\Facades\Log::warning('ApiUsageLog::record failed', ['error' => $logEx->getMessage()]); }
             if ($noBg) {
                 $processed = $noBg; // Keep as PNG — converting to WebP and back degrades quality
@@ -353,6 +355,7 @@ if ($isEdit) {
                     'provider' => $provider,
                     'model'    => $model,
                     'method'   => $bgRemovalMethod,
+                    'engine'   => $bgRemovalEngine,
                 ]);
                 $processed = null;
                 $result['bg_removal_failed'] = true;

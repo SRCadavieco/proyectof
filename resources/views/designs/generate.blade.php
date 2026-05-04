@@ -1653,12 +1653,13 @@
             });
 
             if (data.bg_removal_method) {
-                const bgMethodSource = data.bg_removal_method === 'api'
-                    ? 'Replicate API'
-                    : (data.bg_removal_method === 'laravel_local' ? 'Laravel local fallback' : 'No background removal result');
-                console.info('[FabricAI] Background removal method', {
+                const bgRoute = data.bg_removal_method === 'api'
+                    ? 'replicate_primary'
+                    : (data.bg_removal_method === 'laravel_local' ? 'laravel_local_fallback' : 'unknown');
+                console.info('[FabricAI] Background removal (sync)', {
                     method: data.bg_removal_method,
-                    source: bgMethodSource,
+                    route: bgRoute,
+                    engine: data.bg_removal_engine || 'unknown',
                     provider: data.provider || 'unknown',
                     model: data.model || 'unknown',
                 });
@@ -1719,12 +1720,13 @@
                         });
 
                         if (data.bg_removal_method) {
-                            const bgMethodSource = data.bg_removal_method === 'api'
-                                ? 'Replicate API'
-                                : (data.bg_removal_method === 'laravel_local' ? 'Laravel local fallback' : 'No background removal result');
-                            console.info('[FabricAI] Background removal method (async)', {
+                            const bgRoute = data.bg_removal_method === 'api'
+                                ? 'replicate_primary'
+                                : (data.bg_removal_method === 'laravel_local' ? 'laravel_local_fallback' : 'unknown');
+                            console.info('[FabricAI] Background removal (async)', {
                                 method: data.bg_removal_method,
-                                source: bgMethodSource,
+                                route: bgRoute,
+                                engine: data.bg_removal_engine || 'unknown',
                                 provider: data.provider || 'nanogpt',
                                 model: data.model || 'juggernaut_z',
                             });
