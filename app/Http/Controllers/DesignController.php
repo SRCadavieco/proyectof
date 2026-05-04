@@ -529,7 +529,7 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
 
     // Keep Z-Image/Together behavior aligned with the legacy prompt strategy.
     if (in_array($provider, ['chutes', 'together'], true)) {
-            $legacyStyleGuide = 'vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast.';
+          $legacyStyleGuide =  'Style: vector illustration. Use flat colors and bold outlines.  Avoid gradients and heavy shadows.  Utilize an unused colour for the background ';
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
