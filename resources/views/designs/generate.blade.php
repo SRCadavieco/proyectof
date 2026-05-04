@@ -279,7 +279,7 @@
                         Describe your design — a style, a mood, a concept — and I'll bring it to life.
                     </p>
                     <p class="text-xs text-white/20 mt-2 italic">
-                        Try: "Minimalist botanical line art in earthy tones"
+                        Try: "Retro sun with mountains, bold outlines, earthy tones"
                     </p>
                     @php $printifyConnected = Auth::check() && Auth::user()->printifyConnection; @endphp
                     @if(!$printifyConnected)
@@ -353,7 +353,7 @@
                         id="prompt"
                         rows="1"
                         maxlength="270"
-                        placeholder="Describe the graphic or print decoration — style, motif, colors…"
+                        placeholder="Describe the graphic decoration: motif, style, mood, colors…"
                         class="flex-1 rounded-xl px-4 py-2.5 text-sm resize-none text-white focus:outline-none transition-colors max-h-32 scrollbar-hide leading-relaxed placeholder-white/25"
                         style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
                     <!-- Send button -->

@@ -392,7 +392,7 @@
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.06]">
             @php
             $steps = [
-                ['num' => '01', 'title' => 'Write a prompt',      'desc' => 'Describe your t-shirt, hoodie, or apparel concept.'],
+                ['num' => '01', 'title' => 'Write a prompt',      'desc' => 'Describe the graphic or decoration you want — motif, style, colors, mood.'],
                 ['num' => '02', 'title' => 'Generate with AI',    'desc' => 'Get product-ready graphics for print on demand.'],
                 ['num' => '03', 'title' => 'Clean and refine',    'desc' => 'Remove backgrounds and iterate variations instantly.'],
                 ['num' => '04', 'title' => 'Publish to Printify', 'desc' => 'Sync products and launch your ecommerce catalog.'],

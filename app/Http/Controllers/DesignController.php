@@ -534,7 +534,7 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
     }
 
     $baseGuide = implode(', ', [
-        'isolated main subject',
+
         'clean composition',
         'single coherent scene',
         'sharp details',
