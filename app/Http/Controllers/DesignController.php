@@ -529,35 +529,15 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
 
     // Keep Z-Image/Together behavior aligned with the legacy prompt strategy.
     if (in_array($provider, ['chutes', 'together'], true)) {
-        $legacyStyleGuide = 'vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast, isolated subject.';
+            $legacyStyleGuide = 'vector-like illustration, flat colors, bold outlines, no gradients, no heavy shadows, high contrast.';
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
-    $baseGuide = implode(', ', [
+        // NanoGPT (juggernaut-z): minimal guidance so the model can render full scenes freely.
+        $baseGuide = 'sharp details, high quality, no text, no letters, no logos, no watermark.';
+        $stylePriorityGuide = 'Honor the requested style exactly (realistic, vector, anime, 3d, watercolor, etc.) without overriding it.';
 
-        'clean composition',
-        'single coherent scene',
-        'sharp details',
-        'no text',
-        'no letters',
-        'no logos',
-        'no watermark',
-    ]) . '.';
-
-    $stylePriorityGuide = 'If the user explicitly asks for a style (for example: realistic, photorealistic, svg, vector, anime, 3d, watercolor), prioritize that style request over default style guidance.';
-
-    $styleGuide = implode(', ', [
-        'semi-realistic illustration',
-        'stylized drawing look (not hyperrealistic)',
-        'accurate anatomy and proportions',
-        'clear separation between elements',
-        'natural but simplified lighting',
-        'high fidelity edges',
-        'avoid duplicated objects',
-        'avoid random typography',
-    ]) . '.';
-
-    return trim($cleanPrompt . ' ' . $baseGuide . ' ' . $stylePriorityGuide . ' ' . $styleGuide);
+        return trim($cleanPrompt . ' ' . $baseGuide . ' ' . $stylePriorityGuide);
 }
 
     /**

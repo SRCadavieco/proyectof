@@ -119,7 +119,7 @@ class BackgroundRemovalService
 
             if (str_starts_with($outputUrl, 'data:')) {
                 $this->lastMethod = 'api';
-                return $outputUrl;
+                return $this->featherAlphaEdges($outputUrl);
             }
 
             $imgResponse = Http::withToken($this->token)
@@ -132,7 +132,8 @@ class BackgroundRemovalService
             $ct   = $imgResponse->header('Content-Type') ?? 'image/png';
             $mime = strtok($ct, ';');
             $this->lastMethod = 'api';
-            return "data:{$mime};base64," . base64_encode($imgResponse->body());
+            $dataUrl = "data:{$mime};base64," . base64_encode($imgResponse->body());
+            return $this->featherAlphaEdges($dataUrl);
 
         } catch (\Throwable $e) {
             Log::error('Replicate remove-bg failed', ['message' => $e->getMessage()]);
@@ -298,6 +299,89 @@ class BackgroundRemovalService
             return null;
         }
         return 'data:image/png;base64,' . base64_encode($png);
+    }
+
+    /**
+     * Soften the alpha channel edges of a PNG to reduce the hard "cookie-cutter" cutout look.
+     * Detects pixels at the opacity boundary and feathers them over a 2-px radius.
+     *
+     * @param  string $dataUrl data URL (data:image/png;base64,...)
+     * @param  int    $radius  feather radius in pixels (1-3 recommended)
+     * @return string          data URL with softened alpha, or original if GD fails
+     */
+    private function featherAlphaEdges(string $dataUrl, int $radius = 2): string
+    {
+        try {
+            $raw    = $this->stripDataHeader($dataUrl);
+            $binary = base64_decode($raw, true);
+            if (!$binary) return $dataUrl;
+
+            $src = @imagecreatefromstring($binary);
+            if (!$src) return $dataUrl;
+
+            $w = imagesx($src);
+            $h = imagesy($src);
+
+            $out = imagecreatetruecolor($w, $h);
+            imagealphablending($out, false);
+            imagesavealpha($out, true);
+
+            // First pass: read all alpha values into a flat array (0 = opaque, 127 = transparent)
+            $alphas = [];
+            for ($y = 0; $y < $h; $y++) {
+                for ($x = 0; $x < $w; $x++) {
+                    $col = imagecolorat($src, $x, $y);
+                    $alphas[$y * $w + $x] = ($col >> 24) & 0x7F;
+                }
+            }
+
+            // Second pass: for each pixel near an alpha edge, blend its opacity
+            for ($y = 0; $y < $h; $y++) {
+                for ($x = 0; $x < $w; $x++) {
+                    $col = imagecolorat($src, $x, $y);
+                    $r   = ($col >> 16) & 0xFF;
+                    $g   = ($col >> 8)  & 0xFF;
+                    $b   =  $col        & 0xFF;
+                    $a   = $alphas[$y * $w + $x];
+
+                    // Only process pixels that are fully or mostly opaque (not already transparent)
+                    if ($a < 40) {
+                        // Sample neighbours within radius
+                        $sum = 0; $count = 0;
+                        for ($dy = -$radius; $dy <= $radius; $dy++) {
+                            for ($dx = -$radius; $dx <= $radius; $dx++) {
+                                $nx = $x + $dx; $ny = $y + $dy;
+                                if ($nx >= 0 && $nx < $w && $ny >= 0 && $ny < $h) {
+                                    $sum += $alphas[$ny * $w + $nx];
+                                    $count++;
+                                }
+                            }
+                        }
+                        $avgNeighbour = $count > 0 ? $sum / $count : $a;
+                        // If surrounded by some transparent neighbours, feather proportionally
+                        if ($avgNeighbour > 4) {
+                            // scale: if avg neighbour alpha is high (transparent), raise our alpha too
+                            $a = (int) min(127, $a + (int) round($avgNeighbour * 0.55));
+                        }
+                    }
+
+                    imagesetpixel($out, $x, $y, imagecolorallocatealpha($out, $r, $g, $b, $a));
+                }
+            }
+
+            ob_start();
+            imagepng($out, null, 6);
+            $png = ob_get_clean();
+            imagedestroy($src);
+            imagedestroy($out);
+
+            if (!$png) return $dataUrl;
+            return 'data:image/png;base64,' . base64_encode($png);
+
+        } catch (\Throwable $e) {
+            Log::warning('featherAlphaEdges failed, returning original', ['error' => $e->getMessage()]);
+            return $dataUrl;
+        }
     }
 
     /**

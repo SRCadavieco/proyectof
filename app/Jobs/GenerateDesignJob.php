@@ -20,7 +20,7 @@ class GenerateDesignJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries   = 1;
-    public int $timeout = 300;
+    public int $timeout = 360;
 
     public function __construct(
         public readonly string  $generationId,

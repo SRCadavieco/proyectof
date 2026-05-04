@@ -73,7 +73,7 @@ class NanoGptService
         ];
 
         try {
-            $response = Http::timeout(180)
+            $response = Http::timeout(250)
                 ->withHeaders(['x-api-key' => $apiKey])
                 ->withToken($apiKey)
                 ->acceptJson()
