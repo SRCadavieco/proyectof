@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class BackgroundRemovalService
 {
     private string $replicateApiUrl = 'https://api.replicate.com/v1';
-    private string $replicateVersion = '851-labs/background-remover:a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc';
+    private string $replicateVersion = 'fottoai/remove-bg-2:d717e7ff597a03bef8c40262cd94ff63001d2a39eb60f557063959673e0961e1';
     private string $token;
     private string $lastMethod = 'not_attempted';
 
@@ -23,7 +23,7 @@ class BackgroundRemovalService
     }
 
     /**
-     * Remove background using the Replicate API (851-labs/background-remover).
+     * Remove background using the Replicate API (fottoai/remove-bg-2).
      * Falls back to local GD edge-sample remover if the API fails.
      *
      * @param string $imageBase64 Base64 string or data URL
@@ -51,9 +51,7 @@ class BackgroundRemovalService
                 ->post("{$this->replicateApiUrl}/predictions", [
                     'version' => $this->replicateVersion,
                     'input' => [
-                        'image' => $imageBase64,
-                        'background_type' => 'rgba',
-                        'format' => 'png',
+                        'image_url' => $imageBase64,
                     ],
                 ]);
 
