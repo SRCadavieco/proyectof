@@ -533,11 +533,9 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
-        // NanoGPT (juggernaut-z): minimal guidance so the model can render full scenes freely.
-        $baseGuide = 'sharp details, high quality, no text, no letters, no logos, no watermark.';
-        $stylePriorityGuide = 'Honor the requested style exactly (realistic, vector, anime, 3d, watercolor, etc.) without overriding it.';
-
-        return trim($cleanPrompt . ' ' . $baseGuide . ' ' . $stylePriorityGuide);
+    // NanoGPT uses the same guide as chutes for consistent results.
+    $styleGuide = 'Style: vector illustration. Use flat colors and bold outlines. Avoid gradients and heavy shadows. Utilize an unused colour for the background';
+    return trim($cleanPrompt . ' ' . $styleGuide);
 }
 
     /**
