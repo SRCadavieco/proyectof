@@ -615,135 +615,6 @@
     </div>
 </div>
 
-<!-- ═══════════ TURBO UPDATE MODAL ═══════════ -->
-<div id="turbo-update-modal"
-     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col" style="background:#111;border:1px solid rgba(255,255,255,0.09)">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.07)">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-bolt text-[#c084fc] text-sm"></i>
-                <h2 class="text-sm font-semibold text-white">Turbo Update</h2>
-            </div>
-            <button onclick="closeTurboUpdateModal()" id="turbo-modal-close-btn" class="icon-btn">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <!-- Body -->
-        <div class="px-5 py-4 space-y-4 overflow-y-auto">
-            <div id="turbo-form-section">
-                <div class="flex flex-col gap-2 mb-3">
-                    <label class="text-xs text-white/40 mb-1">Select sides to print</label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 text-xs text-white/60">
-                            <input type="checkbox" id="turbo-front" checked class="accent-[#7c3ca0]"> Front
-                        </label>
-                        @if(in_array(Auth::user()->plan ?? 'free', ['pro', 'business']))
-                        <label class="flex items-center gap-2 text-xs text-white/60">
-                            <input type="checkbox" id="turbo-back" class="accent-[#7c3ca0]"> Back
-                        </label>
-                        @else
-                        <label class="flex items-center gap-2 text-xs text-white/25 cursor-not-allowed" title="Available from Pro plan">
-                            <input type="checkbox" id="turbo-back" class="accent-[#7c3ca0]" disabled> Back
-                            <span class="text-[10px] text-[#c084fc] font-medium">Pro</span>
-                        </label>
-                        @endif
-                    </div>
-                </div>
-                <div id="turbo-back-selector" class="hidden mb-3">
-                    <label class="text-xs text-white/40 block mb-1">Back image</label>
-                    <button type="button" onclick="openTurboBackDesigns()"
-                            class="px-3 py-2 rounded-lg text-xs text-white/60 hover:text-white transition-colors w-full text-left" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
-                        Choose from My Designs
-                    </button>
-                    <div id="turbo-back-thumb" class="mt-2"></div>
-                </div>
-                <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-white/40">Product name</label>
-                    <input id="turbo-title" type="text" placeholder="FabricAI — My Design"
-                           class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
-                           style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
-                </div>
-                <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-white/40">Printify store</label>
-                    <select id="turbo-shop"
-                            class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
-                            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
-                        <option value="">Loading stores…</option>
-                    </select>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs text-white/40">Garment color</label>
-                    <div class="flex items-center gap-3">
-                        <input type="color" id="turbo-color-hex" value="#ffffff"
-                               oninput="document.getElementById('turbo-color-name').textContent=hexToColorName(this.value)"
-                               class="w-10 h-10 rounded-lg cursor-pointer bg-transparent" style="border:1px solid rgba(255,255,255,0.12)">
-                        <span id="turbo-color-name" class="text-xs text-white/70 font-medium">White</span>
-                    </div>
-                </div>
-                <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    <label class="flex items-center gap-2.5 cursor-pointer group">
-                        <div class="relative">
-                            <input type="checkbox" id="turbo-publish" class="sr-only peer">
-                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
-                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
-                        </div>
-                        <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Publish directly to store</span>
-                    </label>
-                    <p class="text-[10px] text-white/30 mt-1.5 ml-11">Makes products visible in your store immediately after creation.</p>
-                </div>
-            </div>
-            <div id="turbo-progress-section" class="hidden space-y-3">
-                <div class="flex justify-between text-xs text-white/40 mb-1">
-                    <span id="turbo-progress-label">Uploading…</span>
-                    <span id="turbo-progress-count">0/8</span>
-                </div>
-                <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
-                    <div id="turbo-progress-bar" class="bg-[#7c3ca0] h-2 rounded-full transition-all duration-300" style="width:0%"></div>
-                </div>
-                <div id="turbo-progress-results" class="space-y-1 pt-1 text-xs max-h-40 overflow-y-auto"></div>
-            </div>
-        </div>
-        <!-- Footer -->
-        <div class="px-5 py-4 flex gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
-            <button onclick="closeTurboUpdateModal()" id="turbo-cancel-btn"
-                    class="flex-1 py-2.5 text-white/50 hover:text-white text-xs font-medium tracking-wide uppercase rounded-xl transition-colors" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
-                Cancel
-            </button>
-            <button onclick="startTurboUpdate()" id="turbo-start-btn"
-                    class="flex-1 py-2.5 bg-[#7c3ca0] text-white text-xs font-medium tracking-wide
-                           uppercase rounded-xl hover:bg-[#5a2275] transition-colors disabled:opacity-50">
-                <i class="fas fa-bolt mr-1"></i> Turbo Update
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════ TURBO BACK DESIGNS PICKER ═══════════ -->
-<div id="turbo-back-designs-modal"
-     class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div class="shadow-2xl w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
-        <div class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
-            <h2 class="text-base font-semibold text-white">Choose back design</h2>
-            <button onclick="closeTurboBackDesigns()" class="icon-btn">
-                <i class="fas fa-times text-lg"></i>
-            </button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-6">
-            <div id="turbo-back-designs-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-            <div id="turbo-back-designs-empty" class="hidden flex-col items-center justify-center py-16 text-center">
-                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(255,255,255,0.07)">
-                    <i class="fas fa-bookmark text-white/20 text-xl"></i>
-                </div>
-                <p class="text-sm text-white/40">No saved designs yet.</p>
-            </div>
-            <div id="turbo-back-designs-loading" class="flex items-center justify-center py-16">
-                <i class="fas fa-spinner fa-spin text-white/30 text-xl"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- ═══════════ GARMENT PREVIEW MODAL ═══════════ -->
 <div id="preview-modal"
      class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
@@ -1137,7 +1008,7 @@
             }
         }
 
-        return { provider: 'chutes', model: 'z_image_turbo', cost: 1 };
+        return { provider: 'chutes', model: 'fabric_pro', cost: 1 };
     }
 
     // ─── Textarea auto-resize ─────────────────────────────────────────
@@ -1283,18 +1154,10 @@
                         <i class="fas fa-tshirt"></i>
                         <span style="font-size:8px;opacity:0.6">Try on</span>
                     </button>
-                    <button type="button" title="Turbo Upload" class="icon-btn accent turbo-quick-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#c084fc;background:rgba(124,60,160,0.2);border-radius:10px">
-                        <i class="fas fa-bolt"></i>
-                        <span style="font-size:8px;opacity:0.7">Upload</span>
-                    </button>
                 </div>
             </div>`;
 
         messagesContainer.appendChild(div);
-
-        // Attach turbo button listener after DOM insertion (avoids inline onclick issues with long base64 URLs)
-        const turboBtn = div.querySelector('.turbo-quick-btn');
-        if (turboBtn) turboBtn.addEventListener('click', () => openTurboUpdateModal(imageUrl));
 
         updateWelcomeScreen();
         scrollToBottom();
@@ -1602,7 +1465,7 @@
         if (!prompt) { showError('Please enter a prompt'); return; }
         const peekCost = resolveGenerationEngine(uploadedImageBase64).cost;
         if (TokenManager.get() < peekCost) {
-            showError(peekCost > 1 ? `Necesitas ${peekCost} Spools para usar Fabric Max` : 'No tienes Spools disponibles');
+            showError(peekCost > 1 ? `You need ${peekCost} Spools to use advanced features` : 'No Spools available');
             return;
         }
 
@@ -3165,12 +3028,6 @@
             if (n) n.textContent=hexToColorName(e.target.value);
         });
     });
-    document.addEventListener('click', function (e) {
-        const qb = e.target.closest ? e.target.closest('.printify-quick-btn') : null;
-        if (!qb) return;
-        const src = qb.getAttribute('data-image-src');
-        if (src) openTurboUpdateModal(src);
-    });
 
     // ═══════════════════════════════════════════════════════════════
     //  SAVED DESIGNS
@@ -3333,252 +3190,6 @@
             t.style.opacity = '0';
             setTimeout(() => t.remove(), 300);
         }, 2200);
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //  TURBO UPDATE MODAL
-    // ═══════════════════════════════════════════════════════════════
-    let _turboFrontChecked  = true;
-    let _turboBackChecked   = false;
-    let _turboBackImage     = null;
-    let _turboShopsLoaded   = false;
-    let _turboFrontImageSrc = null; // null = usar _layers; string = imagen del chat
-
-    document.getElementById('turbo-front').addEventListener('change', function () {
-        _turboFrontChecked = this.checked;
-    });
-    document.getElementById('turbo-back').addEventListener('change', function () {
-        _turboBackChecked = this.checked;
-        document.getElementById('turbo-back-selector').classList.toggle('hidden', !_turboBackChecked);
-    });
-
-    function openTurboUpdateModal(chatImageSrc) {
-        _turboFrontImageSrc = chatImageSrc || null;
-        if (!chatImageSrc && !_layers.front.length) {
-            showToast('Carga un diseño en el canvas primero.', 'error'); return;
-        }
-        _turboFrontChecked = true;
-        _turboBackChecked  = false;
-        _turboBackImage    = null;
-        document.getElementById('turbo-front').checked = true;
-        document.getElementById('turbo-back').checked  = false;
-        document.getElementById('turbo-back-selector').classList.add('hidden');
-        document.getElementById('turbo-back-thumb').innerHTML = '';
-        document.getElementById('turbo-form-section').classList.remove('hidden');
-        document.getElementById('turbo-progress-section').classList.add('hidden');
-        document.getElementById('turbo-start-btn').disabled = false;
-        document.getElementById('turbo-start-btn').innerHTML = '<i class="fas fa-bolt mr-1"></i> Turbo Update';
-        document.getElementById('turbo-cancel-btn').disabled = false;
-        document.getElementById('turbo-cancel-btn').textContent = 'Cancel';
-        document.getElementById('turbo-modal-close-btn').disabled = false;
-        document.getElementById('turbo-progress-results').innerHTML = '';
-        document.getElementById('turbo-progress-bar').style.width = '0%';
-        const turboPublish = document.getElementById('turbo-publish');
-        if (turboPublish) turboPublish.checked = false;
-        const existing = document.getElementById('printify-title')?.value;
-        document.getElementById('turbo-title').value = existing || 'FabricAI — My Design';
-        const hexSrc = document.getElementById('printify-color-hex')?.value || '#ffffff';
-        document.getElementById('turbo-color-hex').value = hexSrc;
-        document.getElementById('turbo-color-name').textContent = hexToColorName(hexSrc);
-        if (!chatImageSrc && _layers.back.length) {
-            document.getElementById('turbo-back-thumb').innerHTML =
-                `<img src="${_layers.back[0].src}" class="w-16 h-16 object-contain rounded-lg border border-cream-300">`;
-        }
-        const modal = document.getElementById('turbo-update-modal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        _loadTurboShops();
-    }
-
-    function closeTurboUpdateModal() {
-        const modal = document.getElementById('turbo-update-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    async function _loadTurboShops() {
-        if (_turboShopsLoaded) return;
-        const sel = document.getElementById('turbo-shop');
-        sel.innerHTML = '<option value="">Loading…</option>';
-        try {
-            const statusRes = await fetch('/printify/status', { headers: { 'Accept': 'application/json' } });
-            const status    = await statusRes.json();
-            if (!status.connected) { sel.innerHTML = '<option value="">Not connected</option>'; return; }
-            const res   = await fetch('/printify/shops', { headers: { 'Accept': 'application/json' } });
-            const shops = await res.json();
-            if (!res.ok || !Array.isArray(shops) || !shops.length) {
-                sel.innerHTML = '<option value="">No shops found</option>'; return;
-            }
-            sel.innerHTML = shops.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
-            _turboShopsLoaded = true;
-        } catch (err) {
-            sel.innerHTML = `<option value="">Error: ${escapeHtml(err.message)}</option>`;
-        }
-    }
-
-    function openTurboBackDesigns() {
-        const modal = document.getElementById('turbo-back-designs-modal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        _loadTurboBackDesigns();
-    }
-
-    function closeTurboBackDesigns() {
-        const modal = document.getElementById('turbo-back-designs-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    async function _loadTurboBackDesigns() {
-        const grid    = document.getElementById('turbo-back-designs-grid');
-        const empty   = document.getElementById('turbo-back-designs-empty');
-        const loading = document.getElementById('turbo-back-designs-loading');
-        grid.innerHTML = '';
-        empty.classList.add('hidden');
-        loading.classList.remove('hidden');
-        try {
-            const res     = await fetch('/designs/saved', { headers: { 'Accept': 'application/json' } });
-            const designs = await res.json();
-            loading.classList.add('hidden');
-            if (!Array.isArray(designs) || !designs.length) { empty.classList.remove('hidden'); return; }
-            designs.forEach(d => {
-                const item = document.createElement('div');
-                item.className = 'rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-[#7c3ca0] transition-all bg-white/[0.05]';
-                const img = document.createElement('img');
-                img.src = d.image_data; img.alt = d.title || 'Design';
-                img.className = 'w-full h-24 object-contain block';
-                item.appendChild(img);
-                item.onclick = () => {
-                    _turboBackImage = d.image_data;
-                    document.getElementById('turbo-back-thumb').innerHTML =
-                        `<img src="${d.image_data}" class="w-16 h-16 object-contain rounded-lg border border-cream-300">`;
-                    closeTurboBackDesigns();
-                };
-                grid.appendChild(item);
-            });
-        } catch (e) {
-            loading.classList.add('hidden');
-            empty.classList.remove('hidden');
-        }
-    }
-
-    async function startTurboUpdate() {
-        const shopId = document.getElementById('turbo-shop').value;
-        const title  = document.getElementById('turbo-title').value.trim();
-        const color  = hexToColorName(document.getElementById('turbo-color-hex').value);
-        if (!shopId) { showToast('Selecciona una tienda Printify.', 'error'); return; }
-        if (!title)  { showToast('Escribe un nombre de producto.', 'error'); return; }
-        if (!_turboFrontChecked && !_turboBackChecked) { showToast('Selecciona al menos una cara.', 'error'); return; }
-
-        document.getElementById('turbo-form-section').classList.add('hidden');
-        document.getElementById('turbo-progress-section').classList.remove('hidden');
-        document.getElementById('turbo-start-btn').disabled = true;
-        document.getElementById('turbo-cancel-btn').disabled = true;
-        document.getElementById('turbo-modal-close-btn').disabled = true;
-
-        // Front image
-        let frontImageSrc = null;
-        let posX = 0, posY = 0, sc = 1;
-        if (_turboFrontChecked) {
-            if (_turboFrontImageSrc) {
-                frontImageSrc = _turboFrontImageSrc;
-            } else {
-                const fl = _layers.front;
-                const sf = fl[0] || null;
-                const baked = fl.length > 1 || !!(sf?.rotation);
-                frontImageSrc = await getFlattenedSrc(fl);
-                if (!baked) { posX = sf?.posX ?? 0; posY = sf?.posY ?? 0; sc = sf?.scale ?? 1; }
-            }
-        }
-
-        // Back image
-        let backImageSrc = null;
-        let bPosX = 0, bPosY = 0, bSc = 1;
-        if (_turboBackChecked) {
-            if (_turboBackImage) {
-                backImageSrc = _turboBackImage;
-            } else if (!_turboFrontImageSrc && _layers.back.length) {
-                const bl = _layers.back;
-                const sb = bl[0] || null;
-                const baked = bl.length > 1 || !!(sb?.rotation);
-                backImageSrc = await getFlattenedSrc(bl);
-                if (!baked) { bPosX = sb?.posX ?? 0; bPosY = sb?.posY ?? 0; bSc = sb?.scale ?? 1; }
-            } else {
-                backImageSrc = frontImageSrc;
-            }
-        }
-
-        const csrf = document.querySelector('meta[name="csrf-token"]').content;
-        let successCount = 0, errorCount = 0;
-        const resultLines = [];
-        const garments = [
-            {type:'tshirt',label:'T-Shirt'},{type:'hoodie',label:'Hoodie'},
-            {type:'zip_hoodie',label:'Zip Hoodie'},{type:'tanktop',label:'Tank Top'},
-            {type:'longsleeve',label:'Long Sleeve'},{type:'sweatshirt',label:'Sweatshirt'},
-            {type:'vneck',label:'V-Neck Tee'},{type:'womens_tee',label:"Women's Tee"},
-        ];
-
-        const updateProgress = (cur, curLabel) => {
-            const pct  = Math.round((cur / garments.length) * 100);
-            document.getElementById('turbo-progress-bar').style.width   = pct + '%';
-            document.getElementById('turbo-progress-count').textContent = `${cur}/${garments.length}`;
-            document.getElementById('turbo-progress-label').textContent =
-                cur >= garments.length ? 'Done!' : `Uploading ${curLabel}…`;
-        };
-
-        for (let i = 0; i < garments.length; i++) {
-            const {type, label} = garments[i];
-            updateProgress(i, label);
-            try {
-                const payload = {
-                    shop_id: parseInt(shopId), garment_type: type,
-                    title: title + ' — ' + label, color,
-                    pos_x: 0.5 + posX * 0.5, pos_y: 0.5 + posY * 0.5, design_scale: sc,
-                    publish_after_create: document.getElementById('turbo-publish')?.checked ?? false,
-                };
-                if (frontImageSrc) payload.image_source = frontImageSrc;
-                if (backImageSrc) {
-                    payload.back_image_source = backImageSrc;
-                    payload.back_pos_x = 0.5 + bPosX * 0.5;
-                    payload.back_pos_y = 0.5 + bPosY * 0.5;
-                    payload.back_design_scale = bSc;
-                }
-                const res  = await fetch('/printify/products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-                successCount++;
-                resultLines.push(`<div class="text-green-700 text-xs">✓ ${label}</div>`);
-            } catch (err) {
-                errorCount++;
-                resultLines.push(`<div class="text-red-600 text-xs">✗ ${label}: ${escapeHtml(err.message || 'Unknown error')}</div>`);
-            }
-        }
-        updateProgress(garments.length, '');
-
-        const resultsEl = document.getElementById('turbo-progress-results');
-        if (successCount > 0) {
-            resultsEl.innerHTML = `
-                <div class="flex flex-col items-center gap-2 pt-2 text-center">
-                    <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
-                        <i class="fas fa-check-circle"></i>
-                        <span>${successCount} product${successCount > 1 ? 's' : ''} created${errorCount > 0 ? ` (${errorCount} failed)` : ''}</span>
-                    </div>
-                    <div class="w-full text-left space-y-0.5">${resultLines.join('')}</div>
-                    <a href="https://printify.com/app/store/products" target="_blank" rel="noopener noreferrer"
-                       class="px-4 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl hover:bg-[#5a2275] transition-colors flex items-center gap-1.5">
-                        <i class="fas fa-external-link-alt text-[10px]"></i> View in Printify
-                    </a>
-                </div>`;
-        } else {
-            resultsEl.innerHTML = `<div class="space-y-2 pt-2"><p class="text-xs text-red-600 text-center">All uploads failed. Please try again.</p><div class="text-left space-y-0.5">${resultLines.join('')}</div></div>`;
-        }
-        document.getElementById('turbo-cancel-btn').disabled = false;
-        document.getElementById('turbo-modal-close-btn').disabled = false;
-        document.getElementById('turbo-cancel-btn').textContent = 'Close';
     }
 </script>
 

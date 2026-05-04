@@ -59,7 +59,7 @@
                     <li><span class="check">✓</span>Printify integration</li>
                     <li><span class="check">✓</span>Design history</li>
                     <li><span class="check">✓</span>Turbo upload (front)</li>
-                    <li><span class="check">✓</span> Fabric Flash (1 spool)</li>
+                    <li><span class="check">✓</span> Model Flash</li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'free')
@@ -75,7 +75,7 @@
             <!-- STARTER -->
             <div class="plan-card flex flex-col rounded-2xl p-6" style="background:#111;border:1px solid rgba(255,255,255,0.07)">
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-4">Starter</p>
-                <div class="mb-1"><span class="font-serif text-4xl text-white">$5</span><span class="text-white/30 text-sm ml-1">/ mo</span></div>
+                <div class="mb-1"><span class="font-serif text-4xl text-white">$7</span><span class="text-white/30 text-sm ml-1">/ mo</span></div>
                 <p class="text-white/40 text-xs mb-5">50 Spools &middot; +1/day &middot; up to 80/mo</p>
                 <ul class="space-y-2 text-sm text-white/50 mb-7 flex-1">
                     <li><span class="check">✓</span>Up to 80 designs/mo</li>
@@ -84,7 +84,7 @@
                     <li><span class="check">✓</span>Design history</li>
                     <li><span class="check">✓</span>Turbo upload (front)</li>
                     <li><span class="check">✓</span>Upload in 1 garment color</li>
-                    <li><span class="check">✓</span> Fabric Flash (1 spool)</li>
+                    <li><span class="check">✓</span> Model Flash</li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'starter')
@@ -104,7 +104,7 @@
                     <p class="text-[10px] font-semibold uppercase tracking-[.22em]" style="color:#c084fc">Pro</p>
                     <span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full text-white" style="background:#7c3ca0">Popular</span>
                 </div>
-                <div class="mb-1"><span class="font-serif text-4xl text-white">$10</span><span class="text-white/30 text-sm ml-1">/ mo</span></div>
+                <div class="mb-1"><span class="font-serif text-4xl text-white">$12</span><span class="text-white/30 text-sm ml-1">/ mo</span></div>
                 <p class="text-white/45 text-xs mb-5">80 Spools &middot; +4/day &middot; up to 200/mo</p>
                 <ul class="space-y-2 text-sm text-white/65 mb-7 flex-1">
                     <li><span class="check">✓</span>Up to 200 designs/mo</li>
@@ -114,8 +114,8 @@
                     <li><span class="check">✓</span>10 AI chats/mo</li>
                     <li><span class="check">✓</span>Turbo front &amp; back</li>
                     <li><span class="check">✓</span>Post in all colors</li>
-                    <li><span class="check">✓</span> Fabric Flash (1 spool)</li>
-                    <li><span class="check">✓</span><span style="color:#c084fc"> Fabric Max (2 spools)</span></li>
+                    <li><span class="check">✓</span> Model Flash</li>
+                    <li><span class="check">✓</span><span style="color:#c084fc"> Model Max</span></li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'pro')
@@ -132,7 +132,7 @@
             <!-- BUSINESS -->
             <div class="plan-card flex flex-col rounded-2xl p-6" style="background:#111;border:1px solid rgba(255,255,255,0.07)">
                 <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-white/30 mb-4">Business</p>
-                <div class="mb-1"><span class="font-serif text-4xl text-white">$20</span><span class="text-white/30 text-sm ml-1">/ mo</span></div>
+                <div class="mb-1"><span class="font-serif text-4xl text-white">$25</span><span class="text-white/30 text-sm ml-1">/ mo</span></div>
                 <p class="text-white/40 text-xs mb-5">200 Spools &middot; +10/day &middot; up to 500/mo</p>
                 <ul class="space-y-2 text-sm text-white/50 mb-7 flex-1">
                     <li><span class="check">✓</span>Up to 500 designs/mo</li>
@@ -142,8 +142,8 @@
                     <li><span class="check">✓</span>30 AI chats/mo</li>
                     <li><span class="check">✓</span>Turbo front &amp; back</li>
                     <li><span class="check">✓</span>Post in all colors</li>
-                    <li><span class="check">✓</span> Fabric Flash (1 spool)</li>
-                    <li><span class="check">✓</span><span style="color:#c084fc"> Fabric Max (2 spools)</span></li>
+                    <li><span class="check">✓</span> Model Flash</li>
+                    <li><span class="check">✓</span><span style="color:#c084fc"> Model Max</span></li>
                 </ul>
                 @auth
                     @if(auth()->user()->plan === 'business')
@@ -181,8 +181,8 @@
                         ['Turbo back placement',   false,  false,  true,   true],
                         ['Post in all colors',     false,  false,  true,   true],
                         ['Garment colors (upload)','1',    '1',    'All',  'All'],
-                        [' Fabric Flash',         true,   true,   true,   true],
-                        [' Fabric Max (2 spools)',false,  false,  true,   true],
+                        [' Model Flash',         true,   true,   true,   true],
+                        [' Model Max',false,  false,  true,   true],
                     ];
                     @endphp
                     @foreach($rows as $i => $row)

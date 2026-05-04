@@ -127,9 +127,9 @@
                 $plan = strtolower($user->plan ?? 'free');
                 $planMeta = [
                     'free'     => ['label' => 'Free',     'price' => '$0',  'accent' => '#444',   'perks' => ['5 Spools to start', 'All AI models', 'Printify integration'], 'desc' => 'Perfect for exploring FabricAI.'],
-                    'starter'  => ['label' => 'Starter',  'price' => '$5',  'accent' => '#7c3ca0','perks' => ['Up to 80 Spools/month', 'Daily refill', 'All AI models', 'Printify integration', 'Choose 1 garment color per upload'], 'desc' => 'For creators getting serious.'],
-                    'pro'      => ['label' => 'Pro',      'price' => '$10', 'accent' => '#c084fc','perks' => ['Up to 200 Spools/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For freelancers who design regularly.'],
-                    'business' => ['label' => 'Business', 'price' => '$20', 'accent' => '#a855f7','perks' => ['Up to 500 Spools/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For studios with high-volume needs.'],
+                    'starter'  => ['label' => 'Starter',  'price' => '$7',  'accent' => '#7c3ca0','perks' => ['Up to 80 Spools/month', 'Daily refill', 'All AI models', 'Printify integration', 'Choose 1 garment color per upload'], 'desc' => 'For creators getting serious.'],
+                    'pro'      => ['label' => 'Pro',      'price' => '$12', 'accent' => '#c084fc','perks' => ['Up to 200 Spools/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For freelancers who design regularly.'],
+                    'business' => ['label' => 'Business', 'price' => '$25', 'accent' => '#a855f7','perks' => ['Up to 500 Spools/month', 'All AI models', 'Printify integration', 'Upload in all colors', 'Back placement'], 'desc' => 'For studios with high-volume needs.'],
                 ];
                 $meta = $planMeta[$plan] ?? $planMeta['free'];
             @endphp

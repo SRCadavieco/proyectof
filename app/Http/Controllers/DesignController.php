@@ -80,7 +80,7 @@ class DesignController extends Controller
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
            'mimeType' => ['nullable', 'string'],
-           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,z_image_turbo,flux_dev,juggernaut_z'],
+           'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,flux_dev,juggernaut_z'],
            'provider' => ['nullable', 'string', 'in:gemini,chutes,together,nanogpt'],
            'is_edit' => ['nullable', 'boolean'],
        ]);
@@ -128,8 +128,8 @@ class DesignController extends Controller
         return response()->json([
             'success' => false,
             'error' => $tokenCost > 1
-                ? "Necesitas {$tokenCost} Spools para usar Fabric Max. Consigue más para seguir diseñando."
-                : 'No tienes tokens disponibles. Consigue más para seguir diseñando.',
+                ? "You need {$tokenCost} Spools to use advanced features. Get more to continue designing."
+                : 'No Spools available. Get more to continue designing.',
         ], 403);
     }
     $user->decrement('tokens', $tokenCost);
@@ -154,7 +154,7 @@ class DesignController extends Controller
     $imageBase64 = $validated['imageBase64'] ?? null;
     $mimeType = $validated['mimeType'] ?? 'image/png';
     $model = $validated['model'] ?? ($provider === 'chutes'
-        ? 'z_image_turbo'
+        ? 'fabric_pro'
         : ($provider === 'together'
             ? 'flux_dev'
             : ($provider === 'nanogpt' ? 'juggernaut_z' : 'fabric_light')));
@@ -194,7 +194,7 @@ if ($effectivePlan === 'studio') {
 }
 if ($provider === 'nanogpt' && !in_array($effectivePlan, ['pro', 'business'], true)) {
     $provider = 'chutes';
-    $model = 'z_image_turbo';
+    $model = 'fabric_pro';
     $ai = $chutes;
 }
 
@@ -305,11 +305,11 @@ if ($isEdit) {
         || !empty($result['imageUrl'] ?? $result['image_url'] ?? $result['url'] ?? null)
     );
     if ($provider === 'nanogpt' && !$hasGeneratedImage) {
-        $fallback = $chutes->generateDesignWithContext($prompt, $context, $backgroundColor, 'z_image_turbo');
+        $fallback = $chutes->generateDesignWithContext($prompt, $context, $backgroundColor, 'fabric_pro');
         if (is_array($fallback)) {
             $result = $fallback;
             $provider = 'chutes';
-            $model = 'z_image_turbo';
+            $model = 'fabric_pro';
         }
     }
 }
