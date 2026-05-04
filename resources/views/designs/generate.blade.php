@@ -353,7 +353,7 @@
                         id="prompt"
                         rows="1"
                         maxlength="270"
-                        placeholder="Describe your idea…"
+                        placeholder="Describe the graphic or print decoration — style, motif, colors…"
                         class="flex-1 rounded-xl px-4 py-2.5 text-sm resize-none text-white focus:outline-none transition-colors max-h-32 scrollbar-hide leading-relaxed placeholder-white/25"
                         style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
                     <!-- Send button -->
@@ -369,10 +369,10 @@
                 <div class="mt-2 flex items-center justify-between gap-2">
                     @if(in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'business', 'studio']))
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] uppercase tracking-wider text-white/35">Model</span>
-                        <select id="model-selector" class="text-[11px] rounded font-mono px-2 py-0.5 outline-none cursor-pointer" style="background:rgba(255,255,255,0.07);color:#e2c9f7;border:1px solid rgba(180,100,220,0.25)">
-                            <option value="flash"> Fabric Flash · 1 spool</option>
-                            <option value="max"> Fabric Max · 2 spools</option>
+                        <span class="text-[10px] uppercase tracking-wider" style="color:rgba(255,255,255,0.55)">Model</span>
+                        <select id="model-selector" class="text-[11px] rounded px-2 py-1 outline-none cursor-pointer font-medium" style="background:#3b1a54;color:#e9d5ff;border:1px solid rgba(192,132,252,0.6)">
+                            <option value="flash">Fabric Flash · 1 spool</option>
+                            <option value="max">Fabric Max · 2 spools</option>
                         </select>
                     </div>
                     @endif

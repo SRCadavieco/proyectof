@@ -5,7 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>FabricAI — AI Clothing Design Platform</title>
+    <title>AI Clothing Design Generator | Print on Demand | FabricAI</title>
+    <meta name="description" content="Create AI clothing designs in seconds. FabricAI is an AI design generator for print on demand, t-shirt design, apparel graphics, and Printify-ready dropshipping products.">
+    <meta name="keywords" content="AI clothing design, AI design generator, print on demand, t-shirt design, apparel graphics, Printify, dropshipping, product design, POD automation">
+    <link rel="canonical" href="https://fabricai.net">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AI Clothing Design Generator for Print on Demand | FabricAI">
+    <meta property="og:description" content="Generate AI apparel designs, remove backgrounds, and publish Printify-ready products in seconds.">
+    <meta property="og:url" content="https://fabricai.net">
+    <meta property="og:image" content="{{ asset('images/logo.png') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FabricAI | AI Clothing Design Generator">
+    <meta name="twitter:description" content="AI designs for print on demand, t-shirts, and apparel collections.">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -280,7 +291,7 @@
     <div class="marquee-track">
         @for($i = 0; $i < 2; $i++)
         <span class="flex items-center gap-7 mr-7">
-            @php $items = ['One Prompt','100 Designs','Ship in Seconds','Printify Ready','Background Removal','No Design Skills']; @endphp
+            @php $items = ['AI Clothing Design','Print on Demand','T-Shirt Design','Printify Ready','POD Automation','Dropshipping']; @endphp
             @foreach($items as $item)
             <span class="text-[10px] font-semibold tracking-[0.3em] uppercase" style="color:rgba(255,255,255,0.35)">{{ $item }}</span>
             <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-accent"></span>
@@ -302,9 +313,9 @@
                 class="transition-all duration-700 ease-out"
             >
                 <h2 class="font-serif leading-[0.9]" style="color:rgba(255,255,255,0.82);font-size:clamp(3rem,7vw,7rem)">
-                    Manual clothing<br>
-                    <span class="italic gradient-text">designing</span><br>
-                    is over.
+                    AI fashion design<br>
+                    <span class="italic gradient-text">for ecommerce</span><br>
+                    at full speed.
                 </h2>
             </div>
             <div
@@ -315,9 +326,8 @@
             >
                 <div class="w-8 h-px bg-accent mb-6"></div>
                 <p class="text-white/40 leading-relaxed text-base">
-                    Create and ship entire collections in seconds. Stop making your clients
-                    wait for new products. FabricAI plugs straight into Printify — your
-                    designs go live the moment they're ready.
+                    Generate apparel graphics, publish to Printify, and launch new products fast.
+                    AI design, print on demand, and ecommerce automation in one workflow.
                 </p>
                 <a href="/design"
                    class="link-underline-accent inline-flex items-center gap-2 mt-8 text-xs font-semibold
@@ -331,9 +341,9 @@
         <div class="grid sm:grid-cols-3 gap-px bg-white/[0.04]">
             @php
             $problems = [
-                ['icon' => 'fa-clock-rotate-left', 'label' => 'Still using POD editors in 2026?', 'desc' => 'Drag-and-drop is dead. Type your idea, press generate, done.'],
-                ['icon' => 'fa-user-slash',         'label' => 'No designer on payroll?',          'desc' => 'You don\'t need one anymore. FabricAI handles the creative work.'],
-                ['icon' => 'fa-hourglass-half',     'label' => 'Clients waiting for new drops?',  'desc' => 'Spin up a whole new collection before the Zoom call ends.'],
+                ['icon' => 'fa-clock-rotate-left', 'label' => 'Slow product creation?',  'desc' => 'From prompt to print-ready design in seconds.'],
+                ['icon' => 'fa-user-slash',         'label' => 'No in-house designer?',   'desc' => 'Use AI to create professional t-shirt and apparel graphics.'],
+                ['icon' => 'fa-hourglass-half',     'label' => 'Need faster drops?',      'desc' => 'Launch more POD products with less manual work.'],
             ];
             @endphp
             @foreach($problems as $i => $p)
@@ -370,21 +380,22 @@
             >
                 <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">Process</p>
                 <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl leading-tight" style="color:rgba(255,255,255,0.82)">
-                    From idea to<br><span class="italic gradient-text">production.</span>
+                    From prompt to<br><span class="italic gradient-text">POD product.</span>
                 </h2>
             </div>
-            <p class="text-white/30 text-sm leading-relaxed sm:text-right" style="max-width:200px">
-                Four steps. Zero friction.<br>Everything automated.
+            <p class="text-white/30 text-sm leading-relaxed sm:text-right" style="max-width:240px">
+                AI generation, background removal,
+                Printify sync, instant publishing.
             </p>
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.06]">
             @php
             $steps = [
-                ['num' => '01', 'title' => 'Describe your idea',   'desc' => 'Write a prompt. Be as detailed or abstract as you want — our AI speaks fashion.'],
-                ['num' => '02', 'title' => 'AI builds the design', 'desc' => 'Watch your concept materialize in seconds. Production-ready from the start.'],
-                ['num' => '03', 'title' => 'Refine until perfect', 'desc' => 'Iterate with follow-up prompts. Remove backgrounds in one click.'],
-                ['num' => '04', 'title' => 'Upload & go live',     'desc' => 'Push directly to Printify. Your product is live before your next meeting.'],
+                ['num' => '01', 'title' => 'Write a prompt',      'desc' => 'Describe your t-shirt, hoodie, or apparel concept.'],
+                ['num' => '02', 'title' => 'Generate with AI',    'desc' => 'Get product-ready graphics for print on demand.'],
+                ['num' => '03', 'title' => 'Clean and refine',    'desc' => 'Remove backgrounds and iterate variations instantly.'],
+                ['num' => '04', 'title' => 'Publish to Printify', 'desc' => 'Sync products and launch your ecommerce catalog.'],
             ];
             @endphp
             @foreach($steps as $i => $step)
@@ -416,16 +427,16 @@
             class="transition-all duration-700 mb-16"
         >
             <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">What you get</p>
-            <h2 class="font-serif text-4xl sm:text-5xl" style="color:rgba(255,255,255,0.82)">Built for speed.</h2>
+            <h2 class="font-serif text-4xl sm:text-5xl" style="color:rgba(255,255,255,0.82)">Built for AI ecommerce.</h2>
             <div class="w-14 h-px bg-accent mt-6"></div>
         </div>
 
         @php
         $features = [
-            ['icon' => 'fa-bolt',        'title' => 'AI generation',      'desc' => 'Industry-leading diffusion models deliver stunning garment-ready graphics in under 15 seconds.'],
-            ['icon' => 'fa-eraser',      'title' => 'Background removal', 'desc' => 'Automatic background removal and clean PNG export — no Photoshop, no manual editing.'],
-            ['icon' => 'fa-store',       'title' => 'Printify sync',       'desc' => 'One click uploads your design to every garment in your Printify catalog simultaneously.'],
-            ['icon' => 'fa-layer-group', 'title' => 'Design library',      'desc' => 'Every design auto-saves. Build a library. Reuse and remix your best work anytime.'],
+            ['icon' => 'fa-bolt',        'title' => 'AI design generator', 'desc' => 'Fast image generation for apparel, streetwear, and t-shirt design.'],
+            ['icon' => 'fa-eraser',      'title' => 'Background removal',  'desc' => 'Instant transparent PNG for clean print on demand production.'],
+            ['icon' => 'fa-store',       'title' => 'Printify integration', 'desc' => 'Send new designs to your catalog and publish products in one flow.'],
+            ['icon' => 'fa-layer-group', 'title' => 'Design library',      'desc' => 'Save, reuse, and scale high-performing designs across collections.'],
         ];
         @endphp
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.04]">
@@ -463,11 +474,11 @@
             >
                 <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-4">See it in action</p>
                 <h2 class="font-serif text-4xl sm:text-5xl leading-tight mb-6" style="color:rgba(255,255,255,0.82)">
-                    Type it.<br><span class="italic gradient-text">It ships.</span>
+                    Type it.<br><span class="italic gradient-text">Sell it.</span>
                 </h2>
                 <p class="text-white/40 text-base leading-relaxed mb-8">
-                    Describe any garment design — graphic tees, all-over prints, minimalist logos —
-                    and FabricAI generates production-ready artwork instantly.
+                    AI t-shirt design, hoodie graphics, and apparel artwork generated in seconds.
+                    Ready for print on demand and dropshipping stores.
                 </p>
                 <a href="/design"
                    class="btn-shimmer inline-flex items-center gap-3 px-8 py-4 bg-accent text-white
@@ -554,12 +565,12 @@
             class="font-serif text-5xl sm:text-6xl lg:text-7xl leading-[0.92] mb-8 transition-all duration-700"
             style="color:rgba(255,255,255,0.82)"
         >
-            Stop waiting.<br>
-            <span class="italic gradient-text">Start shipping.</span>
+            Less editing.<br>
+            <span class="italic gradient-text">More selling.</span>
         </h2>
         <p class="text-white/35 text-lg max-w-md mx-auto mb-12 leading-relaxed">
-            Create and ship entire collections in seconds.<br>
-            Your competitors are already automating.
+            AI design generator for print on demand.<br>
+            Launch faster and scale your apparel brand.
         </p>
         <a href="/design"
            class="btn-shimmer cta-btn relative inline-flex items-center gap-3 px-10 py-4 bg-accent text-white
