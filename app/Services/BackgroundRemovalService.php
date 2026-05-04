@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class BackgroundRemovalService
 {
     private string $replicateApiUrl = 'https://api.replicate.com/v1';
-    private string $replicateVersion = 'cjwbw/rembg:34bd50c3cdcf667a839abdcdde7201d5b39bbebb54aa037da542ee6e670d9786';
+    // Use the model-name endpoint so we always hit the latest deployed version
+    // without needing to pin a specific (possibly deprecated) version hash.
+    private string $replicateModel = 'cjwbw/rembg';
     private string $token;
     private string $lastMethod = 'not_attempted';
 
@@ -71,7 +73,7 @@ class BackgroundRemovalService
 
     public function getEngineId(): string
     {
-        return $this->replicateVersion;
+        return $this->replicateModel;
     }
 
     /**
@@ -96,14 +98,14 @@ class BackgroundRemovalService
         }
 
         try {
-            // Community models must go through /v1/predictions with an explicit version.
-            // timeout must exceed the Prefer:wait value so the HTTP client doesn't cut
-            // the connection before Replicate returns the synchronous result.
+            // Use the model-name endpoint (/v1/models/{owner}/{name}/predictions) so we
+            // always use the latest deployed version without a pinned hash.
+            // Prefer:wait=60 asks Replicate to respond synchronously if it finishes in time;
+            // timeout(70) must be > Prefer:wait so PHP doesn't cut the connection first.
             $createResponse = Http::withToken($this->token)
                 ->withHeaders(['Prefer' => 'wait=60'])
                 ->timeout(70)
-                ->post("{$this->replicateApiUrl}/predictions", [
-                    'version' => $this->replicateVersion,
+                ->post("{$this->replicateApiUrl}/models/{$this->replicateModel}/predictions", [
                     'input' => [
                         'image' => $imageBase64,
                     ],
@@ -112,51 +114,58 @@ class BackgroundRemovalService
             if (!$createResponse->successful()) {
                 Log::warning('Replicate remove-bg create failed', [
                     'status' => $createResponse->status(),
-                    'body'   => substr($createResponse->body(), 0, 300),
+                    'body'   => substr($createResponse->body(), 0, 500),
+                    'model'  => $this->replicateModel,
                 ]);
                 throw new \RuntimeException('Create prediction failed: HTTP ' . $createResponse->status());
             }
 
             $prediction = $createResponse->json();
-            $predictionId = $prediction['id'] ?? null;
 
-            if (!$predictionId) {
-                throw new \RuntimeException('No prediction ID returned from Replicate');
-            }
-
-            // Step 2: Poll until succeeded or failed (max ~90 seconds)
-            $maxAttempts = 30;
-            $pollInterval = 3; // seconds
-            $output = null;
-
-            for ($i = 0; $i < $maxAttempts; $i++) {
-                sleep($pollInterval);
-
-                $pollResponse = Http::withToken($this->token)
-                    ->timeout(15)
-                    ->get("{$this->replicateApiUrl}/predictions/{$predictionId}");
-
-                if (!$pollResponse->successful()) {
-                    Log::warning('Replicate poll failed', ['status' => $pollResponse->status()]);
-                    continue;
+            // Replicate may return the result synchronously when Prefer:wait is honored.
+            if (($prediction['status'] ?? '') === 'succeeded') {
+                $output = $prediction['output'] ?? null;
+            } else {
+                $predictionId = $prediction['id'] ?? null;
+                if (!$predictionId) {
+                    Log::warning('Replicate remove-bg: no prediction ID', ['body' => $prediction]);
+                    throw new \RuntimeException('No prediction ID returned from Replicate');
                 }
 
-                $result = $pollResponse->json();
-                $status = $result['status'] ?? '';
+                // Poll until succeeded or failed (max ~90 seconds)
+                $maxAttempts = 30;
+                $pollInterval = 3;
+                $output = null;
 
-                if ($status === 'succeeded') {
-                    $output = $result['output'] ?? null;
-                    break;
-                }
+                for ($i = 0; $i < $maxAttempts; $i++) {
+                    sleep($pollInterval);
 
-                if (in_array($status, ['failed', 'canceled'])) {
-                    Log::warning('Replicate remove-bg prediction failed', [
-                        'status' => $status,
-                        'error'  => $result['error'] ?? '',
-                    ]);
-                    throw new \RuntimeException('Replicate prediction ' . $status);
+                    $pollResponse = Http::withToken($this->token)
+                        ->timeout(15)
+                        ->get("{$this->replicateApiUrl}/predictions/{$predictionId}");
+
+                    if (!$pollResponse->successful()) {
+                        Log::warning('Replicate poll failed', ['status' => $pollResponse->status()]);
+                        continue;
+                    }
+
+                    $result = $pollResponse->json();
+                    $status = $result['status'] ?? '';
+
+                    if ($status === 'succeeded') {
+                        $output = $result['output'] ?? null;
+                        break;
+                    }
+
+                    if (in_array($status, ['failed', 'canceled'])) {
+                        Log::warning('Replicate remove-bg prediction failed', [
+                            'status' => $status,
+                            'error'  => $result['error'] ?? '',
+                        ]);
+                        throw new \RuntimeException('Replicate prediction ' . $status);
+                    }
+                    // still starting/processing — continue polling
                 }
-                // still starting/processing — continue polling
             }
 
             if (!$output) {
