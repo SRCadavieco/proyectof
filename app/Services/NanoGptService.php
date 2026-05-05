@@ -60,10 +60,13 @@ class NanoGptService
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         } else {
-            // No colour selected: render on a white canvas so rembg can strip it cleanly.
-            // Balanced composition: the artwork should include both the main subject and the
-            // surrounding environment — not an isolated object on a white void.
-            $finalPrompt .= "\nWhite canvas background outside the artwork area only. Balanced composition including both the main subject and the surrounding scene. no apparel, no text overlays.";
+            // No colour selected: ask for a graphic illustration style with a full scene
+            // composition. rembg handles illustrated/graphic artwork much better than
+            // photorealistic photos — it reads the whole illustrated piece as "foreground"
+            // and strips only the plain white exterior margin.
+            // The white border/margin is added via the size/padding of the artwork itself,
+            // not by asking for a white studio backdrop (which isolates the subject).
+            $finalPrompt .= "\nGraphic illustration style. Full scene composition: include both the main subject and its surrounding environment (background, ground, atmosphere). The artwork should feel like a sticker or graphic patch — complete scene, not an isolated cutout. White empty margin only outside the artwork border. No apparel, no text.";
         }
 
         // Keep payload bounded for stability with image models.
