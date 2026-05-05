@@ -24,6 +24,9 @@
         .plan-card { transition: border-color .2s; }
         .plan-card:hover { border-color: rgba(124,60,160,0.35) !important; }
         .check { color: #9d5bc7; margin-right: 6px; }
+        .exclusive-feature { color: #c084fc; font-weight: 600; }
+        .exclusive-row-label { color: #c084fc; font-weight: 600; }
+        .exclusive-cell { color: #c084fc !important; font-weight: 600; }
     </style>
 </head>
 <body class="bg-[#0d0d0d] text-white font-sans antialiased overflow-x-hidden">
@@ -111,9 +114,9 @@
                     <li><span class="check">✓</span>Background removal</li>
                     <li><span class="check">✓</span>Printify integration</li>
                     <li><span class="check">✓</span>Design history</li>
-                    <li><span class="check">✓</span>10 AI chats/mo</li>
-                    <li><span class="check">✓</span>Turbo front &amp; back</li>
-                    <li><span class="check">✓</span>Post in all colors</li>
+                    <li><span class="check">✓</span><span class="exclusive-feature">10 AI chats/mo</span></li>
+                    <li><span class="check">✓</span><span class="exclusive-feature">Turbo front &amp; back</span></li>
+                    <li><span class="check">✓</span><span class="exclusive-feature">Post in all colors</span></li>
                     <li><span class="check">✓</span> Model Flash</li>
                     <li><span class="check">✓</span><span style="color:#c084fc"> Model Max</span></li>
                 </ul>
@@ -139,9 +142,9 @@
                     <li><span class="check">✓</span>Background removal</li>
                     <li><span class="check">✓</span>Printify integration</li>
                     <li><span class="check">✓</span>Design history</li>
-                    <li><span class="check">✓</span>30 AI chats/mo</li>
-                    <li><span class="check">✓</span>Turbo front &amp; back</li>
-                    <li><span class="check">✓</span>Post in all colors</li>
+                    <li><span class="check">✓</span><span class="exclusive-feature">30 AI chats/mo</span></li>
+                    <li><span class="check">✓</span><span class="exclusive-feature">Turbo front &amp; back</span></li>
+                    <li><span class="check">✓</span><span class="exclusive-feature">Post in all colors</span></li>
                     <li><span class="check">✓</span> Model Flash</li>
                     <li><span class="check">✓</span><span style="color:#c084fc"> Model Max</span></li>
                 </ul>
@@ -187,7 +190,7 @@
                     @endphp
                     @foreach($rows as $i => $row)
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);{{ $i % 2 !== 0 ? 'background:rgba(255,255,255,0.015)' : '' }}">
-                        <td class="py-3 px-5 text-white/45 text-xs">{{ $row[0] }}</td>
+                        <td class="py-3 px-5 text-xs {{ in_array($row[0], ['AI chats / month', 'Turbo back placement', 'Post in all colors']) ? 'exclusive-row-label' : 'text-white/45' }}">{{ $row[0] }}</td>
                         @for($c = 1; $c <= 4; $c++)
                         <td class="py-3 px-3 text-center text-xs">
                             @if($row[$c] === true)
@@ -195,7 +198,7 @@
                             @elseif($row[$c] === false)
                                 <span style="color:rgba(255,255,255,0.12)">—</span>
                             @else
-                                <span style="{{ $c === 3 ? 'color:#c084fc;font-weight:500' : 'color:rgba(255,255,255,0.35)' }}">{{ $row[$c] }}</span>
+                                <span class="{{ in_array($row[0], ['AI chats / month', 'Turbo back placement', 'Post in all colors']) && in_array($c, [3,4], true) ? 'exclusive-cell' : '' }}" style="{{ $c === 3 ? 'color:#c084fc;font-weight:500' : 'color:rgba(255,255,255,0.35)' }}">{{ $row[$c] }}</span>
                             @endif
                         </td>
                         @endfor
