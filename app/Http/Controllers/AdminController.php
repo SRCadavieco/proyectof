@@ -32,7 +32,11 @@ class AdminController extends Controller
             ELSE 'free'
         END";
 
-        $usersByPlan = User::selectRaw("{$planCase} as normalized_plan, COUNT(*) as total")
+        $usersByPlan = User::where(function ($query) {
+                $query->whereNull('plan')
+                    ->orWhereRaw('LOWER(plan) <> ?', ['admin']);
+            })
+            ->selectRaw("{$planCase} as normalized_plan, COUNT(*) as total")
             ->groupBy('normalized_plan')
             ->pluck('total', 'normalized_plan');
 
@@ -104,7 +108,7 @@ class AdminController extends Controller
         }
 
         if ($plan = $request->input('plan')) {
-            if (! in_array($plan, ['free', 'starter', 'pro', 'business'], true)) {
+            if (! in_array($plan, ['free', 'starter', 'pro', 'business', 'admin'], true)) {
                 $plan = null;
             }
         }
@@ -112,6 +116,8 @@ class AdminController extends Controller
         if ($plan) {
             if ($plan === 'business') {
                 $query->whereIn('plan', ['business', 'studio']);
+            } elseif ($plan === 'admin') {
+                $query->where('plan', 'admin')->where('is_admin', true);
             } else {
                 $query->where('plan', $plan);
             }
@@ -170,7 +176,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'tokens' => 'nullable|integer|min:0',
-            'plan' => 'nullable|in:free,starter,pro,business',
+            'plan' => 'nullable|in:free,starter,pro,business,admin',
         ]);
 
         if (isset($validated['tokens'])) {
@@ -178,6 +184,9 @@ class AdminController extends Controller
         }
 
         if (isset($validated['plan'])) {
+            if ($validated['plan'] === 'admin' && ! $user->is_admin) {
+                return back()->with('error', 'El Plan Admin solo puede asignarse a usuarios administradores.');
+            }
             $user->plan = $validated['plan'];
         }
 

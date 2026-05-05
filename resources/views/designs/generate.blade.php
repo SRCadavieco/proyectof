@@ -367,7 +367,10 @@
                     </button>
                 </div>
                 <div class="mt-2 flex items-center justify-between gap-2">
-                    @if(in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'business', 'studio']))
+                    @if(
+                        in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'business', 'studio'])
+                        || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
+                    )
                     <div class="flex items-center gap-2">
                         <span class="text-[10px] uppercase tracking-wider" style="color:rgba(255,255,255,0.55)">Model</span>
                         <select id="model-selector" class="text-[11px] rounded px-2 py-1 outline-none cursor-pointer font-medium" style="background:#3b1a54;color:#e9d5ff;border:1px solid rgba(192,132,252,0.6)">
@@ -376,8 +379,22 @@
                         </select>
                     </div>
                     @endif
-                    <!-- Char counter -->
-                    <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
+                    <div class="ml-auto flex items-center gap-2">
+                        @if(Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
+                        <span class="text-[10px] uppercase tracking-wider" style="color:rgba(255,255,255,0.55)">Design</span>
+                        <select id="style-selector" class="text-[11px] rounded px-2 py-1 outline-none cursor-pointer font-medium" style="background:#1f2b4d;color:#dbeafe;border:1px solid rgba(147,197,253,0.45)">
+                            <option value="default">No style (Default)</option>
+                            <option value="realistic_drawing">Realistic Drawing</option>
+                            <option value="cartoon_drawing">Cartoon Drawing</option>
+                            <option value="vector_art">Vector Art</option>
+                            <option value="photorealistic">Photorealistic</option>
+                            <option value="ghibli">Ghibli-inspired</option>
+                            <option value="manga">Manga</option>
+                        </select>
+                        @endif
+                        <!-- Char counter -->
+                        <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -817,6 +834,14 @@
     const userInitial   = '{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}';
     const userAvatarUrl = @json(Auth::user()->avatar);
     const userPlan      = @json(Auth::user()->plan ?? 'free');
+    const userIsAdmin   = @json((bool) Auth::user()->is_admin);
+    const isAdminPlan   = userIsAdmin && String(userPlan || '').toLowerCase() === 'admin';
+
+    const adminConsole = {
+        info(...args) { if (isAdminPlan) console.info(...args); },
+        warn(...args) { if (isAdminPlan) console.warn(...args); },
+        error(...args) { if (isAdminPlan) console.error(...args); },
+    };
 
 
     // ─── Token Manager ────────────────────────────────────────────────
@@ -969,7 +994,7 @@
             document.getElementById('welcome-screen').classList.remove('hidden');
             await newChat();
         } catch (e) {
-            console.error('Delete all failed', e);
+            adminConsole.error('Delete all failed', e);
         }
     });
     document.getElementById('delete-all-modal').addEventListener('click', function (e) {
@@ -1001,7 +1026,7 @@
         }
 
         const plan = String(userPlan || '').toLowerCase();
-        if (['pro', 'business', 'studio'].includes(plan)) {
+        if (isAdminPlan || ['pro', 'business', 'studio'].includes(plan)) {
             const sel = document.getElementById('model-selector')?.value || 'flash';
             if (sel === 'max') {
                 return { provider: 'nanogpt', model: 'juggernaut_z', cost: 2 };
@@ -1498,6 +1523,7 @@
                     imageBase64: snapshotImage, mimeType: snapshotMime,
                     model: generationEngine.model,
                     provider: generationEngine.provider,
+                    imageStyle: document.getElementById('style-selector')?.value || 'default',
                     is_edit: isEditMode,
                 }),
             });
@@ -1513,7 +1539,7 @@
             const imageUrl = data.imageUrl || data.image_url || data.url;
             const base64   = data.imageBase64 || data.image_base64 || data.base64;
 
-            console.info('[FabricAI] Generation engine', {
+            adminConsole.info('[FabricAI] Generation engine', {
                 plan: userPlan,
                 provider: data.provider || 'unknown',
                 model: data.model || 'unknown',
@@ -1524,7 +1550,7 @@
                 const bgRoute = data.bg_removal_method === 'api'
                     ? 'replicate_primary'
                     : (data.bg_removal_method === 'laravel_local' ? 'laravel_local_fallback' : 'unknown');
-                console.info('[FabricAI] Background removal (sync)', {
+                adminConsole.info('[FabricAI] Background removal (sync)', {
                     method: data.bg_removal_method,
                     route: bgRoute,
                     engine: data.bg_removal_engine || 'unknown',
@@ -1534,7 +1560,7 @@
             }
 
             if (data.bg_removal_failed) {
-                console.warn('[FabricAI] Background removal failed for this generation. The raw image is being shown instead.', {
+                adminConsole.warn('[FabricAI] Background removal failed for this generation. The raw image is being shown instead.', {
                     provider: data.provider || 'unknown',
                     model:    data.model    || 'unknown',
                     detail:   data.bg_removal_error || 'No additional detail — check server logs.',
@@ -1583,7 +1609,7 @@
                         const imageUrl = data.imageUrl || data.image_url || data.url;
                         const base64   = data.imageBase64 || data.image_base64 || data.base64;
 
-                        console.info('[FabricAI] Generation engine (async)', {
+                        adminConsole.info('[FabricAI] Generation engine (async)', {
                             plan: userPlan, provider: data.provider || 'nanogpt', model: data.model || 'juggernaut_z',
                         });
 
@@ -1591,7 +1617,7 @@
                             const bgRoute = data.bg_removal_method === 'api'
                                 ? 'replicate_primary'
                                 : (data.bg_removal_method === 'laravel_local' ? 'laravel_local_fallback' : 'unknown');
-                            console.info('[FabricAI] Background removal (async)', {
+                            adminConsole.info('[FabricAI] Background removal (async)', {
                                 method: data.bg_removal_method,
                                 route: bgRoute,
                                 engine: data.bg_removal_engine || 'unknown',
@@ -1891,7 +1917,7 @@
                     empty.classList.add('flex');
                 }
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { adminConsole.error(e); }
     }
 
     async function _renameSavedDesign(id, title, labelEl) {
@@ -1904,7 +1930,7 @@
                 },
                 body: JSON.stringify({ title })
             });
-        } catch(e) { console.error(e); }
+        } catch(e) { adminConsole.error(e); }
     }
 
     // ─── Mobile sidebar ───────────────────────────────────────────────
@@ -2949,7 +2975,7 @@
                 successCount++;
             } catch (err) {
                 errorCount++;
-                console.warn('Bulk upload error for', type, err.message);
+                adminConsole.warn('Bulk upload error for', type, err.message);
             }
         }
         updateProgress(garments.length, '');

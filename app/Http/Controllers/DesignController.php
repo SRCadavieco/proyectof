@@ -82,6 +82,7 @@ class DesignController extends Controller
            'mimeType' => ['nullable', 'string'],
            'model' => ['nullable', 'string', 'in:fabric_light,fabric_pro,flux_dev,juggernaut_z'],
            'provider' => ['nullable', 'string', 'in:gemini,chutes,together,nanogpt'],
+           'imageStyle' => ['nullable', 'string', 'in:default,realistic_drawing,cartoon_drawing,vector_art,photorealistic,ghibli,manga'],
            'is_edit' => ['nullable', 'boolean'],
        ]);
    } catch (\Illuminate\Validation\ValidationException $e) {
@@ -97,6 +98,18 @@ class DesignController extends Controller
     $userPrompt = trim($validated['prompt']);
     $prompt = $userPrompt;
     $provider = $validated['provider'] ?? 'gemini';
+    $user = $request->user();
+    $effectivePlan = strtolower((string) ($user->plan ?? 'free'));
+    if ($effectivePlan === 'studio') {
+        $effectivePlan = 'business';
+    }
+    if ($effectivePlan === 'admin' && ! $user->is_admin) {
+        $effectivePlan = 'free';
+    }
+    $isAdminPlan = $effectivePlan === 'admin' && $user->is_admin;
+    $imageStyle = $isAdminPlan
+        ? ($validated['imageStyle'] ?? 'default')
+        : 'default';
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
     // Diffusion models are sensitive to long prompts, keep user intent concise.
@@ -107,12 +120,13 @@ class DesignController extends Controller
         // No style guides, no chat context — the model only needs the image and the instruction.
         $prompt = $userPrompt;
     } elseif ($provider === 'chutes' || $provider === 'nanogpt') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $model ?? null);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $imageStyle);
     } elseif ($provider === 'together') {
-        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $model ?? null);
+        $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $imageStyle);
     } else {
         $prompt = $userPrompt;
     }
+    $prompt = $this->applyImageStyleGuide($prompt, $imageStyle);
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
 
@@ -123,7 +137,6 @@ class DesignController extends Controller
     }
 
     // Verificar y descontar token del usuario (con reset mensual lazy)
-    $user = $request->user();
     $user->refreshCreditsIfNeeded();
     $tokenCost = ($provider === 'nanogpt' && empty($validated['is_edit'])) ? 2 : 1;
     if ($user->tokens < $tokenCost) {
@@ -189,12 +202,8 @@ if ($needsImg2Img) {
     }
 }
 
-// Guard: nanogpt is only available for pro/business plans
-$effectivePlan = strtolower((string) ($user->plan ?? 'free'));
-if ($effectivePlan === 'studio') {
-    $effectivePlan = 'business';
-}
-if ($provider === 'nanogpt' && !in_array($effectivePlan, ['pro', 'business'], true)) {
+// Guard: nanogpt is only available for pro/business/admin plans
+if ($provider === 'nanogpt' && !in_array($effectivePlan, ['pro', 'business', 'admin'], true)) {
     $provider = 'chutes';
     $model = 'fabric_pro';
     $ai = $chutes;
@@ -528,12 +537,19 @@ if ($isEdit) {
  * Build a provider-aware hybrid prompt that keeps the product's visual essence
  * while adapting quality guidance to each image model family.
  */
-private function buildHybridPrompt(string $userPrompt, string $provider, ?string $model = null): string
+private function buildHybridPrompt(string $userPrompt, string $provider, ?string $imageStyle = null): string
 {
     $cleanPrompt = trim($userPrompt);
+    $style = trim(strtolower((string) $imageStyle));
 
     // Chutes/Together are vector-style diffusion models — append style guidance.
     if (in_array($provider, ['chutes', 'together'], true)) {
+        // Only enforce legacy vector guidance when the user keeps the default style.
+        // If a style is selected, let applyImageStyleGuide() steer the output.
+        if ($style !== '' && $style !== 'default') {
+            return $cleanPrompt;
+        }
+
         $legacyStyleGuide = 'Style: vector illustration. Use flat colors and bold outlines.  Avoid gradients and heavy shadows.  Utilize an unused colour for the background ';
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
@@ -541,6 +557,33 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
     // NanoGPT (juggernaut-z / gpt-image-2) is a high-quality photorealistic/artistic
     // model — adding vector style guidance produces wrong results. Send prompt as-is.
     return $cleanPrompt;
+}
+
+/**
+ * Adds optional style steering based on the UI design selector.
+ */
+private function applyImageStyleGuide(string $prompt, ?string $imageStyle): string
+{
+    $style = trim(strtolower((string) $imageStyle));
+
+    if ($style === '' || $style === 'default') {
+        return $prompt;
+    }
+
+    $styleInstructions = [
+        'realistic_drawing' => 'Style: realistic drawing illustration, natural proportions, hand-drawn finish, refined shading.',
+        'cartoon_drawing' => 'Style: cartoon drawing with simplified shapes, playful forms, expressive linework and vibrant color blocks.',
+        'vector_art' => 'Style: clean vector art, flat fills, crisp contours, minimal gradients, scalable graphic look.',
+        'photorealistic' => 'Style: photorealistic image with realistic lighting, textures, depth, and natural color response.',
+        'ghibli' => 'Style: whimsical hand-painted anime look inspired by classic Ghibli films, warm palette, soft atmospheric depth.',
+        'manga' => 'Style: manga illustration with expressive ink lines, stylized composition, and dynamic contrast.',
+    ];
+
+    if (!isset($styleInstructions[$style])) {
+        return $prompt;
+    }
+
+    return trim($prompt . "\n" . $styleInstructions[$style]);
 }
 
     /**

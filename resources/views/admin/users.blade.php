@@ -79,6 +79,7 @@
         <option value="starter" style="color:#0f172a" {{ request('plan') == 'starter' ? 'selected' : '' }}>Starter</option>
         <option value="pro" style="color:#0f172a" {{ request('plan') == 'pro' ? 'selected' : '' }}>Pro</option>
         <option value="business" style="color:#0f172a" {{ request('plan') == 'business' ? 'selected' : '' }}>Business</option>
+        <option value="admin" style="color:#0f172a" {{ request('plan') == 'admin' ? 'selected' : '' }}>Admin</option>
     </select>
     <button type="submit" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition" style="background:#7c3ca0">
         <i class="fas fa-filter mr-2"></i>Filter
@@ -108,13 +109,14 @@
                         $currentPlan = match ($user->plan) {
                             'pro' => 'pro',
                             'studio' => 'business',
-                            'starter', 'business', 'free' => $user->plan,
+                            'starter', 'business', 'free', 'admin' => $user->plan,
                             default => 'free',
                         };
                         $planBadge = match($currentPlan) {
                             'pro' => 'background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc',
                             'starter' => 'background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.35);color:#93c5fd',
                             'business' => 'background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.35);color:#6ee7b7',
+                            'admin' => 'background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.35);color:#fca5a5',
                             default => 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)',
                         };
                     @endphp
@@ -315,6 +317,7 @@
                     <option value="starter" style="color:#0f172a">Starter</option>
                     <option value="pro" style="color:#0f172a">Pro</option>
                     <option value="business" style="color:#0f172a">Business</option>
+                    <option value="admin" style="color:#0f172a">Admin</option>
                 </select>
             </div>
             <div class="mb-5">

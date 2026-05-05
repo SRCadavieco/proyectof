@@ -32,6 +32,7 @@ class ChatController extends Controller
         return match ($plan) {
             'pro'      => 10,
             'business' => 30,
+            'admin'    => 30,
             default    => 5,  // free, starter
         };
     }

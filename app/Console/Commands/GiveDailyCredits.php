@@ -14,8 +14,14 @@ class GiveDailyCredits extends Command
     {
         $count = 0;
 
-        // Only process paid plans that have a daily rate
-        User::whereIn('plan', ['starter', 'pro', 'business'])
+        // Only process paid plans that have a daily rate.
+        // Admin plan is restricted to admin users.
+        User::where(function ($query) {
+            $query->whereIn('plan', ['starter', 'pro', 'business'])
+                ->orWhere(function ($adminQuery) {
+                    $adminQuery->where('plan', 'admin')->where('is_admin', true);
+                });
+        })
             ->each(function (User $user) use (&$count) {
                 $daily = User::dailyCreditsForPlan($user->plan ?? 'free');
                 if ($daily <= 0) return;

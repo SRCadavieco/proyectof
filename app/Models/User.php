@@ -69,6 +69,7 @@ class User extends Authenticatable
             'starter'  => 50,
             'pro'      => 80,
             'business' => 200,
+            'admin'    => 200,
             default    => 5,   // free: all 5 upfront, no daily
         };
     }
@@ -82,6 +83,7 @@ class User extends Authenticatable
             'starter'  => 1,
             'pro'      => 4,
             'business' => 10,
+            'admin'    => 10,
             default    => 0,
         };
     }
@@ -95,6 +97,7 @@ class User extends Authenticatable
             'starter'  => 80,
             'pro'      => 200,
             'business' => 500,
+            'admin'    => 500,
             default    => 5,
         };
     }
