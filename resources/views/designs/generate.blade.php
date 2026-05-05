@@ -340,7 +340,7 @@
                         Cancel
                     </button>
                 </div>
-                <div class="flex gap-2 items-end">
+                <div class="flex gap-2 items-center">
                     <!-- Attach image -->
                     <label class="cursor-pointer icon-btn shrink-0" title="Attach image" style="color:#c084fc">
                         <i class="fas fa-paperclip text-base"></i>
@@ -1153,6 +1153,11 @@
                     <button type="button" title="Preview on garment" class="icon-btn preview-btn flex-col gap-0.5" data-preview-idx="${idx}" style="width:52px;height:44px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,0.1);border-radius:10px">
                         <i class="fas fa-tshirt"></i>
                         <span style="font-size:8px;opacity:0.6">Try on</span>
+                    </button>
+                    <button type="button" title="Turbo upload to all garments" onclick="openBulkUploadModal('${imageUrl}')"
+                            class="icon-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#c084fc;background:rgba(124,60,160,0.2);border-radius:10px">
+                        <i class="fas fa-bolt"></i>
+                        <span style="font-size:8px;opacity:0.75">Upload</span>
                     </button>
                 </div>
             </div>`;
