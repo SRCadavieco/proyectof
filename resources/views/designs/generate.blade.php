@@ -567,16 +567,19 @@
                     </div>
                 </div>
                 <div class="mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    @if(in_array(Auth::user()->plan ?? 'free', ['pro', 'studio', 'business']))
+                    @if(
+                        in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'studio', 'business'])
+                        || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
+                    )
                     <label class="flex items-center gap-2.5 cursor-pointer group">
                         <div class="relative">
                             <input type="checkbox" id="bulk-all-colors" class="sr-only peer">
-                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
+                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#a855f7]" style="background:rgba(255,255,255,0.12)"></div>
                             <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
                         </div>
                         <div>
                             <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Upload in all available colors</span>
-                            <span class="ml-1.5 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider">Pro</span>
+                            <span class="ml-1.5 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider">Turbo</span>
                         </div>
                     </label>
                     <p id="bulk-all-colors-note" class="text-[10px] text-white/30 mt-1.5 ml-11 hidden">

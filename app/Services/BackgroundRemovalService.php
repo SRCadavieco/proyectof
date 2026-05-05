@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Log;
 class BackgroundRemovalService
 {
     private string $replicateApiUrl = 'https://api.replicate.com/v1';
-    private string $replicateVersion = 'cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003';
+    private string $replicateModel = '851-labs/background-remover';
+    private string $replicateVersion = 'a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc';
     private string $token;
     private string $lastMethod = 'not_attempted';
 
@@ -71,11 +72,11 @@ class BackgroundRemovalService
 
     public function getEngineId(): string
     {
-        return $this->replicateVersion;
+        return $this->replicateModel . ':' . $this->replicateVersion;
     }
 
     /**
-     * Remove background using the Replicate API (cjwbw/rembg).
+     * Remove background using the Replicate API (851-labs/background-remover).
      *
      * @param string $imageBase64 Base64 string or data URL
      * @return string|null data URL (data:image/png;base64,...) or null on failure
@@ -106,9 +107,12 @@ class BackgroundRemovalService
                 ->withHeaders(['Prefer' => 'wait=60'])
                 ->timeout(70)
                 ->post("{$this->replicateApiUrl}/predictions", [
-                    'version' => 'fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003',
+                    'version' => $this->replicateVersion,
                     'input' => [
                         'image' => $imageBase64,
+                        'background_type' => 'rgba',
+                        'format' => 'png',
+                        'threshold' => 0,
                     ],
                 ]);
 
