@@ -59,6 +59,12 @@ class NanoGptService
         if (!empty($backgroundColor)) {
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
+        } else {
+            // No colour selected: render as a t-shirt graphic composition on a white canvas.
+            // "White canvas" tells rembg there is a clear solid area to strip, while
+            // "balanced composition" prevents the model from generating an isolated object
+            // and encourages including both the main subject and the scene/environment.
+            $finalPrompt .= "\nT-shirt graphic design. Balanced composition: include both the main subject and the surrounding scene/environment. White canvas background outside the artwork boundaries only — not a studio backdrop. Do not isolate the subject on a white void.";
         }
 
         // Keep payload bounded for stability with image models.

@@ -102,7 +102,9 @@ class DesignController extends Controller
     // Diffusion models are sensitive to long prompts, keep user intent concise.
     $userPromptForDiffusion = mb_substr($userPrompt, 0, 270);
 
-    if ($hasReferenceImage) {
+    if ($hasReferenceImage || !empty($validated['is_edit'])) {
+        // Edit/reference-image mode: pass only the raw user prompt.
+        // No style guides, no chat context — the model only needs the image and the instruction.
         $prompt = $userPrompt;
     } elseif ($provider === 'chutes' || $provider === 'nanogpt') {
         $prompt = $this->buildHybridPrompt($userPromptForDiffusion, $provider, $model ?? null);
