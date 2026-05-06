@@ -18,6 +18,19 @@ class PrintifyService
         'sweatshirt'  => 49,   // Unisex Heavy Blend™ Crewneck Sweatshirt
         'vneck'       => 61,   // Unisex Jersey Short Sleeve V-Neck Tee (Bella+Canvas 3005)
         'womens_tee'  => 9,    // Women's Jersey Short Sleeve Tee (Bella+Canvas 6004)
+        'leggings'    => 509,  // Women's Casual Spandex Leggings (AOP)
+        'joggers'     => 591,  // Athletic Joggers (AOP)
+        'shorts'      => 1110, // Women's Shorts (AOP)
+        'dresses'     => 276,  // Women's Cut & Sew Racerback Dress (AOP)
+        'skirts'      => 286,  // Women's Skater Skirt (AOP)
+        'bikinis'     => 349,  // Women's Bikini Swimsuit (AOP)
+        'socks'       => 365,  // Crew Socks
+        'underwear'   => 406,  // Men's Boxer Briefs (AOP)
+        'pajamas'     => 1037, // Women's Satin Pajamas (AOP)
+        'caps'        => 1108, // Low Profile Baseball Cap
+        'beanies'     => 1689, // Cuff Beanie
+        'tote_bags'   => 553,  // Cotton Tote Bag
+        'scarves'     => 264,  // Poly Scarf
     ];
 
     // ─── HTTP client ─────────────────────────────────────────────────────────

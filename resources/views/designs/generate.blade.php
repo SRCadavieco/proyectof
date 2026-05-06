@@ -687,6 +687,19 @@
                     <option value="tanktop">Tank Top</option>
                     <option value="longsleeve">Long Sleeve</option>
                     <option value="sweatshirt">Sweatshirt</option>
+                    <option value="leggings">Leggings</option>
+                    <option value="joggers">Joggers</option>
+                    <option value="shorts">Shorts</option>
+                    <option value="dresses">Vestidos</option>
+                    <option value="skirts">Faldas</option>
+                    <option value="bikinis">Bikinis / Swimwear</option>
+                    <option value="socks">Calcetines</option>
+                    <option value="underwear">Ropa interior</option>
+                    <option value="pajamas">Pijamas</option>
+                    <option value="caps">Gorras</option>
+                    <option value="beanies">Beanies</option>
+                    <option value="tote_bags">Tote Bags</option>
+                    <option value="scarves">Bufandas</option>
                 </select>
                 <input type="color" id="garment-color" value="#ffffff" oninput="renderPreview()"
                        title="Garment color"
@@ -1963,6 +1976,17 @@
         return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
     }
 
+    function _drawGenericGarment(ctx, color) {
+        const dk = shadeColor(color, -20);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(120, 60, 260, 440, 24);
+        ctx.fill();
+        ctx.strokeStyle = dk;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
     // Returns the print area rectangle (canvas pixels) for the given garment.
     function _computePrintArea(garmentKey) {
         const g = GARMENTS[garmentKey];
@@ -2117,6 +2141,123 @@
                 ctx.beginPath(); ctx.moveTo(48,343);  ctx.lineTo(85,353);  ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(415,353); ctx.lineTo(452,343); ctx.stroke();
             }
+        },
+        leggings: {
+            name:'Leggings', ref:'AOP Leggings', printPx:'3600 × 4800', printInches:'12.00" × 16.00"', dpi:300,
+            printW:3600, printH:4800,
+            svgUrl:'/images/garments/leggings.svg',
+            printArea:{ x:145, y:92, w:210, h:360 },
+            svgUrlBack:'/images/garments/leggings-back.svg',
+            printAreaBack:{ x:145, y:92, w:210, h:360 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        joggers: {
+            name:'Joggers', ref:'Athletic Joggers (AOP)', printPx:'3600 × 4800', printInches:'12.00" × 16.00"', dpi:300,
+            printW:3600, printH:4800,
+            svgUrl:'/images/garments/joggers.svg',
+            printArea:{ x:135, y:122, w:230, h:330 },
+            svgUrlBack:'/images/garments/joggers-back.svg',
+            printAreaBack:{ x:135, y:122, w:230, h:330 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        shorts: {
+            name:'Shorts', ref:'Shorts (AOP)', printPx:'3000 × 2400', printInches:'10.00" × 8.00"', dpi:300,
+            printW:3000, printH:2400,
+            svgUrl:'/images/garments/shorts.svg',
+            printArea:{ x:130, y:200, w:240, h:210 },
+            svgUrlBack:'/images/garments/shorts-back.svg',
+            printAreaBack:{ x:130, y:200, w:240, h:210 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        dresses: {
+            name:'Vestidos', ref:'Racerback Dress (AOP)', printPx:'4200 × 5400', printInches:'14.00" × 18.00"', dpi:300,
+            printW:4200, printH:5400,
+            svgUrl:'/images/garments/dresses.svg',
+            printArea:{ x:138, y:96, w:224, h:360 },
+            svgUrlBack:'/images/garments/dresses-back.svg',
+            printAreaBack:{ x:138, y:96, w:224, h:360 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        skirts: {
+            name:'Faldas', ref:'Skater Skirt (AOP)', printPx:'3600 × 3000', printInches:'12.00" × 10.00"', dpi:300,
+            printW:3600, printH:3000,
+            svgUrl:'/images/garments/skirts.svg',
+            printArea:{ x:118, y:210, w:264, h:190 },
+            svgUrlBack:'/images/garments/skirts-back.svg',
+            printAreaBack:{ x:118, y:210, w:264, h:190 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        bikinis: {
+            name:'Bikinis / Swimwear', ref:'Bikini Swimsuit (AOP)', printPx:'3000 × 3000', printInches:'10.00" × 10.00"', dpi:300,
+            printW:3000, printH:3000,
+            svgUrl:'/images/garments/bikinis.svg',
+            printArea:{ x:145, y:142, w:210, h:240 },
+            svgUrlBack:'/images/garments/bikinis-back.svg',
+            printAreaBack:{ x:145, y:142, w:210, h:240 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        socks: {
+            name:'Calcetines', ref:'Crew Socks', printPx:'1500 × 3000', printInches:'5.00" × 10.00"', dpi:300,
+            printW:1500, printH:3000,
+            svgUrl:'/images/garments/socks.svg',
+            printArea:{ x:180, y:110, w:140, h:320 },
+            svgUrlBack:'/images/garments/socks-back.svg',
+            printAreaBack:{ x:180, y:110, w:140, h:320 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        underwear: {
+            name:'Ropa interior', ref:'Boxer Briefs (AOP)', printPx:'3000 × 2400', printInches:'10.00" × 8.00"', dpi:300,
+            printW:3000, printH:2400,
+            svgUrl:'/images/garments/underwear.svg',
+            printArea:{ x:140, y:190, w:220, h:180 },
+            svgUrlBack:'/images/garments/underwear-back.svg',
+            printAreaBack:{ x:140, y:190, w:220, h:180 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        pajamas: {
+            name:'Pijamas', ref:'Satin Pajamas (AOP)', printPx:'4200 × 5400', printInches:'14.00" × 18.00"', dpi:300,
+            printW:4200, printH:5400,
+            svgUrl:'/images/garments/pajamas.svg',
+            printArea:{ x:130, y:92, w:240, h:360 },
+            svgUrlBack:'/images/garments/pajamas-back.svg',
+            printAreaBack:{ x:130, y:92, w:240, h:360 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        caps: {
+            name:'Gorras', ref:'Low Profile Baseball Cap', printPx:'1800 × 1200', printInches:'6.00" × 4.00"', dpi:300,
+            printW:1800, printH:1200,
+            svgUrl:'/images/garments/caps.svg',
+            printArea:{ x:185, y:175, w:130, h:90 },
+            svgUrlBack:'/images/garments/caps-back.svg',
+            printAreaBack:{ x:190, y:165, w:120, h:85 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        beanies: {
+            name:'Beanies', ref:'Cuff Beanie', printPx:'1800 × 1800', printInches:'6.00" × 6.00"', dpi:300,
+            printW:1800, printH:1800,
+            svgUrl:'/images/garments/beanies.svg',
+            printArea:{ x:170, y:135, w:160, h:130 },
+            svgUrlBack:'/images/garments/beanies-back.svg',
+            printAreaBack:{ x:170, y:135, w:160, h:130 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        tote_bags: {
+            name:'Tote Bags', ref:'Cotton Tote Bag', printPx:'3600 × 4200', printInches:'12.00" × 14.00"', dpi:300,
+            printW:3600, printH:4200,
+            svgUrl:'/images/garments/tote_bags.svg',
+            printArea:{ x:130, y:160, w:240, h:260 },
+            svgUrlBack:'/images/garments/tote_bags-back.svg',
+            printAreaBack:{ x:130, y:160, w:240, h:260 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
+        },
+        scarves: {
+            name:'Bufandas', ref:'Poly Scarf', printPx:'4800 × 1800', printInches:'16.00" × 6.00"', dpi:300,
+            printW:4800, printH:1800,
+            svgUrl:'/images/garments/scarves.svg',
+            printArea:{ x:110, y:220, w:280, h:110 },
+            svgUrlBack:'/images/garments/scarves-back.svg',
+            printAreaBack:{ x:110, y:220, w:280, h:110 },
+            draw(ctx,color) { _drawGenericGarment(ctx, color); }
         },
     };
 
@@ -2764,6 +2905,19 @@
             {type:'sweatshirt',label:'Sweatshirt'},
             {type:'vneck',     label:'V-Neck Tee'},
             {type:'womens_tee',label:"Women's Tee"},
+            {type:'leggings',  label:'Leggings'},
+            {type:'joggers',   label:'Joggers'},
+            {type:'shorts',    label:'Shorts'},
+            {type:'dresses',   label:'Vestidos'},
+            {type:'skirts',    label:'Faldas'},
+            {type:'bikinis',   label:'Bikinis / Swimwear'},
+            {type:'socks',     label:'Calcetines'},
+            {type:'underwear', label:'Ropa interior'},
+            {type:'pajamas',   label:'Pijamas'},
+            {type:'caps',      label:'Gorras'},
+            {type:'beanies',   label:'Beanies'},
+            {type:'tote_bags', label:'Tote Bags'},
+            {type:'scarves',   label:'Bufandas'},
         ];
         btn.disabled = true; send.disabled = true; resetPrintifyFeedback();
         const frontLayers  = _layers.front;
@@ -2928,6 +3082,19 @@
             {type:'sweatshirt',label:'Sweatshirt'},
             {type:'vneck',     label:'V-Neck Tee'},
             {type:'womens_tee',label:"Women's Tee"},
+            {type:'leggings',  label:'Leggings'},
+            {type:'joggers',   label:'Joggers'},
+            {type:'shorts',    label:'Shorts'},
+            {type:'dresses',   label:'Vestidos'},
+            {type:'skirts',    label:'Faldas'},
+            {type:'bikinis',   label:'Bikinis / Swimwear'},
+            {type:'socks',     label:'Calcetines'},
+            {type:'underwear', label:'Ropa interior'},
+            {type:'pajamas',   label:'Pijamas'},
+            {type:'caps',      label:'Gorras'},
+            {type:'beanies',   label:'Beanies'},
+            {type:'tote_bags', label:'Tote Bags'},
+            {type:'scarves',   label:'Bufandas'},
         ];
 
         // Switch to progress view

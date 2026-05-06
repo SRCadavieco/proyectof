@@ -140,7 +140,7 @@ class PrintifyController extends Controller
 
         $data = $request->validate([
             'shop_id'              => 'required|integer',
-            'garment_type'         => 'required|string|in:tshirt,hoodie,zip_hoodie,tanktop,longsleeve,sweatshirt,vneck,womens_tee',
+            'garment_type'         => 'required|string|in:tshirt,hoodie,zip_hoodie,tanktop,longsleeve,sweatshirt,vneck,womens_tee,leggings,joggers,shorts,dresses,skirts,bikinis,socks,underwear,pajamas,caps,beanies,tote_bags,scarves',
             'image_source'         => 'required|string',
             'title'                => 'required|string|max:140',
             'color'                => 'nullable|string|max:50',
