@@ -130,7 +130,7 @@ class PrintifyService
 
     private function buildPlaceholdersFromVariants(
         array $variants,
-        string $frontImageId,
+        ?string $frontImageId,
         float $frontPosX,
         float $frontPosY,
         float $frontScale,
@@ -178,12 +178,17 @@ class PrintifyService
             return $fallback;
         }
 
-        $targetPositions = $positions;
-
         $placeholders = [];
-        foreach ($targetPositions as $position) {
+        foreach ($positions as $position) {
             $isBackPosition = str_starts_with($position, 'back') || str_ends_with($position, '_back');
-            $useBack = $backImageId !== null && $isBackPosition;
+            if ($isBackPosition && $backImageId === null) {
+                continue;
+            }
+            if (!$isBackPosition && $frontImageId === null) {
+                continue;
+            }
+
+            $useBack = $isBackPosition;
 
             $placeholders[] = [
                 'position' => $position,
@@ -200,13 +205,20 @@ class PrintifyService
         return $placeholders;
     }
 
-    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = '', ?string $backImageUrl = null, float $backPosX = 0.5, float $backPosY = 0.5, float $backScale = 1.0): array
+    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, ?string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = '', ?string $backImageUrl = null, float $backPosX = 0.5, float $backPosY = 0.5, float $backScale = 1.0): array
     {
         $blueprintId = self::BLUEPRINT_MAP[$garmentType] ?? self::BLUEPRINT_MAP['tshirt'];
 
+        if (!$imageUrl && !$backImageUrl) {
+            throw new \InvalidArgumentException('At least one side image is required.');
+        }
+
         // 1. Upload the design image
-        $upload  = $this->uploadImage($token, $imageUrl);
-        $imageId = $upload['id'];
+        $imageId = null;
+        if ($imageUrl) {
+            $upload  = $this->uploadImage($token, $imageUrl);
+            $imageId = $upload['id'];
+        }
 
         // 1b. Upload back image if provided
         $backImageId = null;
@@ -252,6 +264,11 @@ class PrintifyService
                     $backPosY,
                     $backScale
                 );
+
+                if (empty($placeholders)) {
+                    $lastError = 'No printable placeholders available for the selected side(s).';
+                    continue;
+                }
 
                 // 5. Build product payload
                 $payload = [

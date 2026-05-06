@@ -579,6 +579,31 @@
                     </div>
                 </div>
                 <div class="mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <label class="text-xs text-white/40 block mb-2">Sides</label>
+                    <div class="flex flex-col gap-2">
+                        <label class="flex items-center gap-2.5 cursor-pointer group">
+                            <input type="checkbox" id="bulk-side-front" class="w-4 h-4 rounded border-white/20 bg-transparent text-[#9333ea] focus:ring-[#9333ea] focus:ring-offset-0" checked>
+                            <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Front</span>
+                        </label>
+                        @if(
+                            in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'studio', 'business'])
+                            || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
+                        )
+                        <label class="flex items-center gap-2.5 cursor-pointer group">
+                            <input type="checkbox" id="bulk-side-back" class="w-4 h-4 rounded border-white/20 bg-transparent text-[#9333ea] focus:ring-[#9333ea] focus:ring-offset-0">
+                            <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Back</span>
+                        </label>
+                        <p id="bulk-side-back-note" class="text-[10px] text-white/30 ml-6 hidden">Uses the current back design from the editor.</p>
+                        @else
+                        <div class="flex items-center gap-2.5 opacity-50 cursor-not-allowed" title="Back side is available from Pro plan">
+                            <input type="checkbox" disabled class="w-4 h-4 rounded border-white/20 bg-transparent pointer-events-none">
+                            <span class="text-xs text-white/40 font-medium">Back</span>
+                            <a href="/pricing" class="ml-1 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider hover:underline">Upgrade</a>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                <div class="mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
                     @if(
                         in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'studio', 'business'])
                         || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
@@ -3097,12 +3122,14 @@
     // ═══════════════════════════════════════════════════════════════
     //  BULK UPLOAD MODAL
     // ═══════════════════════════════════════════════════════════════
-    let _bulkUploadImageSrc = null;
+    let _bulkUploadFrontImageSrc = null;
+    let _bulkUploadBackImageSrc  = null;
     let _bulkShopsLoaded    = false;
     let _bulkUploadAborted  = false;
 
     async function openBulkUploadModal(imageSrc) {
-        _bulkUploadImageSrc = imageSrc;
+        _bulkUploadFrontImageSrc = imageSrc || (_layers.front.length ? await getFlattenedSrc(_layers.front) : null);
+        _bulkUploadBackImageSrc  = _layers.back.length ? await getFlattenedSrc(_layers.back) : null;
         // Reset UI to form state
         document.getElementById('bulk-form-section').classList.remove('hidden');
         document.getElementById('bulk-progress-section').classList.add('hidden');
@@ -3114,6 +3141,18 @@
         document.getElementById('bulk-progress-bar').style.width = '0%';
         const bulkPublish = document.getElementById('bulk-publish');
         if (bulkPublish) bulkPublish.checked = false;
+        const bulkFront = document.getElementById('bulk-side-front');
+        const bulkBack = document.getElementById('bulk-side-back');
+        const bulkBackNote = document.getElementById('bulk-side-back-note');
+        if (bulkFront) {
+            bulkFront.checked = !!_bulkUploadFrontImageSrc;
+            bulkFront.disabled = !_bulkUploadFrontImageSrc;
+        }
+        if (bulkBack) {
+            bulkBack.checked = !!_bulkUploadBackImageSrc;
+            bulkBack.disabled = !_bulkUploadBackImageSrc;
+            if (bulkBackNote) bulkBackNote.classList.toggle('hidden', !_bulkUploadBackImageSrc);
+        }
 
         // Pre-fill title from current design
         const existing = document.getElementById('printify-title')?.value;
@@ -3153,7 +3192,8 @@
         const modal = document.getElementById('bulk-upload-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        _bulkUploadImageSrc = null;
+        _bulkUploadFrontImageSrc = null;
+        _bulkUploadBackImageSrc = null;
         _bulkUploadAborted = false;
     }
 
@@ -3196,9 +3236,13 @@
         const title     = document.getElementById('bulk-title').value.trim();
         const allColors = document.getElementById('bulk-all-colors')?.checked ?? false;
         const color     = allColors ? '' : hexToColorName(document.getElementById('bulk-color-hex').value);
+        const useFront  = document.getElementById('bulk-side-front')?.checked ?? true;
+        const useBack   = document.getElementById('bulk-side-back')?.checked ?? false;
         if (!shopId)  { alert('Please select a Printify store.'); return; }
         if (!title)   { alert('Please enter a product name.'); return; }
-        if (!_bulkUploadImageSrc) { alert('No image selected.'); return; }
+        if (!useFront && !useBack) { alert('Select at least one side: Front or Back.'); return; }
+        if (useFront && !_bulkUploadFrontImageSrc) { alert('No front design selected.'); return; }
+        if (useBack && !_bulkUploadBackImageSrc) { alert('No back design loaded in the editor.'); return; }
 
         const garments = [
             {type:'tshirt',    label:'T-Shirt'},
@@ -3267,12 +3311,18 @@
                     body: JSON.stringify({
                         shop_id:      parseInt(shopId),
                         garment_type: type,
-                        image_source: _bulkUploadImageSrc,
+                        image_source: useFront ? _bulkUploadFrontImageSrc : null,
                         title:        title + ' — ' + label,
                         color:        color,
                         pos_x:        0.5,
                         pos_y:        0.5,
                         design_scale: 1,
+                        ...(useBack ? {
+                            back_image_source: _bulkUploadBackImageSrc,
+                            back_pos_x: 0.5,
+                            back_pos_y: 0.5,
+                            back_design_scale: 1,
+                        } : {}),
                         publish_after_create: document.getElementById('bulk-publish')?.checked ?? false,
                     }),
                 });
