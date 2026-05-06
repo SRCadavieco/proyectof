@@ -36,6 +36,40 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Public sitemap
+Route::get('/sitemap.xml', function () {
+    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
+    $lastmod = now()->toAtomString();
+
+    $pages = [
+        ['path' => '/', 'changefreq' => 'weekly', 'priority' => '1.0'],
+        ['path' => '/pricing', 'changefreq' => 'weekly', 'priority' => '0.9'],
+        ['path' => '/faq', 'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['path' => '/terms', 'changefreq' => 'yearly', 'priority' => '0.4'],
+        ['path' => '/privacy', 'changefreq' => 'yearly', 'priority' => '0.4'],
+        ['path' => '/login', 'changefreq' => 'monthly', 'priority' => '0.5'],
+        ['path' => '/register', 'changefreq' => 'monthly', 'priority' => '0.5'],
+    ];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+    foreach ($pages as $page) {
+        $loc = $page['path'] === '/' ? $baseUrl . '/' : $baseUrl . $page['path'];
+
+        $xml .= '<url>';
+        $xml .= '<loc>' . e($loc) . '</loc>';
+        $xml .= '<lastmod>' . $lastmod . '</lastmod>';
+        $xml .= '<changefreq>' . $page['changefreq'] . '</changefreq>';
+        $xml .= '<priority>' . $page['priority'] . '</priority>';
+        $xml .= '</url>';
+    }
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
+})->name('sitemap');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/design', [DesignController::class, 'form']);
