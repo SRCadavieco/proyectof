@@ -1,5 +1,6 @@
 ﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 550">
-  <path id="color_first" d="M165 82 L335 82 C350 82 362 95 362 110 L362 200 C362 218 348 232 330 232 L312 232 L304 502 C304 516 292 528 278 528 L246 528 C232 528 220 516 220 502 L212 252 L188 252 L180 502 C180 516 168 528 154 528 L122 528 C108 528 96 516 96 502 L88 232 L70 232 C52 232 38 218 38 200 L38 110 C38 95 50 82 65 82 Z" fill="#ffffff"/>
-  <path d="M250 118 L250 500" stroke="#6b7280" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
-  <path d="M165 82 L335 82" stroke="#4b5563" stroke-width="5" opacity="0.5"/>
+  <path id="color_first" d="M146 88 H354 C370 88 382 101 382 117 V196 C382 213 369 226 352 226 H316 L334 503 C335 519 322 532 306 532 H270 C254 532 241 519 242 503 L252 252 H248 L258 503 C259 519 246 532 230 532 H194 C178 532 165 519 166 503 L184 226 H148 C131 226 118 213 118 196 V117 C118 101 130 88 146 88 Z" fill="#ffffff"/>
+  <path d="M198 236 L188 495 M302 236 L312 495" stroke="#9ca3af" stroke-width="4" opacity="0.4"/>
+  <path d="M250 118 L250 505" stroke="#6b7280" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+  <path d="M146 88 H354" stroke="#4b5563" stroke-width="5" opacity="0.55"/>
 </svg>
