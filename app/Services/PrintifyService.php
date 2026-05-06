@@ -178,14 +178,7 @@ class PrintifyService
             return $fallback;
         }
 
-        $hasFront = in_array('front', $positions, true);
-        $hasBack = in_array('back', $positions, true);
-        $targetPositions = ($hasFront || $hasBack)
-            ? array_values(array_filter(
-                ['front', $backImageId ? 'back' : null],
-                fn($p) => $p !== null && in_array($p, $positions, true)
-            ))
-            : $positions;
+        $targetPositions = $positions;
 
         $placeholders = [];
         foreach ($targetPositions as $position) {
@@ -362,55 +355,76 @@ class PrintifyService
                     $results[$garmentType] = ['success' => false, 'error' => 'No print providers'];
                     continue;
                 }
-                $providerId = $providers[0]['id'];
+                $lastError = 'No variants available';
+                $created = false;
 
-                $variantsData = $this->getVariants($token, $blueprintId, $providerId);
-                $available    = array_values(array_filter(
-                    $variantsData['variants'] ?? [],
-                    fn($v) => $v['is_available'] ?? true
-                ));
-                $variants = array_slice($this->filterVariantsByColor($available, $color), 0, 10);
+                foreach ($providers as $provider) {
+                    $providerId = $provider['id'];
 
-                if (empty($variants)) {
-                    $results[$garmentType] = ['success' => false, 'error' => 'No variants available'];
-                    continue;
+                    try {
+                        $variantsData = $this->getVariants($token, $blueprintId, $providerId);
+                        $available    = array_values(array_filter(
+                            $variantsData['variants'] ?? [],
+                            fn($v) => $v['is_available'] ?? true
+                        ));
+                        $variants = array_slice($this->filterVariantsByColor($available, $color), 0, 10);
+
+                        if (empty($variants)) {
+                            $lastError = 'No variants available';
+                            continue;
+                        }
+
+                        $variantIds = array_column($variants, 'id');
+                        $placeholders = $this->buildPlaceholdersFromVariants(
+                            $variants,
+                            $imageId,
+                            $posX,
+                            $posY,
+                            $scale
+                        );
+
+                        $payload = [
+                            'title'             => $title . ' - ' . ucfirst($garmentType),
+                            'blueprint_id'      => $blueprintId,
+                            'print_provider_id' => $providerId,
+                            'variants'          => array_map(fn($v) => [
+                                'id'         => $v['id'],
+                                'price'      => 2500,
+                                'is_enabled' => true,
+                            ], $variants),
+                            'print_areas' => [
+                                [
+                                    'variant_ids'  => $variantIds,
+                                    'placeholders' => $placeholders,
+                                ],
+                            ],
+                        ];
+
+                        $response  = $this->http($token)->post(self::BASE_URL . "/shops/{$shopId}/products.json", $payload);
+                        $response->throw();
+                        $product   = $response->json();
+                        $productId = $product['id'];
+
+                        $results[$garmentType] = [
+                            'success' => true,
+                            'url'     => "https://printify.com/app/store/{$shopId}/products/{$productId}/edit",
+                        ];
+                        $created = true;
+                        break;
+                    } catch (\Throwable $e) {
+                        \Log::warning('Bulk Printify attempt failed', [
+                            'garment_type' => $garmentType,
+                            'blueprint_id' => $blueprintId,
+                            'provider_id' => $providerId,
+                            'error' => $e->getMessage(),
+                        ]);
+                        $lastError = $e->getMessage();
+                    }
                 }
 
-                $variantIds = array_column($variants, 'id');
-                $placeholders = $this->buildPlaceholdersFromVariants(
-                    $variants,
-                    $imageId,
-                    $posX,
-                    $posY,
-                    $scale
-                );
-
-                $payload = [
-                    'title'             => $title . ' — ' . ucfirst($garmentType),
-                    'blueprint_id'      => $blueprintId,
-                    'print_provider_id' => $providerId,
-                    'variants'          => array_map(fn($v) => [
-                        'id'         => $v['id'],
-                        'price'      => 2500,
-                        'is_enabled' => true,
-                    ], $variants),
-                    'print_areas' => [
-                        [
-                            'variant_ids'  => $variantIds,
-                            'placeholders' => $placeholders,
-                        ],
-                    ],
-                ];
-
-                $response  = $this->http($token)->post(self::BASE_URL . "/shops/{$shopId}/products.json", $payload);
-                $response->throw();
-                $product   = $response->json();
-                $productId = $product['id'];
-
-                $results[$garmentType] = [
-                    'success' => true,
-                    'url'     => "https://printify.com/app/store/{$shopId}/products/{$productId}/edit",
-                ];
+                if (!$created) {
+                    $results[$garmentType] = ['success' => false, 'error' => $lastError];
+                }
             } catch (\Throwable $e) {
                 $results[$garmentType] = ['success' => false, 'error' => $e->getMessage()];
             }
