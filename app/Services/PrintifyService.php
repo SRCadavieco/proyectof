@@ -128,6 +128,85 @@ class PrintifyService
         return $response->json();
     }
 
+    private function buildPlaceholdersFromVariants(
+        array $variants,
+        string $frontImageId,
+        float $frontPosX,
+        float $frontPosY,
+        float $frontScale,
+        ?string $backImageId = null,
+        float $backPosX = 0.5,
+        float $backPosY = 0.5,
+        float $backScale = 1.0
+    ): array {
+        $positions = [];
+        foreach ($variants as $variant) {
+            foreach (($variant['placeholders'] ?? []) as $placeholder) {
+                $position = $placeholder['position'] ?? null;
+                if (is_string($position) && $position !== '') {
+                    $positions[$position] = true;
+                }
+            }
+        }
+
+        $positions = array_keys($positions);
+        if (empty($positions)) {
+            $fallback = [[
+                'position' => 'front',
+                'images' => [[
+                    'id' => $frontImageId,
+                    'x' => $frontPosX,
+                    'y' => $frontPosY,
+                    'scale' => $frontScale,
+                    'angle' => 0,
+                ]],
+            ]];
+
+            if ($backImageId) {
+                $fallback[] = [
+                    'position' => 'back',
+                    'images' => [[
+                        'id' => $backImageId,
+                        'x' => $backPosX,
+                        'y' => $backPosY,
+                        'scale' => $backScale,
+                        'angle' => 0,
+                    ]],
+                ];
+            }
+
+            return $fallback;
+        }
+
+        $hasFront = in_array('front', $positions, true);
+        $hasBack = in_array('back', $positions, true);
+        $targetPositions = ($hasFront || $hasBack)
+            ? array_values(array_filter(
+                ['front', $backImageId ? 'back' : null],
+                fn($p) => $p !== null && in_array($p, $positions, true)
+            ))
+            : $positions;
+
+        $placeholders = [];
+        foreach ($targetPositions as $position) {
+            $isBackPosition = str_starts_with($position, 'back') || str_ends_with($position, '_back');
+            $useBack = $backImageId !== null && $isBackPosition;
+
+            $placeholders[] = [
+                'position' => $position,
+                'images' => [[
+                    'id' => $useBack ? $backImageId : $frontImageId,
+                    'x' => $useBack ? $backPosX : $frontPosX,
+                    'y' => $useBack ? $backPosY : $frontPosY,
+                    'scale' => $useBack ? $backScale : $frontScale,
+                    'angle' => 0,
+                ]],
+            ];
+        }
+
+        return $placeholders;
+    }
+
     public function sendDesign(string $token, int $shopId, string $title, string $garmentType, string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = '', ?string $backImageUrl = null, float $backPosX = 0.5, float $backPosY = 0.5, float $backScale = 1.0): array
     {
         $blueprintId = self::BLUEPRINT_MAP[$garmentType] ?? self::BLUEPRINT_MAP['tshirt'];
@@ -147,36 +226,6 @@ class PrintifyService
         $providers = $this->getPrintProviders($token, $blueprintId);
         if (empty($providers)) {
             throw new \RuntimeException('No print providers available for this product type.');
-        }
-
-        // 4. Build placeholders (front always, back only if image provided)
-        $placeholders = [
-            [
-                'position' => 'front',
-                'images'   => [
-                    [
-                        'id'    => $imageId,
-                        'x'     => $posX,
-                        'y'     => $posY,
-                        'scale' => $scale,
-                        'angle' => 0,
-                    ],
-                ],
-            ],
-        ];
-        if ($backImageId) {
-            $placeholders[] = [
-                'position' => 'back',
-                'images'   => [
-                    [
-                        'id'    => $backImageId,
-                        'x'     => $backPosX,
-                        'y'     => $backPosY,
-                        'scale' => $backScale,
-                        'angle' => 0,
-                    ],
-                ],
-            ];
         }
 
         $lastError = 'No variants available for this product.';
@@ -199,6 +248,17 @@ class PrintifyService
                 }
 
                 $variantIds = array_column($variants, 'id');
+                $placeholders = $this->buildPlaceholdersFromVariants(
+                    $variants,
+                    $imageId,
+                    $posX,
+                    $posY,
+                    $scale,
+                    $backImageId,
+                    $backPosX,
+                    $backPosY,
+                    $backScale
+                );
 
                 // 5. Build product payload
                 $payload = [
@@ -317,6 +377,13 @@ class PrintifyService
                 }
 
                 $variantIds = array_column($variants, 'id');
+                $placeholders = $this->buildPlaceholdersFromVariants(
+                    $variants,
+                    $imageId,
+                    $posX,
+                    $posY,
+                    $scale
+                );
 
                 $payload = [
                     'title'             => $title . ' — ' . ucfirst($garmentType),
@@ -330,20 +397,7 @@ class PrintifyService
                     'print_areas' => [
                         [
                             'variant_ids'  => $variantIds,
-                            'placeholders' => [
-                                [
-                                    'position' => 'front',
-                                    'images'   => [
-                                        [
-                                            'id'    => $imageId,
-                                            'x'     => $posX,
-                                            'y'     => $posY,
-                                            'scale' => $scale,
-                                            'angle' => 0,
-                                        ],
-                                    ],
-                                ],
-                            ],
+                            'placeholders' => $placeholders,
                         ],
                     ],
                 ];

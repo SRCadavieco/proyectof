@@ -3107,6 +3107,7 @@
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         let successCount = 0;
         let errorCount   = 0;
+        const failedItems = [];
 
         const updateProgress = (cur, curLabel) => {
             const pct    = Math.round((cur / garments.length) * 100);
@@ -3145,6 +3146,7 @@
                 successCount++;
             } catch (err) {
                 errorCount++;
+                failedItems.push({ label, error: err.message || 'Unknown error' });
                 adminConsole.warn('Bulk upload error for', type, err.message);
             }
         }
@@ -3153,6 +3155,12 @@
         // Show summary
         const resultsEl = document.getElementById('bulk-progress-results');
         if (successCount > 0) {
+            const failedHtml = failedItems.length
+                ? `<div class="w-full mt-2 p-2 rounded-lg text-left" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.22)">
+                        <p class="text-[11px] font-semibold text-red-400 mb-1">Failed items</p>
+                        ${failedItems.map(f => `<p class="text-[11px] text-red-300">• ${escapeHtml(f.label)}: ${escapeHtml(f.error)}</p>`).join('')}
+                   </div>`
+                : '';
             resultsEl.innerHTML = `
                 <div class="flex flex-col items-center gap-2 pt-2 text-center">
                     <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
@@ -3163,9 +3171,11 @@
                        class="px-4 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl hover:bg-[#5a2275] transition-colors flex items-center gap-1.5">
                         <i class="fas fa-external-link-alt text-[10px]"></i> View in Printify
                     </a>
+                    ${failedHtml}
                 </div>`;
         } else {
-            resultsEl.innerHTML = `<p class="text-xs text-red-600 text-center pt-2">All uploads failed. Please try again.</p>`;
+            resultsEl.innerHTML = `<div class="text-xs text-red-600 text-center pt-2">All uploads failed. Please try again.</div>
+                ${failedItems.length ? `<div class="mt-2 text-left">${failedItems.map(f => `<p class="text-[11px] text-red-400">• ${escapeHtml(f.label)}: ${escapeHtml(f.error)}</p>`).join('')}</div>` : ''}`;
         }
 
         // Re-enable close
