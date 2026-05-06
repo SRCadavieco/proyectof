@@ -12,7 +12,7 @@ class PrintifyService
     public const BLUEPRINT_MAP = [
         'tshirt'      => 6,    // Unisex Heavy Cotton Tee (Gildan 5000)
         'hoodie'      => 77,   // Unisex Heavy Blend™ Hooded Sweatshirt (Gildan 18500)
-        'zip_hoodie'  => 429,  // Unisex Heavy Blend™ Zip Hoodie (Gildan 18600)
+        'zip_hoodie'  => 66,   // Unisex Heavy Blend™ Full Zip Hooded Sweatshirt (Gildan 18600)
         'tanktop'     => 39,   // Unisex Jersey Tank
         'longsleeve'  => 41,   // Unisex Jersey Long Sleeve Tee
         'sweatshirt'  => 49,   // Unisex Heavy Blend™ Crewneck Sweatshirt

@@ -2109,15 +2109,47 @@
                 ctx.lineWidth=4; ctx.strokeStyle=dk; ctx.stroke();
             }
         },
+        zip_hoodie: {
+            name:'Zip Hoodie', ref:'Gildan 18600', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
+            printW:3543, printH:4724,
+            svgUrl:'/images/garments/zip_hoodie.svg',
+            printArea:{ x:158, y:192, w:184, h:216 },
+            svgUrlBack:'/images/garments/zip_hoodie-back.svg',
+            printAreaBack:{ x:160, y:168, w:180, h:210 },
+            draw(ctx,color) {
+                const dk=shadeColor(color,-20); ctx.fillStyle=color;
+                // Hood
+                ctx.beginPath(); ctx.moveTo(175,155); ctx.quadraticCurveTo(155,65,250,55);
+                ctx.quadraticCurveTo(345,65,325,155); ctx.quadraticCurveTo(250,130,175,155);
+                ctx.closePath(); ctx.fill(); ctx.strokeStyle=dk; ctx.lineWidth=2; ctx.stroke();
+                // Body
+                ctx.fillStyle=color; ctx.beginPath();
+                ctx.moveTo(195,155); ctx.lineTo(100,178); ctx.lineTo(48,340); ctx.lineTo(88,350);
+                ctx.lineTo(140,230); ctx.lineTo(140,498); ctx.lineTo(360,498); ctx.lineTo(360,230);
+                ctx.lineTo(412,350); ctx.lineTo(452,340); ctx.lineTo(400,178); ctx.lineTo(305,155);
+                ctx.quadraticCurveTo(250,138,195,155); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle=dk; ctx.lineWidth=2; ctx.stroke();
+                // Pocket
+                ctx.beginPath(); ctx.moveTo(188,370); ctx.quadraticCurveTo(250,395,312,370);
+                ctx.lineTo(312,420); ctx.quadraticCurveTo(250,430,188,420);
+                ctx.closePath(); ctx.strokeStyle=dk; ctx.lineWidth=1.5; ctx.stroke();
+                // Zipper line
+                ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(250,155); ctx.lineTo(250,498);
+                ctx.strokeStyle=dk; ctx.lineWidth=1.5; ctx.stroke(); ctx.setLineDash([]);
+                // Zipper teeth (short ticks)
+                for(let y=180;y<490;y+=10){
+                    ctx.beginPath(); ctx.moveTo(246,y); ctx.lineTo(254,y);
+                    ctx.strokeStyle=dk; ctx.lineWidth=1; ctx.stroke();
+                }
+            }
+        },
         hoodie: {
             name:'Hoodie', ref:'Gildan 18500', printPx:'3543 × 4724', printInches:'11.81" × 15.75"', dpi:300,
             printW:3543, printH:4724,
-            // SVG from Printify API (viewBox 4159.82×4159.82, translate 1468.06 1428.49, rect 1223.69×1035.56)
-            // Print area widened & extended vertically to match actual chest safe zone (SVG rect was landscape/too short)
             svgUrl:'/images/garments/hoodie.svg',
-            printArea:{ x:163, y:197, w:175, h:190 },
+            printArea:{ x:155, y:190, w:190, h:218 },
             svgUrlBack:'/images/garments/hoodie-back.svg',
-            printAreaBack:{ x:165, y:182, w:170, h:185 },
+            printAreaBack:{ x:158, y:168, w:184, h:212 },
             draw(ctx,color) {
                 const dk=shadeColor(color,-20); ctx.fillStyle=color;
                 ctx.beginPath(); ctx.moveTo(175,155); ctx.quadraticCurveTo(155,65,250,55);
