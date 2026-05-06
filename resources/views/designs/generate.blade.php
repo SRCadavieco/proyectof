@@ -586,7 +586,7 @@
                     <label class="flex items-center gap-2.5 cursor-pointer group">
                         <div class="relative">
                             <input type="checkbox" id="bulk-all-colors" class="sr-only peer">
-                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#a855f7]" style="background:rgba(255,255,255,0.12)"></div>
+                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#9333ea]" style="background:rgba(255,255,255,0.12); --tw-shadow: none;"></div>
                             <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
                         </div>
                         <div>
@@ -613,7 +613,7 @@
                     <label class="flex items-center gap-2.5 cursor-pointer group">
                         <div class="relative">
                             <input type="checkbox" id="bulk-publish" class="sr-only peer">
-                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#7c3ca0]" style="background:rgba(255,255,255,0.12)"></div>
+                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#9333ea]" style="background:rgba(255,255,255,0.12)"></div>
                             <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
                         </div>
                         <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Publish directly to store</span>
@@ -634,7 +634,7 @@
         </div>
         <!-- Footer -->
         <div class="px-5 py-4 flex gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
-            <button onclick="closeBulkUploadModal()" id="bulk-cancel-btn"
+            <button onclick="handleBulkUploadCancel()" id="bulk-cancel-btn"
                     class="flex-1 py-2.5 text-white/50 hover:text-white text-xs font-medium tracking-wide uppercase rounded-xl transition-colors" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
                 Cancel
             </button>
@@ -3099,6 +3099,7 @@
     // ═══════════════════════════════════════════════════════════════
     let _bulkUploadImageSrc = null;
     let _bulkShopsLoaded    = false;
+    let _bulkUploadAborted  = false;
 
     async function openBulkUploadModal(imageSrc) {
         _bulkUploadImageSrc = imageSrc;
@@ -3153,6 +3154,19 @@
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         _bulkUploadImageSrc = null;
+        _bulkUploadAborted = false;
+    }
+
+    function handleBulkUploadCancel() {
+        // If upload is in progress, signal abort
+        if (document.getElementById('bulk-progress-section').classList.contains('hidden') === false) {
+            _bulkUploadAborted = true;
+            document.getElementById('bulk-cancel-btn').disabled = true;
+            document.getElementById('bulk-cancel-btn').textContent = 'Aborting…';
+        } else {
+            // Otherwise just close the modal
+            closeBulkUploadModal();
+        }
     }
 
     async function _loadBulkShops() {
@@ -3193,7 +3207,6 @@
             {type:'tanktop',   label:'Tank Top'},
             {type:'longsleeve',label:'Long Sleeve'},
             {type:'sweatshirt',label:'Sweatshirt'},
-            {type:'vneck',     label:'V-Neck Tee'},
             {type:'womens_tee',label:"Women's Tee"},
             {type:'leggings',  label:'Leggings'},
             {type:'joggers',   label:'Joggers'},
@@ -3214,8 +3227,10 @@
         document.getElementById('bulk-form-section').classList.add('hidden');
         document.getElementById('bulk-progress-section').classList.remove('hidden');
         document.getElementById('bulk-start-btn').disabled = true;
-        document.getElementById('bulk-cancel-btn').disabled = true;
         document.getElementById('bulk-modal-close-btn').disabled = true;
+        document.getElementById('bulk-cancel-btn').textContent = 'Cancel';
+        document.getElementById('bulk-cancel-btn').disabled = false;
+        _bulkUploadAborted = false;
 
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         let successCount = 0;
@@ -3232,6 +3247,13 @@
         };
 
         for (let i = 0; i < garments.length; i++) {
+            if (_bulkUploadAborted) {
+                document.getElementById('bulk-progress-label').textContent = 'Cancelled';
+                failedItems.push({ label: 'Upload cancelled by user', error: '' });
+                break;
+            }
+            // Add delay to avoid rate limiting (Printify 429)
+            if (i > 0) await new Promise(resolve => setTimeout(resolve, 400));
             const {type, label} = garments[i];
             updateProgress(i, label);
             try {
@@ -3291,10 +3313,12 @@
                 ${failedItems.length ? `<div class="mt-2 text-left">${failedItems.map(f => `<p class="text-[11px] text-red-400">• ${escapeHtml(f.label)}: ${escapeHtml(f.error)}</p>`).join('')}</div>` : ''}`;
         }
 
-        // Re-enable close
+        // Re-enable close (unless upload was cancelled)
         document.getElementById('bulk-cancel-btn').disabled = false;
         document.getElementById('bulk-modal-close-btn').disabled = false;
-        document.getElementById('bulk-cancel-btn').textContent = 'Close';
+        if (!_bulkUploadAborted) {
+            document.getElementById('bulk-cancel-btn').textContent = 'Close';
+        }
     }
 
     function switchSide(side) {
