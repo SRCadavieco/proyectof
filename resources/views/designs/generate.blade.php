@@ -2995,13 +2995,37 @@
     }
     function resetPrintifyFeedback() {
         const fb = document.getElementById('printify-feedback');
-        fb.className = 'hidden text-sm py-1'; fb.innerHTML = '';
+        fb.className = 'hidden text-sm py-2 px-3 rounded-lg'; fb.innerHTML = '';
     }
     function showPrintifyFeedback(html, type = 'error') {
         const fb = document.getElementById('printify-feedback');
-        fb.className = `text-sm py-1 ${type === 'success' ? 'text-green-700' : 'text-red-600'}`;
+        const styles = {
+            success: 'text-emerald-200 border border-emerald-400/30 bg-emerald-500/10',
+            info: 'text-white/90 border border-white/10 bg-white/5',
+            error: 'text-rose-200 border border-rose-400/30 bg-rose-500/10',
+        };
+        fb.className = `text-sm py-2 px-3 rounded-lg ${styles[type] || styles.error}`;
         fb.innerHTML = html; fb.classList.remove('hidden');
     }
+
+    function humanizePrintifyError(message = '') {
+        const raw = String(message || 'Unknown error');
+        const normalized = raw.toLowerCase();
+        if (normalized.includes('blueprint was not found')) {
+            return 'This garment is not available in Printify right now.';
+        }
+        if (normalized.includes('status code 404')) {
+            return 'Resource not found in Printify. Please try another garment.';
+        }
+        const jsonStart = raw.indexOf('{"title"');
+        if (jsonStart > 0) {
+            return raw.slice(0, jsonStart).replace(/\s*:\s*$/, '').trim();
+        }
+        return raw;
+    }
+
+    let _sendAllAbortController = null;
+    let _sendAllInProgress = false;
 
     async function sendToPrintify() {
         const shopId = document.getElementById('printify-shop').value;
@@ -3059,6 +3083,11 @@
     }
 
     async function sendToAllPrintify() {
+        if (_sendAllInProgress) {
+            _sendAllAbortController?.abort();
+            return;
+        }
+
         const shopId = document.getElementById('printify-shop').value;
         const title  = document.getElementById('printify-title').value.trim();
         const btn    = document.getElementById('printify-bulk-btn');
@@ -3073,7 +3102,6 @@
             {type:'tanktop',   label:'Tank Top'},
             {type:'longsleeve',label:'Long Sleeve'},
             {type:'sweatshirt',label:'Sweatshirt'},
-            {type:'vneck',     label:'V-Neck Tee'},
             {type:'womens_tee',label:"Women's Tee"},
             {type:'leggings',  label:'Leggings'},
             {type:'joggers',   label:'Joggers'},
@@ -3089,66 +3117,112 @@
             {type:'tote_bags', label:'Tote Bags'},
             {type:'scarves',   label:'Bufandas'},
         ];
-        btn.disabled = true; send.disabled = true; resetPrintifyFeedback();
-        const frontLayers  = _layers.front;
-        const backLayers   = _layers.back;
-        const imageSrc     = await getFlattenedSrc(frontLayers);
-        const backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
-        const selFront     = frontLayers[0] || null;
-        const isBakedFront = frontLayers.length > 1 || !!(selFront?.rotation);
-        const posX = !isBakedFront ? (selFront?.posX  ?? 0) : 0;
-        const posY = !isBakedFront ? (selFront?.posY  ?? 0) : 0;
-        const sc   = !isBakedFront ? (selFront?.scale ?? 1) : 1;
-        const selBack      = backLayers[0] || null;
-        const isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
-        const bPosX = !isBakedBack ? (selBack?.posX  ?? 0) : 0;
-        const bPosY = !isBakedBack ? (selBack?.posY  ?? 0) : 0;
-        const bSc   = !isBakedBack ? (selBack?.scale ?? 1) : 1;
-        const csrf = document.querySelector('meta[name="csrf-token"]').content;
-        const resultLines = [];
-        const renderProgress = (cur, curLabel) => {
-            const pct = Math.round((cur/garments.length)*100);
-            showPrintifyFeedback(`<div class="space-y-2">
-                <div class="flex justify-between text-xs text-white/30 mb-0.5">
-                    <span>${cur < garments.length ? 'Uploading '+curLabel+'…' : 'Done'}</span>
-                    <span>${cur}/${garments.length}</span>
-                </div>
-                <div class="w-full rounded h-1.5" style="background:rgba(255,255,255,0.08)">
-                    <div class="bg-purple-600 h-1.5 rounded transition-all duration-300" style="width:${pct}%"></div>
-                </div>
-                <div class="space-y-0.5 pt-1">${resultLines.join('')}</div></div>`);
-        };
-        for (let i = 0; i < garments.length; i++) {
-            const {type,label} = garments[i];
-            renderProgress(i, label);
-            try {
-                const payload = {
-                    shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc,
-                    title:title+' — '+label,
-                    color:hexToColorName(document.getElementById('printify-color-hex').value),
-                    pos_x:0.5+posX*0.5, pos_y:0.5+posY*0.5, design_scale:sc,
-                    publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
-                };
-                if (backImageSrc) {
-                    payload.back_image_source = backImageSrc;
-                    payload.back_pos_x        = 0.5+bPosX*0.5;
-                    payload.back_pos_y        = 0.5+bPosY*0.5;
-                    payload.back_design_scale = bSc;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-stop-circle mr-1"></i> Cancel Upload';
+        send.disabled = true;
+        resetPrintifyFeedback();
+        _sendAllAbortController = new AbortController();
+        _sendAllInProgress = true;
+
+        try {
+            const frontLayers  = _layers.front;
+            const backLayers   = _layers.back;
+            const imageSrc     = await getFlattenedSrc(frontLayers);
+            const backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
+            const selFront     = frontLayers[0] || null;
+            const isBakedFront = frontLayers.length > 1 || !!(selFront?.rotation);
+            const posX = !isBakedFront ? (selFront?.posX  ?? 0) : 0;
+            const posY = !isBakedFront ? (selFront?.posY  ?? 0) : 0;
+            const sc   = !isBakedFront ? (selFront?.scale ?? 1) : 1;
+            const selBack      = backLayers[0] || null;
+            const isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
+            const bPosX = !isBakedBack ? (selBack?.posX  ?? 0) : 0;
+            const bPosY = !isBakedBack ? (selBack?.posY  ?? 0) : 0;
+            const bSc   = !isBakedBack ? (selBack?.scale ?? 1) : 1;
+            const csrf = document.querySelector('meta[name="csrf-token"]').content;
+            const resultLines = [];
+            let cancelled = false;
+            let successCount = 0;
+            let failedCount = 0;
+
+            const renderProgress = (cur, curLabel) => {
+                const pct = Math.round((cur / garments.length) * 100);
+                const statusLabel = cancelled
+                    ? 'Cancelled'
+                    : (cur < garments.length ? 'Uploading ' + curLabel + '…' : 'Done');
+                showPrintifyFeedback(`<div class="space-y-2.5">
+                    <div class="flex justify-between text-xs text-white/75">
+                        <span>${statusLabel}</span>
+                        <span>${cur}/${garments.length}</span>
+                    </div>
+                    <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
+                        <div class="h-2 rounded-full transition-all duration-300 ${cancelled ? 'bg-amber-400' : 'bg-[#7c3ca0]'}" style="width:${pct}%"></div>
+                    </div>
+                    <div class="space-y-1 max-h-36 overflow-y-auto pr-1">${resultLines.join('')}</div>
+                </div>`, cancelled ? 'error' : 'info');
+            };
+
+            for (let i = 0; i < garments.length; i++) {
+                const {type, label} = garments[i];
+                renderProgress(i, label);
+                try {
+                    const payload = {
+                        shop_id: parseInt(shopId), garment_type: type, image_source: imageSrc,
+                        title: title + ' — ' + label,
+                        color: hexToColorName(document.getElementById('printify-color-hex').value),
+                        pos_x: 0.5 + posX * 0.5, pos_y: 0.5 + posY * 0.5, design_scale: sc,
+                        publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
+                    };
+                    if (backImageSrc) {
+                        payload.back_image_source = backImageSrc;
+                        payload.back_pos_x        = 0.5 + bPosX * 0.5;
+                        payload.back_pos_y        = 0.5 + bPosY * 0.5;
+                        payload.back_design_scale = bSc;
+                    }
+
+                    const res  = await fetch('/printify/products', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'},
+                        body: JSON.stringify(payload),
+                        signal: _sendAllAbortController.signal,
+                    });
+                    const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
+                    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+                    successCount++;
+                    resultLines.push(`<div class="text-emerald-300 text-xs">✓ ${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></div>`);
+                } catch (err) {
+                    if (err?.name === 'AbortError') {
+                        cancelled = true;
+                        break;
+                    }
+                    failedCount++;
+                    const msg = humanizePrintifyError(err?.message || 'Unknown error');
+                    resultLines.push(`<div class="text-rose-300 text-xs">✗ ${label}: ${escapeHtml(msg)}</div>`);
                 }
-                const res  = await fetch('/printify/products', {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json'},
-                    body: JSON.stringify(payload),
-                });
-                const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
-                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-                resultLines.push(`<div class="text-green-700 text-xs">✓ ${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></div>`);
-            } catch (err) {
-                resultLines.push(`<div class="text-red-600 text-xs">✗ ${label}: ${escapeHtml(err.message)}</div>`);
             }
+
+            renderProgress(cancelled ? successCount + failedCount : garments.length, '');
+            if (cancelled) {
+                resultLines.push('<div class="text-amber-300 text-xs">Upload cancelled by user.</div>');
+                showPrintifyFeedback(`<div class="space-y-2.5">
+                    <div class="flex justify-between text-xs text-white/75">
+                        <span>Cancelled</span>
+                        <span>${successCount + failedCount}/${garments.length}</span>
+                    </div>
+                    <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
+                        <div class="bg-amber-400 h-2 rounded-full" style="width:${Math.round(((successCount + failedCount) / garments.length) * 100)}%"></div>
+                    </div>
+                    <div class="space-y-1 max-h-36 overflow-y-auto pr-1">${resultLines.join('')}</div>
+                </div>`, 'error');
+            }
+        } finally {
+            _sendAllInProgress = false;
+            _sendAllAbortController = null;
+            btn.disabled = false;
+            send.disabled = false;
+            btn.innerHTML = 'Upload to All';
         }
-        renderProgress(garments.length, '');
-        btn.disabled = false; send.disabled = false; btn.textContent = 'Upload to All';
     }
 
     // ═══════════════════════════════════════════════════════════════

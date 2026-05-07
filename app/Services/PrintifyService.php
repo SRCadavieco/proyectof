@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 class PrintifyService
@@ -50,6 +51,23 @@ class PrintifyService
         $response = $this->http($token)->get(self::BASE_URL . '/shops.json');
         $response->throw();
         return $response->json();
+    }
+
+    private function isBackPosition(string $position): bool
+    {
+        return str_starts_with($position, 'back') || str_ends_with($position, '_back');
+    }
+
+    private function isFrontPosition(string $position): bool
+    {
+        if ($this->isBackPosition($position)) {
+            return false;
+        }
+
+        // Avoid applying front artwork to sleeves, labels, neck tags, pockets, etc.
+        return str_starts_with($position, 'front')
+            || str_ends_with($position, '_front')
+            || $position === 'default';
     }
 
     public function uploadImage(string $token, string $imageSource, string $fileName = 'design.png'): array
@@ -180,11 +198,16 @@ class PrintifyService
 
         $placeholders = [];
         foreach ($positions as $position) {
-            $isBackPosition = str_starts_with($position, 'back') || str_ends_with($position, '_back');
+            $isBackPosition = $this->isBackPosition($position);
+            $isFrontPosition = $this->isFrontPosition($position);
+
             if ($isBackPosition && $backImageId === null) {
                 continue;
             }
-            if (!$isBackPosition && $frontImageId === null) {
+            if ($isFrontPosition && $frontImageId === null) {
+                continue;
+            }
+            if (!$isBackPosition && !$isFrontPosition) {
                 continue;
             }
 
@@ -228,7 +251,14 @@ class PrintifyService
         }
 
         // 2. Get all print providers for this blueprint and try them in order
-        $providers = $this->getPrintProviders($token, $blueprintId);
+        try {
+            $providers = $this->getPrintProviders($token, $blueprintId);
+        } catch (RequestException $e) {
+            if ($e->response && $e->response->status() === 404) {
+                throw new \RuntimeException('This garment is not available in Printify catalog right now.');
+            }
+            throw $e;
+        }
         if (empty($providers)) {
             throw new \RuntimeException('No print providers available for this product type.');
         }
@@ -367,7 +397,15 @@ class PrintifyService
             try {
                 $blueprintId = self::BLUEPRINT_MAP[$garmentType];
 
-                $providers = $this->getPrintProviders($token, $blueprintId);
+                try {
+                    $providers = $this->getPrintProviders($token, $blueprintId);
+                } catch (RequestException $e) {
+                    if ($e->response && $e->response->status() === 404) {
+                        $results[$garmentType] = ['success' => false, 'error' => 'Garment not available in Printify catalog'];
+                        continue;
+                    }
+                    throw $e;
+                }
                 if (empty($providers)) {
                     $results[$garmentType] = ['success' => false, 'error' => 'No print providers'];
                     continue;
