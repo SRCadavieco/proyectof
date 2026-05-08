@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\CreditPackController;
+use App\Models\User;
 
 
 // FAQ page
@@ -90,7 +91,10 @@ Route::middleware('auth')->group(function () {
     // Token API
     Route::get('/api/tokens', function () {
         $user = auth()->user();
-        return response()->json(['remaining' => $user->tokens, 'total' => 10]);
+        return response()->json([
+            'remaining' => $user->tokens,
+            'total' => User::creditsForPlan((string) ($user->plan ?? 'free')),
+        ]);
     })->name('api.tokens');
 
     // Printify

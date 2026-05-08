@@ -28,6 +28,16 @@ class GoogleController extends Controller
                 ]
             );
 
+            // Seed credit metadata for brand-new Google users.
+            if ($user->wasRecentlyCreated) {
+                $user->plan                  = 'free';
+                $user->tokens                = User::creditsForPlan('free');
+                $user->tokens_reset_at       = now()->startOfMonth();
+                $user->tokens_given_this_month = User::upfrontCreditsForPlan('free');
+                $user->daily_tokens_given_at = null;
+                $user->saveQuietly();
+            }
+
             Auth::login($user, remember: true);
 
             return redirect()->route('designs.form');
