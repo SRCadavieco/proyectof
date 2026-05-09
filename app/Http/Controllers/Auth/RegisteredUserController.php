@@ -47,7 +47,8 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+        $request->session()->put('show_style_selector', true);
 
-        return redirect(route('designs.form'));
+        return redirect()->route('designs.form');
     }
 }

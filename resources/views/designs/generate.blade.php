@@ -392,18 +392,24 @@
                     </div>
                     @endif
                     <div class="ml-auto flex items-center gap-2">
-                        @if(Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
-                        <span class="text-[10px] uppercase tracking-wider" style="color:rgba(255,255,255,0.55)">Design</span>
-                        <select id="style-selector" class="text-[11px] rounded px-2 py-1 outline-none cursor-pointer font-medium" style="background:#1f2b4d;color:#dbeafe;border:1px solid rgba(147,197,253,0.45)">
-                            <option value="default">No style (Default)</option>
-                            <option value="realistic_drawing">Realistic Drawing</option>
-                            <option value="cartoon_drawing">Cartoon Drawing</option>
-                            <option value="vector_art">Vector Art</option>
-                            <option value="photorealistic">Photorealistic</option>
-                            <option value="ghibli">Ghibli-inspired</option>
-                            <option value="manga">Manga</option>
+                        {{-- Hidden select keeps value for existing JS that reads style-selector --}}
+                        <select id="style-selector" class="sr-only" aria-hidden="true" tabindex="-1">
+                            <option value="default" selected>default</option>
+                            <option value="realistic_drawing">realistic_drawing</option>
+                            <option value="cartoon_drawing">cartoon_drawing</option>
+                            <option value="vector_art">vector_art</option>
+                            <option value="photorealistic">photorealistic</option>
+                            <option value="ghibli">ghibli</option>
+                            <option value="manga">manga</option>
                         </select>
-                        @endif
+                        {{-- Visible button opens the picker --}}
+                        <button type="button" id="style-selector-btn" onclick="openStylePicker()"
+                                class="flex items-center gap-1.5 text-[11px] rounded-lg px-2.5 py-1.5 font-medium transition-colors"
+                                style="background:#1f2b4d;color:#dbeafe;border:1px solid rgba(147,197,253,0.45)">
+                            <i class="fas fa-palette" style="font-size:9px"></i>
+                            <span id="style-selector-label">Your Style</span>
+                            <i class="fas fa-chevron-down opacity-40" style="font-size:8px"></i>
+                        </button>
                         <!-- Char counter -->
                         <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
                     </div>
@@ -1496,6 +1502,7 @@
             document.getElementById('chat-title').textContent = 'New Design';
             updateWelcomeScreen();
             await loadChats();
+            if (typeof openStylePicker === 'function') openStylePicker();
             return data.id;
         } finally {
             isCreatingChat = false;
@@ -3732,6 +3739,231 @@
             setTimeout(() => t.remove(), 300);
         }, 2200);
     }
+</script>
+
+<!-- ═══════════ STYLE PICKER MODAL ═══════════ -->
+@php $showStyleModal = session('show_style_selector', false); @endphp
+
+<style>
+    /* Mobile: bottom sheet */
+    @media (max-width: 639px) {
+        #style-picker-modal { align-items: flex-end; }
+        #style-picker-panel {
+            position: relative;
+            width: 100%;
+            border-radius: 1.25rem 1.25rem 0 0;
+            max-height: 88dvh;
+        }
+    }
+    /* Desktop: centered dialog */
+    @media (min-width: 640px) {
+        #style-picker-modal { align-items: center; justify-content: center; padding: 1rem; }
+        #style-picker-panel { max-width: 820px; width: 100%; border-radius: 1rem; max-height: 92dvh; }
+    }
+    .spc-inner { transition: border-color 0.14s ease, transform 0.1s ease; }
+    .style-pick-card:hover .spc-inner { border-color: rgba(96,165,250,0.5) !important; }
+    .style-pick-card[data-style="custom"]:hover .spc-inner { border-color: rgba(192,132,252,0.55) !important; }
+    .style-pick-card:active .spc-inner { transform: scale(0.97); }
+    /* Align text across cards in the same row */
+    .style-pick-card          { height: 100%; }                        /* fill grid cell */
+    .style-pick-card .spc-inner > div:last-child { flex: 1; }         /* text section fills remaining card height */
+    .style-pick-card .spc-inner > div:last-child > span:nth-child(2)  /* description grows, pushes tag to bottom */
+        { flex: 1; }
+</style>
+
+<div id="style-picker-modal"
+     class="fixed inset-0 z-[70] flex"
+     style="background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);{{ $showStyleModal ? '' : 'display:none!important' }}"
+     aria-modal="true" role="dialog">
+
+    <div id="style-picker-panel" class="flex flex-col shadow-2xl" style="background:#0f0f0f;border:1px solid rgba(255,255,255,0.08)">
+
+        <!-- Drag handle (mobile only) -->
+        <div class="sm:hidden flex justify-center pt-3 shrink-0">
+            <div class="w-10 h-1 rounded-full" style="background:rgba(255,255,255,0.15)"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="flex items-start justify-between px-5 sm:px-7 pt-4 sm:pt-6 pb-4 shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div>
+                <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Pick a style</h2>
+                <p class="text-xs sm:text-sm mt-0.5" style="color:rgba(255,255,255,0.4)">Choose how your designs will look — change it anytime from the button below.</p>
+            </div>
+            <button onclick="closeStylePicker()" class="ml-4 mt-0.5 w-8 h-8 shrink-0 flex items-center justify-center rounded-lg" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4)" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Cards -->
+        <div class="overflow-y-auto flex-1 p-4 sm:p-5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+
+                {{-- Realistic Drawing --}}
+                <div class="style-pick-card cursor-pointer" data-style="realistic_drawing">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+                        <div class="w-full aspect-[4/3] overflow-hidden flex items-center justify-center" style="background:#181824">
+                            <img src="{{ asset('images/design-styles/realistic_drawing.webp') }}" alt="Realistic Drawing" class="w-full h-full object-cover" onerror="if(!this.dataset.err){this.dataset.err=1;this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-pencil-alt text-4xl\' style=\'color:rgba(255,255,255,0.12)\'></i>';}">
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Realistic Drawing</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">Hand-drawn, natural proportions, refined shading.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "A detailed tiger portrait"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#60a5fa">Sketch · Realistic</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Cartoon Drawing --}}
+                <div class="style-pick-card cursor-pointer" data-style="cartoon_drawing">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+                        <div class="w-full aspect-[4/3] overflow-hidden flex items-center justify-center" style="background:#181824">
+                            <img src="{{ asset('images/design-styles/cartoon_drawing.webp') }}" alt="Cartoon Drawing" class="w-full h-full object-cover" onerror="if(!this.dataset.err){this.dataset.err=1;this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-smile text-4xl\' style=\'color:rgba(255,255,255,0.12)\'></i>';}">
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Cartoon Drawing</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">Simplified shapes, expressive linework, vibrant colors.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "A cheerful astronaut cat"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#60a5fa">Cartoon · Playful</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Vector Art --}}
+                <div class="style-pick-card cursor-pointer" data-style="vector_art">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+                        <div class="w-full aspect-[4/3] overflow-hidden flex items-center justify-center" style="background:#181824">
+                            <img src="{{ asset('images/design-styles/vector_art.webp') }}" alt="Vector Art" class="w-full h-full object-cover" onerror="if(!this.dataset.err){this.dataset.err=1;this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-bezier-curve text-4xl\' style=\'color:rgba(255,255,255,0.12)\'></i>';}">
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Vector Art</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">Clean flat fills, crisp edges, scalable graphic look.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "A geometric mountain sunrise"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#60a5fa">Vector · Minimalist</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Photorealistic --}}
+                <div class="style-pick-card cursor-pointer" data-style="photorealistic">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+                        <div class="w-full aspect-[4/3] overflow-hidden flex items-center justify-center" style="background:#181824">
+                            <img src="{{ asset('images/design-styles/photorealistic.webp') }}" alt="Photorealistic" class="w-full h-full object-cover" onerror="if(!this.dataset.err){this.dataset.err=1;this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-camera text-4xl\' style=\'color:rgba(255,255,255,0.12)\'></i>';}">
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Photorealistic</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">Real-world lighting, textures and natural depth.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "A lion in golden hour light"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#60a5fa">Photo · Realistic</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Ghibli --}}
+                <div class="style-pick-card cursor-pointer" data-style="ghibli">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+                        <div class="w-full aspect-[4/3] overflow-hidden flex items-center justify-center" style="background:#181824">
+                            <img src="{{ asset('images/design-styles/ghibli.webp') }}" alt="Ghibli" class="w-full h-full object-cover" onerror="if(!this.dataset.err){this.dataset.err=1;this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-dragon text-4xl\' style=\'color:rgba(255,255,255,0.12)\'></i>';}">
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Ghibli</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">Hand-painted anime, warm palette, atmospheric depth.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "A spirit fox in an enchanted forest"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#60a5fa">Anime · Whimsical</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Manga --}}
+                <div class="style-pick-card cursor-pointer" data-style="manga">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+                        <div class="w-full aspect-[4/3] overflow-hidden flex items-center justify-center" style="background:#181824">
+                            <img src="{{ asset('images/design-styles/manga.webp') }}" alt="Manga" class="w-full h-full object-cover" onerror="if(!this.dataset.err){this.dataset.err=1;this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-book-open text-4xl\' style=\'color:rgba(255,255,255,0.12)\'></i>';}">
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Manga</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">Expressive ink lines, stylized composition, dynamic contrast.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "A samurai mid-battle strike"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#60a5fa">Manga · Dynamic</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Your Own Style (= default value, no preset context) --}}
+                <div class="style-pick-card cursor-pointer" data-style="custom">
+                    <div class="spc-inner rounded-xl overflow-hidden flex flex-col h-full" style="background:rgba(124,60,160,0.07);border:1px solid rgba(124,60,160,0.22)">
+                        <div class="w-full aspect-[4/3] flex items-center justify-center" style="background:linear-gradient(135deg,rgba(124,60,160,0.15),rgba(59,130,246,0.08))">
+                            <i class="fas fa-wand-magic-sparkles text-4xl" style="color:rgba(192,132,252,0.6)"></i>
+                        </div>
+                        <div class="p-2.5 sm:p-3 flex flex-col gap-1">
+                            <span class="text-xs sm:text-sm font-semibold text-white">Your Own Style</span>
+                            <span class="text-[11px] leading-snug" style="color:rgba(255,255,255,0.38)">No preset — describe exactly what you imagine.</span>
+                            <span class="text-[10px] italic" style="color:rgba(255,255,255,0.22)">e.g. "Retro neon skull with roses"</span>
+                            <span class="mt-1 text-[10px] font-medium" style="color:#c084fc">Creative · Unlimited</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-5 sm:px-7 py-3 sm:py-4 shrink-0 flex justify-end" style="border-top:1px solid rgba(255,255,255,0.06)">
+            <button onclick="closeStylePicker()" class="text-xs transition-colors" style="color:rgba(255,255,255,0.25)" onmouseover="this.style.color='rgba(255,255,255,0.5)'" onmouseout="this.style.color='rgba(255,255,255,0.25)'">
+                Skip — I'll decide later
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById('style-picker-modal');
+    const sel   = document.getElementById('style-selector');
+
+    const styleLabels = {
+        default:           'Your Style',
+        realistic_drawing: 'Realistic',
+        cartoon_drawing:   'Cartoon',
+        vector_art:        'Vector',
+        photorealistic:    'Photo',
+        ghibli:            'Ghibli',
+        manga:             'Manga',
+    };
+
+    function updateBtnLabel(value) {
+        const lbl = document.getElementById('style-selector-label');
+        if (lbl) lbl.textContent = styleLabels[value] || 'Your Style';
+    }
+
+    function openStylePicker()  { modal.style.removeProperty('display'); modal.style.display = 'flex'; }
+    function closeStylePicker() {
+        modal.style.transition = 'opacity 0.16s ease';
+        modal.style.opacity    = '0';
+        setTimeout(() => {
+            modal.style.display    = 'none';
+            modal.style.opacity    = '';
+            modal.style.transition = '';
+        }, 170);
+    }
+    window.openStylePicker  = openStylePicker;
+    window.closeStylePicker = closeStylePicker;
+
+    document.querySelectorAll('.style-pick-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const value = card.dataset.style === 'custom' ? 'default' : card.dataset.style;
+            if (sel) sel.value = value;
+            updateBtnLabel(value);
+            closeStylePicker();
+        });
+    });
+
+    modal.addEventListener('click', e => { if (e.target === modal) closeStylePicker(); });
+
+    @if(session('show_style_selector'))
+        openStylePicker();
+    @endif
+})();
 </script>
 
 @include('layouts.printify-popup')

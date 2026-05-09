@@ -45,14 +45,27 @@ class DesignController extends Controller
     }
 
     /**
+     * Muestra el selector de estilos de diseño.
+     *
+     * GET /designs/select-style
+     */
+    public function selectStyle()
+    {
+        // Old standalone page — redirect to the studio where the popup lives
+        return redirect()->route('designs.form');
+    }
+
+    /**
      * Muestra el formulario simple para solicitar el diseño.
      *
      * GET /designs
      */
-    public function form()
+    public function form(Request $request)
     {
+        // Aceptar un parámetro de estilo si viene desde el selector
+        $selectedStyle = $request->query('style');
         // Renderiza la vista Blade con el formulario y el script de envío.
-        return view('designs.generate');
+        return view('designs.generate', ['selectedStyle' => $selectedStyle]);
     }
 
     /**
@@ -106,10 +119,7 @@ class DesignController extends Controller
     if ($effectivePlan === 'admin' && ! $user->is_admin) {
         $effectivePlan = 'free';
     }
-    $isAdminPlan = $effectivePlan === 'admin' && $user->is_admin;
-    $imageStyle = $isAdminPlan
-        ? ($validated['imageStyle'] ?? 'default')
-        : 'default';
+    $imageStyle = $validated['imageStyle'] ?? 'default';
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
     // Diffusion models are sensitive to long prompts, keep user intent concise.
@@ -536,31 +546,45 @@ if ($isEdit) {
     /**
  * Build a provider-aware hybrid prompt that keeps the product's visual essence
  * while adapting quality guidance to each image model family.
+ * 
+ * Includes context instructions to ensure complete, composable designs
+ * (not isolated elements) optimized for printing/apparel applications.
  */
 private function buildHybridPrompt(string $userPrompt, string $provider, ?string $imageStyle = null): string
 {
     $cleanPrompt = trim($userPrompt);
     $style = trim(strtolower((string) $imageStyle));
 
+    // Context instruction to ensure complete, composable design
+    // Kept concise to respect diffusion model token limits
+    $contextGuide = 'Create a complete, standalone design composition with appropriate spacing and balance. Include subtle background context. Optimized for print and apparel.';
+
     // Chutes/Together are vector-style diffusion models — append style guidance.
     if (in_array($provider, ['chutes', 'together'], true)) {
         // Only enforce legacy vector guidance when the user keeps the default style.
         // If a style is selected, let applyImageStyleGuide() steer the output.
         if ($style !== '' && $style !== 'default') {
-            return $cleanPrompt;
+            // For non-default styles, use contextual vector guidance
+            return trim($cleanPrompt . ' ' . $contextGuide);
         }
 
-        $legacyStyleGuide = 'Style: vector illustration. Use flat colors and bold outlines.  Avoid gradients and heavy shadows.  Utilize an unused colour for the background ';
+        $legacyStyleGuide = 'Style: vector illustration with flat colors and bold outlines. Include meaningful background or composition context. Avoid gradients and heavy shadows. Use clean, printable design.';
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
     // NanoGPT (juggernaut-z / gpt-image-2) is a high-quality photorealistic/artistic
-    // model — adding vector style guidance produces wrong results. Send prompt as-is.
+    // model — enhance with context but keep artistic quality
+    if ($provider === 'nanogpt') {
+        return trim($cleanPrompt . ' ' . $contextGuide);
+    }
+
+    // Default Gemini: send as-is, it's a multimodal LLM
     return $cleanPrompt;
 }
 
 /**
  * Adds optional style steering based on the UI design selector.
+ * Enhanced with composition and completeness guidance.
  */
 private function applyImageStyleGuide(string $prompt, ?string $imageStyle): string
 {
@@ -571,12 +595,12 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle): stri
     }
 
     $styleInstructions = [
-        'realistic_drawing' => 'Style: realistic drawing illustration, natural proportions, hand-drawn finish, refined shading.',
-        'cartoon_drawing' => 'Style: cartoon drawing with simplified shapes, playful forms, expressive linework and vibrant color blocks.',
-        'vector_art' => 'Style: clean vector art, flat fills, crisp contours, minimal gradients, scalable graphic look.',
-        'photorealistic' => 'Style: photorealistic image with realistic lighting, textures, depth, and natural color response.',
-        'ghibli' => 'Style: whimsical hand-painted anime look inspired by classic Ghibli films, warm palette, soft atmospheric depth.',
-        'manga' => 'Style: manga illustration with expressive ink lines, stylized composition, and dynamic contrast.',
+        'realistic_drawing' => 'Style: realistic drawing illustration with natural proportions, hand-drawn finish, refined shading. Complete composition with balanced elements.',
+        'cartoon_drawing' => 'Style: cartoon drawing with simplified shapes, playful forms, expressive linework and vibrant color blocks. Full-scene composition.',
+        'vector_art' => 'Style: clean vector art with flat fills, crisp contours, minimal gradients, scalable graphic look. Designed for print and digital use.',
+        'photorealistic' => 'Style: photorealistic image with realistic lighting, textures, depth, and natural color response. Professional product-quality design.',
+        'ghibli' => 'Style: whimsical hand-painted anime look inspired by classic Ghibli films with warm palette and soft atmospheric depth. Complete, cohesive scene.',
+        'manga' => 'Style: manga illustration with expressive ink lines, stylized composition, and dynamic contrast. Full-panel composition with visual impact.',
     ];
 
     if (!isset($styleInstructions[$style])) {

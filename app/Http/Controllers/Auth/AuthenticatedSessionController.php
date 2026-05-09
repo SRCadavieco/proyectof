@@ -27,10 +27,11 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->put('show_style_selector', true);
 
         $request->user()->update(['last_login_at' => now()]);
 
-        return redirect()->intended(route('designs.form'));
+        return redirect()->route('designs.form');
     }
 
     /**

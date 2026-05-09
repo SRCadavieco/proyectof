@@ -73,6 +73,7 @@ Route::get('/sitemap.xml', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/designs/select-style', [DesignController::class, 'selectStyle'])->name('designs.select-style');
     Route::get('/design', [DesignController::class, 'form']);
     Route::get('/designs', [DesignController::class, 'form'])->name('designs.form');
     Route::post('/designs/generate', [DesignController::class, 'generate'])->name('designs.generate');
