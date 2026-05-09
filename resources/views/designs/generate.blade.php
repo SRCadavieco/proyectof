@@ -3769,11 +3769,13 @@
     .style-pick-card .spc-inner > div:last-child { flex: 1; }         /* text section fills remaining card height */
     .style-pick-card .spc-inner > div:last-child > span:nth-child(2)  /* description grows, pushes tag to bottom */
         { flex: 1; }
+    /* Hidden by default via CSS — JS toggles display:flex/none via inline style (inline beats this rule) */
+    #style-picker-modal { display: none; }
 </style>
 
 <div id="style-picker-modal"
-     class="fixed inset-0 z-[70] flex"
-     style="background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);{{ $showStyleModal ? '' : 'display:none!important' }}"
+     class="fixed inset-0 z-[70]"
+     style="background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);{{ $showStyleModal ? 'display:flex' : '' }}"
      aria-modal="true" role="dialog">
 
     <div id="style-picker-panel" class="flex flex-col shadow-2xl" style="background:#0f0f0f;border:1px solid rgba(255,255,255,0.08)">
@@ -3936,8 +3938,9 @@
         if (lbl) lbl.textContent = styleLabels[value] || 'Your Style';
     }
 
-    function openStylePicker()  { modal.style.removeProperty('display'); modal.style.display = 'flex'; }
+    function openStylePicker()  { if (modal) modal.style.display = 'flex'; }
     function closeStylePicker() {
+        if (!modal) return;
         modal.style.transition = 'opacity 0.16s ease';
         modal.style.opacity    = '0';
         setTimeout(() => {
@@ -3946,6 +3949,9 @@
             modal.style.transition = '';
         }, 170);
     }
+
+    // Expose IMMEDIATELY so newChat() can call openStylePicker() even if
+    // the event-listener setup below throws in some edge case.
     window.openStylePicker  = openStylePicker;
     window.closeStylePicker = closeStylePicker;
 
