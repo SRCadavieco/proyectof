@@ -3011,6 +3011,9 @@
     function humanizePrintifyError(message = '') {
         const raw = String(message || 'Unknown error');
         const normalized = raw.toLowerCase();
+        if (normalized.includes('too many attempts') || normalized.includes('status code 429')) {
+            return 'Printify is rate-limiting requests. Please retry in a few seconds.';
+        }
         if (normalized.includes('blueprint was not found')) {
             return 'This garment is not available in Printify right now.';
         }
@@ -3022,6 +3025,57 @@
             return raw.slice(0, jsonStart).replace(/\s*:\s*$/, '').trim();
         }
         return raw;
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function parseRetryAfterSeconds(retryAfterHeader) {
+        if (!retryAfterHeader) return null;
+        const seconds = Number.parseInt(retryAfterHeader, 10);
+        return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+    }
+
+    async function createPrintifyProductWithRetry(payload, csrf, signal = null, maxRetries = 3) {
+        const fallbackBackoff = [1500, 3000, 5000, 7000];
+        let attempt = 0;
+
+        while (true) {
+            if (signal?.aborted) {
+                throw new DOMException('Aborted', 'AbortError');
+            }
+
+            const res = await fetch('/printify/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+                ...(signal ? { signal } : {}),
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+                return data;
+            }
+
+            const errorMessage = data.error || `HTTP ${res.status}`;
+            const isRateLimited = res.status === 429 || /too many attempts|status code 429/i.test(String(errorMessage));
+            if (!isRateLimited || attempt >= maxRetries) {
+                throw new Error(errorMessage);
+            }
+
+            const retryAfterSeconds = parseRetryAfterSeconds(res.headers.get('Retry-After'));
+            const backoffMs = retryAfterSeconds
+                ? retryAfterSeconds * 1000
+                : (fallbackBackoff[attempt] ?? fallbackBackoff[fallbackBackoff.length - 1]);
+
+            await sleep(backoffMs);
+            attempt++;
+        }
     }
 
     let _sendAllAbortController = null;
@@ -3164,6 +3218,7 @@
 
             for (let i = 0; i < garments.length; i++) {
                 const {type, label} = garments[i];
+                if (i > 0) await sleep(900);
                 renderProgress(i, label);
                 try {
                     const payload = {
@@ -3180,14 +3235,7 @@
                         payload.back_design_scale = bSc;
                     }
 
-                    const res  = await fetch('/printify/products', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'},
-                        body: JSON.stringify(payload),
-                        signal: _sendAllAbortController.signal,
-                    });
-                    const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
-                    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                    const data = await createPrintifyProductWithRetry(payload, csrf, _sendAllAbortController.signal, 3);
 
                     successCount++;
                     resultLines.push(`<div class="text-emerald-300 text-xs">✓ ${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></div>`);
@@ -3403,41 +3451,32 @@
                 break;
             }
             // Add delay to avoid rate limiting (Printify 429)
-            if (i > 0) await new Promise(resolve => setTimeout(resolve, 400));
+            if (i > 0) await sleep(1000);
             const {type, label} = garments[i];
             updateProgress(i, label);
             try {
-                const res  = await fetch('/printify/products', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type':  'application/json',
-                        'X-CSRF-TOKEN':  csrf,
-                        'Accept':        'application/json',
-                    },
-                    body: JSON.stringify({
-                        shop_id:      parseInt(shopId),
-                        garment_type: type,
-                        image_source: useFront ? _bulkUploadFrontImageSrc : null,
-                        title:        title + ' — ' + label,
-                        color:        color,
-                        pos_x:        0.5,
-                        pos_y:        0.5,
-                        design_scale: 1,
-                        ...(useBack ? {
-                            back_image_source: _bulkUploadBackImageSrc,
-                            back_pos_x: 0.5,
-                            back_pos_y: 0.5,
-                            back_design_scale: 1,
-                        } : {}),
-                        publish_after_create: document.getElementById('bulk-publish')?.checked ?? false,
-                    }),
-                });
-                const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status})`); });
-                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                const payload = {
+                    shop_id:      parseInt(shopId),
+                    garment_type: type,
+                    image_source: useFront ? _bulkUploadFrontImageSrc : null,
+                    title:        title + ' — ' + label,
+                    color:        color,
+                    pos_x:        0.5,
+                    pos_y:        0.5,
+                    design_scale: 1,
+                    ...(useBack ? {
+                        back_image_source: _bulkUploadBackImageSrc,
+                        back_pos_x: 0.5,
+                        back_pos_y: 0.5,
+                        back_design_scale: 1,
+                    } : {}),
+                    publish_after_create: document.getElementById('bulk-publish')?.checked ?? false,
+                };
+                await createPrintifyProductWithRetry(payload, csrf, null, 3);
                 successCount++;
             } catch (err) {
                 errorCount++;
-                failedItems.push({ label, error: err.message || 'Unknown error' });
+                failedItems.push({ label, error: humanizePrintifyError(err.message || 'Unknown error') });
                 adminConsole.warn('Bulk upload error for', type, err.message);
             }
         }

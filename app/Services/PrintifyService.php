@@ -169,18 +169,22 @@ class PrintifyService
 
         $positions = array_keys($positions);
         if (empty($positions)) {
-            $fallback = [[
-                'position' => 'front',
-                'images' => [[
-                    'id' => $frontImageId,
-                    'x' => $frontPosX,
-                    'y' => $frontPosY,
-                    'scale' => $frontScale,
-                    'angle' => 0,
-                ]],
-            ]];
+            $fallback = [];
 
-            if ($backImageId) {
+            if ($frontImageId !== null) {
+                $fallback[] = [
+                    'position' => 'front',
+                    'images' => [[
+                        'id' => $frontImageId,
+                        'x' => $frontPosX,
+                        'y' => $frontPosY,
+                        'scale' => $frontScale,
+                        'angle' => 0,
+                    ]],
+                ];
+            }
+
+            if ($backImageId !== null) {
                 $fallback[] = [
                     'position' => 'back',
                     'images' => [[
@@ -197,6 +201,10 @@ class PrintifyService
         }
 
         $placeholders = [];
+        $frontAdded = false;
+        $backAdded = false;
+        $usedPositions = [];
+
         foreach ($positions as $position) {
             $isBackPosition = $this->isBackPosition($position);
             $isFrontPosition = $this->isFrontPosition($position);
@@ -223,6 +231,36 @@ class PrintifyService
                     'angle' => 0,
                 ]],
             ];
+
+            $usedPositions[$position] = true;
+            if ($useBack) {
+                $backAdded = true;
+            } else {
+                $frontAdded = true;
+            }
+        }
+
+        // Some AOP garments expose non-standard placeholder names. If no front slot matched,
+        // fallback to the first non-back position so front-only uploads still work.
+        if ($frontImageId !== null && !$frontAdded) {
+            foreach ($positions as $position) {
+                if ($this->isBackPosition($position) || isset($usedPositions[$position])) {
+                    continue;
+                }
+
+                $placeholders[] = [
+                    'position' => $position,
+                    'images' => [[
+                        'id' => $frontImageId,
+                        'x' => $frontPosX,
+                        'y' => $frontPosY,
+                        'scale' => $frontScale,
+                        'angle' => 0,
+                    ]],
+                ];
+                $frontAdded = true;
+                break;
+            }
         }
 
         return $placeholders;
