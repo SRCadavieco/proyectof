@@ -3742,7 +3742,7 @@
 </script>
 
 <!-- ═══════════ STYLE PICKER MODAL ═══════════ -->
-@php $showStyleModal = session('show_style_selector', false); @endphp
+@php $showStyleModal = session()->pull('show_style_selector', false); @endphp
 
 <style>
     /* Mobile: bottom sheet */
@@ -3960,7 +3960,7 @@
 
     modal.addEventListener('click', e => { if (e.target === modal) closeStylePicker(); });
 
-    @if(session('show_style_selector'))
+    @if($showStyleModal)
         openStylePicker();
     @endif
 })();

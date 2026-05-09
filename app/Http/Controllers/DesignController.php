@@ -120,6 +120,7 @@ class DesignController extends Controller
         $effectivePlan = 'free';
     }
     $imageStyle = $validated['imageStyle'] ?? 'default';
+    \Log::info('[generate] imageStyle received', ['imageStyle' => $imageStyle, 'provider' => $provider, 'prompt_raw' => mb_substr($userPrompt, 0, 80)]);
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
     // Diffusion models are sensitive to long prompts, keep user intent concise.
@@ -136,7 +137,7 @@ class DesignController extends Controller
     } else {
         $prompt = $userPrompt;
     }
-    $prompt = $this->applyImageStyleGuide($prompt, $imageStyle);
+    $prompt = $this->applyImageStyleGuide($prompt, $imageStyle, $provider);
     $backgroundColor = $validated['backgroundColor'] ?? null;
     $chatId = $validated['chat_id'];
 
@@ -559,13 +560,11 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
     // Kept concise to respect diffusion model token limits
     $contextGuide = 'Create a complete, standalone design composition with appropriate spacing and balance. Include subtle background context. Optimized for print and apparel.';
 
-    // Chutes/Together are vector-style diffusion models — append style guidance.
+    // Chutes/Together are diffusion models — applyImageStyleGuide() handles style steering.
+    // For non-default styles, just pass the user prompt clean; the style prefix will be prepended by applyImageStyleGuide.
     if (in_array($provider, ['chutes', 'together'], true)) {
-        // Only enforce legacy vector guidance when the user keeps the default style.
-        // If a style is selected, let applyImageStyleGuide() steer the output.
         if ($style !== '' && $style !== 'default') {
-            // For non-default styles, use contextual vector guidance
-            return trim($cleanPrompt . ' ' . $contextGuide);
+            return trim($cleanPrompt);
         }
 
         $legacyStyleGuide = 'Style: vector illustration with flat colors and bold outlines. Include meaningful background or composition context. Avoid gradients and heavy shadows. Use clean, printable design.';
@@ -586,7 +585,7 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
  * Adds optional style steering based on the UI design selector.
  * Enhanced with composition and completeness guidance.
  */
-private function applyImageStyleGuide(string $prompt, ?string $imageStyle): string
+private function applyImageStyleGuide(string $prompt, ?string $imageStyle, string $provider = 'gemini'): string
 {
     $style = trim(strtolower((string) $imageStyle));
 
@@ -594,20 +593,43 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle): stri
         return $prompt;
     }
 
-    $styleInstructions = [
-        'realistic_drawing' => 'Style: realistic drawing illustration with natural proportions, hand-drawn finish, refined shading. Complete composition with balanced elements.',
-        'cartoon_drawing' => 'Style: cartoon drawing with simplified shapes, playful forms, expressive linework and vibrant color blocks. Full-scene composition.',
-        'vector_art' => 'Style: clean vector art with flat fills, crisp contours, minimal gradients, scalable graphic look. Designed for print and digital use.',
-        'photorealistic' => 'Style: photorealistic image with realistic lighting, textures, depth, and natural color response. Professional product-quality design.',
-        'ghibli' => 'Style: whimsical hand-painted anime look inspired by classic Ghibli films with warm palette and soft atmospheric depth. Complete, cohesive scene.',
-        'manga' => 'Style: manga illustration with expressive ink lines, stylized composition, and dynamic contrast. Full-panel composition with visual impact.',
+    $isDiffusion = in_array($provider, ['chutes', 'together', 'nanogpt'], true);
+
+    if ($isDiffusion) {
+        // Diffusion models (Flux, SDXL, etc.) respond best to comma-separated tags.
+        // Put ALL style tags BEFORE the subject so they get maximum attention weight.
+        $tags = [
+            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed',
+            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, comic style, playful, expressive, cell shaded',
+            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, print ready',
+            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, studio photography, ray tracing, depth of field',
+            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki',
+            'manga'             => 'manga style, monochrome, black and white, bold ink lines, screentone shading, dynamic composition, expressive line art, anime comic',
+        ];
+
+        if (!isset($tags[$style])) {
+            return $prompt;
+        }
+
+        // Tags first, then subject
+        return $tags[$style] . ', ' . $prompt;
+    }
+
+    // Gemini / LLM backends: natural language instruction prefix
+    $instructions = [
+        'realistic_drawing' => 'Draw in a traditional realistic pencil and charcoal style with natural proportions, cross-hatching, and fine line work. Subject: ',
+        'cartoon_drawing'   => 'Draw in a bold cartoon illustration style with thick outlines, flat vibrant colors, and exaggerated playful shapes. Subject: ',
+        'vector_art'        => 'Generate as flat vector graphic art with clean geometric shapes, solid colors, crisp edges, no gradients, minimal and print-ready. Subject: ',
+        'photorealistic'    => 'Generate as a hyper-photorealistic image with cinematic lighting, studio-quality depth of field, and ultra-detailed textures. Subject: ',
+        'ghibli'            => 'Draw in the Studio Ghibli hand-painted animation style with soft watercolor washes, warm earthy palette, and whimsical atmospheric depth. Subject: ',
+        'manga'             => 'Draw as a Japanese manga illustration: bold expressive ink outlines, screentone dot shading, dynamic composition, speed lines, monochrome only, no color. Subject: ',
     ];
 
-    if (!isset($styleInstructions[$style])) {
+    if (!isset($instructions[$style])) {
         return $prompt;
     }
 
-    return trim($prompt . "\n" . $styleInstructions[$style]);
+    return $instructions[$style] . $prompt;
 }
 
     /**
