@@ -1102,6 +1102,8 @@
             },
         };
     })();
+    // Expose to window so inline onclick handlers in dynamically generated HTML can reach it
+    window.UploadQueue = UploadQueue;
 
     // ─── Token Manager ────────────────────────────────────────────────
     const TokenManager = {
