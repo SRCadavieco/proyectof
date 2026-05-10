@@ -170,12 +170,13 @@ class TogetherService
         }
 
         $payload = [
-            'model'   => $modelName,
-            'prompt'  => $prompt,
-            'width'   => 1024,
-            'height'  => 1024,
-            'steps'   => 28,
-            'n'       => 1,
+            'model'           => $modelName,
+            'prompt'          => $prompt,
+            'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels',
+            'width'           => 1024,
+            'height'          => 1024,
+            'steps'           => 28,
+            'n'               => 1,
         ];
 
         try {

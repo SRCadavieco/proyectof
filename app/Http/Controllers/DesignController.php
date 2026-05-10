@@ -598,12 +598,12 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle, strin
         // Diffusion models (Flux, SDXL, etc.) respond best to comma-separated tags.
         // Put ALL style tags BEFORE the subject so they get maximum attention weight.
         $tags = [
-            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed, full scene, scenic background, environment',
-            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, comic style, playful, expressive, cell shaded, full scene, detailed background, environment',
-            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, full scene composition, background included',
-            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, wide shot, environmental context, background, depth of field, ray tracing',
-            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki, full scene, lush environment',
-            'manga'             => 'manga style, monochrome, black and white, bold ink lines, screentone shading, dynamic action scene, full panel composition, background details, environment, expressive line art, anime comic',
+            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed, full scene, scenic background, environment, borderless illustration',
+            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, playful, expressive, cell shaded, full scene, detailed background, environment, borderless illustration',
+            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, full scene composition, background included, borderless illustration',
+            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, wide shot, environmental context, background, depth of field, ray tracing, borderless illustration',
+            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki, full scene, lush environment, borderless illustration',
+            'manga'             => 'manga illustration, monochrome, black and white, bold ink lines, screentone shading, dynamic action scene, detailed background, environment, expressive line art, borderless illustration',
         ];
 
         if (!isset($tags[$style])) {

@@ -407,8 +407,45 @@ class PrintifyService
         return !empty($firstGroup) ? $firstGroup : array_slice($variants, 0, 5);
     }
 
+    /**
+     * Poll the product endpoint until Printify has generated at least one mockup image,
+     * or until the timeout is reached. This prevents publishing a product with no thumbnail.
+     * Printify generates mockups asynchronously after product creation (typically 3–15 s).
+     */
+    private function waitForMockups(string $token, int $shopId, string $productId, int $timeoutSeconds = 45): void
+    {
+        $deadline = time() + $timeoutSeconds;
+        $delay    = 4; // seconds between polls
+
+        while (time() < $deadline) {
+            sleep($delay);
+            try {
+                $response = $this->http($token)->get(
+                    self::BASE_URL . "/shops/{$shopId}/products/{$productId}.json"
+                );
+                if ($response->successful()) {
+                    $images = $response->json('images') ?? [];
+                    if (!empty($images)) {
+                        return; // mockups ready
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Printify waitForMockups poll failed', ['error' => $e->getMessage()]);
+            }
+            $delay = min($delay + 2, 8); // back-off: 4s → 6s → 8s
+        }
+
+        // Timeout reached — publish anyway so the product is at least live
+        \Illuminate\Support\Facades\Log::warning('Printify waitForMockups timed out, publishing without confirmed mockups', [
+            'shop_id'    => $shopId,
+            'product_id' => $productId,
+        ]);
+    }
+
     public function publishProduct(string $token, int $shopId, string $productId): void
     {
+        $this->waitForMockups($token, $shopId, $productId);
+
         $response = $this->http($token)->post(
             self::BASE_URL . "/shops/{$shopId}/products/{$productId}/publish.json",
             [

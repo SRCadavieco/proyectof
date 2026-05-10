@@ -131,7 +131,7 @@ class PrintifyController extends Controller
     // POST /printify/products
     public function createProduct(Request $request)    {
         ini_set('memory_limit', '512M');
-        set_time_limit(120);
+        set_time_limit(180); // extra time for mockup polling (up to ~45 s) before publish
 
         $conn = auth()->user()->printifyConnection;
         if (!$conn) {

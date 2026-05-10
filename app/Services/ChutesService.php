@@ -61,7 +61,7 @@ class ChutesService
             $finalPrompt .= "\nFondo sólido y uniforme de color {$colorName} ({$hex}). Sin transparencia.";
         }
 
-        $payload = ['prompt' => $finalPrompt];
+        $payload = ['prompt' => $finalPrompt, 'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels'];
         if (!empty($backgroundColor)) {
             $payload['backgroundColor'] = $backgroundColor;
         }
