@@ -556,9 +556,8 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
     $cleanPrompt = trim($userPrompt);
     $style = trim(strtolower((string) $imageStyle));
 
-    // Context instruction to ensure complete, composable design
-    // Kept concise to respect diffusion model token limits
-    $contextGuide = 'Create a complete, standalone design composition with appropriate spacing and balance. Include subtle background context. Optimized for print and apparel.';
+    // Context instruction kept for NanoGPT only — it understands natural language.
+    $contextGuide = 'Full scene with detailed background and environment. Complete composition with foreground and background elements.';
 
     // Chutes/Together are diffusion models — applyImageStyleGuide() handles style steering.
     // For non-default styles, just pass the user prompt clean; the style prefix will be prepended by applyImageStyleGuide.
@@ -599,12 +598,12 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle, strin
         // Diffusion models (Flux, SDXL, etc.) respond best to comma-separated tags.
         // Put ALL style tags BEFORE the subject so they get maximum attention weight.
         $tags = [
-            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed',
-            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, comic style, playful, expressive, cell shaded',
-            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, print ready',
-            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, studio photography, ray tracing, depth of field',
-            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki',
-            'manga'             => 'manga style, monochrome, black and white, bold ink lines, screentone shading, dynamic composition, expressive line art, anime comic',
+            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed, full scene, scenic background, environment',
+            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, comic style, playful, expressive, cell shaded, full scene, detailed background, environment',
+            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, full scene composition, background included',
+            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, wide shot, environmental context, background, depth of field, ray tracing',
+            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki, full scene, lush environment',
+            'manga'             => 'manga style, monochrome, black and white, bold ink lines, screentone shading, dynamic action scene, full panel composition, background details, environment, expressive line art, anime comic',
         ];
 
         if (!isset($tags[$style])) {
