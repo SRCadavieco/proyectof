@@ -889,6 +889,204 @@
         error(...args) { if (isAdminPlan) console.error(...args); },
     };
 
+    // ═══════════════════════════════════════════════════════════════
+    //  UPLOAD QUEUE  — floating bottom-right toast manager
+    // ═══════════════════════════════════════════════════════════════
+    const UploadQueue = (() => {
+        let _jobs = [];
+        let _nextId = 1;
+        let _collapsed = false;
+
+        const _panel       = () => document.getElementById('upload-queue-panel');
+        const _list        = () => document.getElementById('upload-queue-list');
+        const _badge       = () => document.getElementById('upload-queue-badge');
+        const _spinner     = () => document.getElementById('upload-queue-spinner');
+        const _doneIcon    = () => document.getElementById('upload-queue-done-icon');
+        const _body        = () => document.getElementById('upload-queue-body');
+        const _chevron     = () => document.getElementById('upload-queue-chevron');
+
+        function _statusColor(status) {
+            if (status === 'done')     return '#34d399';
+            if (status === 'error')    return '#f87171';
+            if (status === 'running')  return '#a78bfa';
+            if (status === 'aborted')  return '#fbbf24';
+            return '#6b7280'; // queued
+        }
+
+        function _statusLabel(status) {
+            if (status === 'done')     return 'Done';
+            if (status === 'error')    return 'Failed';
+            if (status === 'running')  return 'Uploading…';
+            if (status === 'aborted')  return 'Cancelled';
+            return 'Queued';
+        }
+
+        function _jobHtml(job) {
+            const color   = _statusColor(job.status);
+            const label   = _statusLabel(job.status);
+            const typeBadge = job.type === 'bulk'
+                ? '<span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style="background:rgba(124,60,160,0.35);color:#c084fc">Turbo</span>'
+                : '<span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5)">Single</span>';
+            const isRunning = job.status === 'running';
+            const showBar   = (job.type === 'bulk') && (isRunning || job.status === 'done' || job.status === 'aborted');
+            const pct       = job.total > 0 ? Math.round((job.done / job.total) * 100) : 0;
+            const barColor  = job.status === 'aborted' ? '#fbbf24' : '#7c3ca0';
+            const viewLink  = job.printifyUrl
+                ? `<a href="${job.printifyUrl}" target="_blank" rel="noopener noreferrer"
+                      class="text-[10px] text-purple-300 hover:text-white underline transition-colors">Open →</a>`
+                : '';
+            const cancelBtn = isRunning && job.abortFn
+                ? `<button onclick="UploadQueue.cancel(${job.id})" title="Cancel"
+                          class="text-[10px] text-white/30 hover:text-amber-400 transition-colors ml-1">
+                       <i class="fas fa-stop-circle"></i>
+                   </button>`
+                : '';
+            const dismissBtn = (!isRunning)
+                ? `<button onclick="UploadQueue.dismiss(${job.id})" title="Dismiss"
+                          class="text-[10px] text-white/20 hover:text-rose-400 transition-colors ml-1">
+                       <i class="fas fa-times"></i>
+                   </button>`
+                : '';
+
+            return `
+            <div id="uq-job-${job.id}" class="px-4 py-3 space-y-1.5">
+                <div class="flex items-center gap-2 min-w-0">
+                    ${isRunning
+                        ? `<div class="w-3 h-3 flex-shrink-0 rounded-full border-2 border-[#9333ea] border-t-transparent animate-spin"></div>`
+                        : `<div class="w-2.5 h-2.5 flex-shrink-0 rounded-full" style="background:${color}"></div>`}
+                    <span class="text-xs text-white/90 font-medium truncate flex-1" title="${escapeHtml(job.title)}">${escapeHtml(job.title)}</span>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        ${typeBadge}
+                        <span class="text-[10px]" style="color:${color}">${label}</span>
+                        ${job.total > 0 && (isRunning || job.status === 'done' || job.status === 'aborted')
+                            ? `<span class="text-[10px] text-white/30">${job.done}/${job.total}</span>` : ''}
+                        ${cancelBtn}${dismissBtn}
+                    </div>
+                </div>
+                ${showBar ? `
+                <div class="w-full h-1 rounded-full" style="background:rgba(255,255,255,0.08)">
+                    <div class="h-1 rounded-full transition-all duration-300" style="width:${pct}%;background:${barColor}"></div>
+                </div>` : ''}
+                ${viewLink ? `<div class="pl-5">${viewLink}</div>` : ''}
+                ${job.errorMsg ? `<p class="pl-5 text-[10px] text-rose-300 leading-tight">${escapeHtml(job.errorMsg)}</p>` : ''}
+            </div>`;
+        }
+
+        function _render() {
+            const jobs    = _jobs;
+            const listEl  = _list();
+            const panel   = _panel();
+            if (!listEl || !panel) return;
+
+            if (jobs.length === 0) {
+                panel.classList.add('hidden'); return;
+            }
+            panel.classList.remove('hidden');
+
+            const active  = jobs.filter(j => j.status === 'running').length;
+            const total   = jobs.length;
+
+            _badge().textContent = total;
+            if (active > 0) {
+                _spinner().classList.remove('hidden');
+                _doneIcon().classList.add('hidden');
+            } else {
+                _spinner().classList.add('hidden');
+                _doneIcon().classList.remove('hidden');
+            }
+
+            _body().classList.toggle('hidden', _collapsed);
+            _chevron().style.transform = _collapsed ? 'rotate(-90deg)' : '';
+
+            listEl.innerHTML = jobs.map(_jobHtml).join('');
+        }
+
+        function _patch(id, patch) {
+            const job = _jobs.find(j => j.id === id);
+            if (!job) return;
+            Object.assign(job, patch);
+            // Patch only the job row for efficiency, fall back to full render
+            const row = document.getElementById(`uq-job-${id}`);
+            if (row) {
+                row.outerHTML = _jobHtml(job);
+            }
+            // Update header state
+            const active = _jobs.filter(j => j.status === 'running').length;
+            if (active > 0) {
+                _spinner().classList.remove('hidden');
+                _doneIcon().classList.add('hidden');
+            } else {
+                _spinner().classList.add('hidden');
+                _doneIcon().classList.remove('hidden');
+            }
+        }
+
+        return {
+            /** Add a job. Returns jobId. */
+            add(title, type /* 'single' | 'bulk' */, total = 0) {
+                const job = { id: _nextId++, title, type, status: 'running', done: 0, total, printifyUrl: null, errorMsg: null, abortFn: null };
+                _jobs.unshift(job);
+                _collapsed = false;
+                _render();
+                return job.id;
+            },
+
+            /** Update progress for a running bulk job. */
+            progress(id, done, total) {
+                _patch(id, { done, total });
+            },
+
+            /** Mark job done with optional URL. */
+            done(id, printifyUrl = null) {
+                _patch(id, { status: 'done', printifyUrl });
+            },
+
+            /** Mark job failed. */
+            fail(id, errorMsg = '') {
+                _patch(id, { status: 'error', errorMsg });
+            },
+
+            /** Mark job aborted. */
+            abort(id) {
+                _patch(id, { status: 'aborted' });
+            },
+
+            /** Attach an abort function so the cancel button works. */
+            setAbortFn(id, fn) {
+                const job = _jobs.find(j => j.id === id);
+                if (job) job.abortFn = fn;
+            },
+
+            /** Cancel button clicked in the panel. */
+            cancel(id) {
+                const job = _jobs.find(j => j.id === id);
+                if (job?.abortFn) job.abortFn();
+            },
+
+            /** Dismiss a finished job. */
+            dismiss(id) {
+                _jobs = _jobs.filter(j => j.id !== id);
+                _render();
+            },
+
+            /** Toggle collapse state of the body. */
+            toggleCollapse() {
+                _collapsed = !_collapsed;
+                _render();
+            },
+
+            /** Close / hide panel (clears all done/error jobs, keeps running). */
+            closePanel(e) {
+                e.stopPropagation();
+                _jobs = _jobs.filter(j => j.status === 'running');
+                if (_jobs.length === 0) {
+                    _panel().classList.add('hidden');
+                } else {
+                    _render();
+                }
+            },
+        };
+    })();
 
     // ─── Token Manager ────────────────────────────────────────────────
     const TokenManager = {
@@ -3096,6 +3294,7 @@
         if (!shopId)               { showPrintifyFeedback('Please select a Printify shop.'); return; }
         if (!title)                { showPrintifyFeedback('Please enter a product name.'); return; }
         if (!_layers.front.length) { showPrintifyFeedback('No design loaded in preview.'); return; }
+
         const frontLayers  = _layers.front;
         const backLayers   = _layers.back;
         const selFront     = frontLayers[0] || null;
@@ -3103,47 +3302,66 @@
         const posX = selFront?.posX  ?? 0;
         const posY = selFront?.posY  ?? 0;
         const sc   = selFront?.scale ?? 1;
+
+        // Flatten canvases synchronously before going async (must happen on the same frame)
         btn.disabled = true; btn.textContent = 'Preparing…'; resetPrintifyFeedback();
+        let imageSrc, backImageSrc, selBack, isBakedBack, bPosX, bPosY, bSc;
         try {
-            const imageSrc     = await getFlattenedSrc(frontLayers);
-            const backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
-            const selBack      = backLayers[0] || null;
-            const isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
-            const bPosX = selBack?.posX  ?? 0;
-            const bPosY = selBack?.posY  ?? 0;
-            const bSc   = selBack?.scale ?? 1;
-            btn.textContent = 'Creating product…';
-            const csrf = document.querySelector('meta[name="csrf-token"]').content;
-            const payload = {
-                shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc, title,
-                color:hexToColorName(document.getElementById('printify-color-hex').value),
-                pos_x:        isBakedFront ? 0.5 : 0.5+posX*0.5,
-                pos_y:        isBakedFront ? 0.5 : 0.5+posY*0.5,
-                design_scale: isBakedFront ? 1   : sc,
-                publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
-            };
-            if (backImageSrc) {
-                payload.back_image_source = backImageSrc;
-                payload.back_pos_x        = isBakedBack ? 0.5 : 0.5+bPosX*0.5;
-                payload.back_pos_y        = isBakedBack ? 0.5 : 0.5+bPosY*0.5;
-                payload.back_design_scale = isBakedBack ? 1   : bSc;
-            }
-            const res  = await fetch('/printify/products', {
-                method:'POST',
-                headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status}). Check server logs.`); });
-            if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-            showPrintifyFeedback(`✓ Product created! <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open in Printify →</a>`, 'success');
-            btn.textContent = 'Create Another';
+            imageSrc     = await getFlattenedSrc(frontLayers);
+            backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
+            selBack      = backLayers[0] || null;
+            isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
+            bPosX = selBack?.posX  ?? 0;
+            bPosY = selBack?.posY  ?? 0;
+            bSc   = selBack?.scale ?? 1;
         } catch (err) {
-            showPrintifyFeedback(`Failed: ${escapeHtml(err.message)}`);
-            btn.textContent = 'Retry';
-        } finally { btn.disabled = false; }
+            showPrintifyFeedback(`Failed to prepare image: ${escapeHtml(err.message)}`);
+            btn.disabled = false; btn.textContent = 'Create Product';
+            return;
+        }
+
+        // All good — add to queue and restore the button so the user can keep working
+        btn.disabled = false; btn.textContent = 'Queued ✓';
+        setTimeout(() => { btn.textContent = 'Create Product'; }, 2000);
+        resetPrintifyFeedback();
+
+        const jobId = UploadQueue.add(title, 'single');
+        const csrf  = document.querySelector('meta[name="csrf-token"]').content;
+        const payload = {
+            shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc, title,
+            color:hexToColorName(document.getElementById('printify-color-hex').value),
+            pos_x:        isBakedFront ? 0.5 : 0.5+posX*0.5,
+            pos_y:        isBakedFront ? 0.5 : 0.5+posY*0.5,
+            design_scale: isBakedFront ? 1   : sc,
+            publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
+        };
+        if (backImageSrc) {
+            payload.back_image_source = backImageSrc;
+            payload.back_pos_x        = isBakedBack ? 0.5 : 0.5+bPosX*0.5;
+            payload.back_pos_y        = isBakedBack ? 0.5 : 0.5+bPosY*0.5;
+            payload.back_design_scale = isBakedBack ? 1   : bSc;
+        }
+
+        // Fire and forget — runs in background
+        void (async () => {
+            try {
+                const res  = await fetch('/printify/products', {
+                    method:'POST',
+                    headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json().catch(() => { throw new Error(`Server error (HTTP ${res.status}).`); });
+                if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+                UploadQueue.done(jobId, data.printify_url);
+            } catch (err) {
+                UploadQueue.fail(jobId, err.message);
+            }
+        })();
     }
 
+
     async function sendToAllPrintify() {
+        // If already running, pressing the button cancels it
         if (_sendAllInProgress) {
             _sendAllAbortController?.abort();
             return;
@@ -3152,10 +3370,10 @@
         const shopId = document.getElementById('printify-shop').value;
         const title  = document.getElementById('printify-title').value.trim();
         const btn    = document.getElementById('printify-bulk-btn');
-        const send   = document.getElementById('printify-send-btn');
         if (!shopId || !title || !_layers.front.length) {
             showPrintifyFeedback('Please fill in all fields and load a design.'); return;
         }
+
         const garments = [
             {type:'tshirt',    label:'T-Shirt'},
             {type:'hoodie',    label:'Hoodie'},
@@ -3178,107 +3396,95 @@
             {type:'tote_bags', label:'Tote Bags'},
             {type:'scarves',   label:'Bufandas'},
         ];
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-stop-circle mr-1"></i> Cancel Upload';
-        send.disabled = true;
-        resetPrintifyFeedback();
-        _sendAllAbortController = new AbortController();
-        _sendAllInProgress = true;
 
+        // Flatten images before going async
+        btn.disabled = true; btn.textContent = 'Preparing…'; resetPrintifyFeedback();
+        let imageSrc, backImageSrc, posX, posY, sc, bPosX, bPosY, bSc;
         try {
             const frontLayers  = _layers.front;
             const backLayers   = _layers.back;
-            const imageSrc     = await getFlattenedSrc(frontLayers);
-            const backImageSrc = backLayers.length ? await getFlattenedSrc(backLayers) : null;
+            imageSrc           = await getFlattenedSrc(frontLayers);
+            backImageSrc       = backLayers.length ? await getFlattenedSrc(backLayers) : null;
             const selFront     = frontLayers[0] || null;
             const isBakedFront = frontLayers.length > 1 || !!(selFront?.rotation);
-            const posX = !isBakedFront ? (selFront?.posX  ?? 0) : 0;
-            const posY = !isBakedFront ? (selFront?.posY  ?? 0) : 0;
-            const sc   = !isBakedFront ? (selFront?.scale ?? 1) : 1;
-            const selBack      = backLayers[0] || null;
-            const isBakedBack  = backLayers.length > 1 || !!(selBack?.rotation);
-            const bPosX = !isBakedBack ? (selBack?.posX  ?? 0) : 0;
-            const bPosY = !isBakedBack ? (selBack?.posY  ?? 0) : 0;
-            const bSc   = !isBakedBack ? (selBack?.scale ?? 1) : 1;
-            const csrf = document.querySelector('meta[name="csrf-token"]').content;
-            const resultLines = [];
-            let cancelled = false;
-            let successCount = 0;
-            let failedCount = 0;
-
-            const renderProgress = (cur, curLabel) => {
-                const pct = Math.round((cur / garments.length) * 100);
-                const statusLabel = cancelled
-                    ? 'Cancelled'
-                    : (cur < garments.length ? 'Uploading ' + curLabel + '…' : 'Done');
-                showPrintifyFeedback(`<div class="space-y-2.5">
-                    <div class="flex justify-between text-xs text-white/75">
-                        <span>${statusLabel}</span>
-                        <span>${cur}/${garments.length}</span>
-                    </div>
-                    <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
-                        <div class="h-2 rounded-full transition-all duration-300 ${cancelled ? 'bg-amber-400' : 'bg-[#7c3ca0]'}" style="width:${pct}%"></div>
-                    </div>
-                    <div class="space-y-1 max-h-36 overflow-y-auto pr-1">${resultLines.join('')}</div>
-                </div>`, cancelled ? 'error' : 'info');
-            };
-
-            for (let i = 0; i < garments.length; i++) {
-                const {type, label} = garments[i];
-                if (i > 0) await sleep(900);
-                renderProgress(i, label);
-                try {
-                    const payload = {
-                        shop_id: parseInt(shopId), garment_type: type, image_source: imageSrc,
-                        title: title + ' — ' + label,
-                        color: hexToColorName(document.getElementById('printify-color-hex').value),
-                        pos_x: 0.5 + posX * 0.5, pos_y: 0.5 + posY * 0.5, design_scale: sc,
-                        publish_after_create: document.getElementById('printify-publish')?.checked ?? false,
-                    };
-                    if (backImageSrc) {
-                        payload.back_image_source = backImageSrc;
-                        payload.back_pos_x        = 0.5 + bPosX * 0.5;
-                        payload.back_pos_y        = 0.5 + bPosY * 0.5;
-                        payload.back_design_scale = bSc;
-                    }
-
-                    const data = await createPrintifyProductWithRetry(payload, csrf, _sendAllAbortController.signal, 3);
-
-                    successCount++;
-                    resultLines.push(`<div class="text-emerald-300 text-xs">✓ ${label} — <a href="${data.printify_url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">Open →</a></div>`);
-                } catch (err) {
-                    if (err?.name === 'AbortError') {
-                        cancelled = true;
-                        break;
-                    }
-                    failedCount++;
-                    const msg = humanizePrintifyError(err?.message || 'Unknown error');
-                    resultLines.push(`<div class="text-rose-300 text-xs">✗ ${label}: ${escapeHtml(msg)}</div>`);
-                }
-            }
-
-            renderProgress(cancelled ? successCount + failedCount : garments.length, '');
-            if (cancelled) {
-                resultLines.push('<div class="text-amber-300 text-xs">Upload cancelled by user.</div>');
-                showPrintifyFeedback(`<div class="space-y-2.5">
-                    <div class="flex justify-between text-xs text-white/75">
-                        <span>Cancelled</span>
-                        <span>${successCount + failedCount}/${garments.length}</span>
-                    </div>
-                    <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
-                        <div class="bg-amber-400 h-2 rounded-full" style="width:${Math.round(((successCount + failedCount) / garments.length) * 100)}%"></div>
-                    </div>
-                    <div class="space-y-1 max-h-36 overflow-y-auto pr-1">${resultLines.join('')}</div>
-                </div>`, 'error');
-            }
-        } finally {
-            _sendAllInProgress = false;
-            _sendAllAbortController = null;
-            btn.disabled = false;
-            send.disabled = false;
-            btn.innerHTML = 'Upload to All';
+            posX = !isBakedFront ? (selFront?.posX  ?? 0) : 0;
+            posY = !isBakedFront ? (selFront?.posY  ?? 0) : 0;
+            sc   = !isBakedFront ? (selFront?.scale ?? 1) : 1;
+            const selBack     = backLayers[0] || null;
+            const isBakedBack = backLayers.length > 1 || !!(selBack?.rotation);
+            bPosX = !isBakedBack ? (selBack?.posX  ?? 0) : 0;
+            bPosY = !isBakedBack ? (selBack?.posY  ?? 0) : 0;
+            bSc   = !isBakedBack ? (selBack?.scale ?? 1) : 1;
+        } catch (err) {
+            showPrintifyFeedback(`Failed to prepare image: ${escapeHtml(err.message)}`);
+            btn.disabled = false; btn.textContent = 'Upload to All';
+            return;
         }
+
+        // Queue the job and restore the button immediately
+        const jobId = UploadQueue.add(title + ' (All)', 'bulk', garments.length);
+        resetPrintifyFeedback();
+        btn.disabled = false; btn.textContent = 'Queued ✓';
+        setTimeout(() => { if (!_sendAllInProgress) btn.textContent = 'Upload to All'; }, 2000);
+
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        const color = hexToColorName(document.getElementById('printify-color-hex').value);
+        const publish = document.getElementById('printify-publish')?.checked ?? false;
+
+        _sendAllAbortController = new AbortController();
+        _sendAllInProgress = true;
+        UploadQueue.setAbortFn(jobId, () => _sendAllAbortController?.abort());
+
+        // Update button to show cancel while running
+        btn.innerHTML = '<i class="fas fa-stop-circle mr-1"></i> Cancel';
+
+        void (async () => {
+            let successCount = 0;
+            let cancelled    = false;
+
+            try {
+                for (let i = 0; i < garments.length; i++) {
+                    if (i > 0) await sleep(900);
+                    const {type, label} = garments[i];
+                    UploadQueue.progress(jobId, i, garments.length);
+
+                    try {
+                        const payload = {
+                            shop_id: parseInt(shopId), garment_type: type, image_source: imageSrc,
+                            title: title + ' — ' + label, color,
+                            pos_x: 0.5 + posX * 0.5, pos_y: 0.5 + posY * 0.5, design_scale: sc,
+                            publish_after_create: publish,
+                        };
+                        if (backImageSrc) {
+                            payload.back_image_source = backImageSrc;
+                            payload.back_pos_x        = 0.5 + bPosX * 0.5;
+                            payload.back_pos_y        = 0.5 + bPosY * 0.5;
+                            payload.back_design_scale = bSc;
+                        }
+                        await createPrintifyProductWithRetry(payload, csrf, _sendAllAbortController.signal, 3);
+                        successCount++;
+                    } catch (err) {
+                        if (err?.name === 'AbortError') { cancelled = true; break; }
+                        adminConsole.warn('Turbo upload error for', garments[i].type, err.message);
+                        // Continue with next garment on non-abort errors
+                    }
+                }
+
+                if (cancelled) {
+                    UploadQueue.abort(jobId);
+                } else {
+                    UploadQueue.progress(jobId, garments.length, garments.length);
+                    UploadQueue.done(jobId, 'https://printify.com/app/store/products');
+                }
+            } finally {
+                _sendAllInProgress = false;
+                _sendAllAbortController = null;
+                btn.disabled = false;
+                btn.innerHTML = 'Upload to All';
+            }
+        })();
     }
+
 
     // ═══════════════════════════════════════════════════════════════
     //  BULK UPLOAD MODAL
@@ -3355,19 +3561,10 @@
         modal.classList.remove('flex');
         _bulkUploadFrontImageSrc = null;
         _bulkUploadBackImageSrc = null;
-        _bulkUploadAborted = false;
     }
 
     function handleBulkUploadCancel() {
-        // If upload is in progress, signal abort
-        if (document.getElementById('bulk-progress-section').classList.contains('hidden') === false) {
-            _bulkUploadAborted = true;
-            document.getElementById('bulk-cancel-btn').disabled = true;
-            document.getElementById('bulk-cancel-btn').textContent = 'Aborting…';
-        } else {
-            // Otherwise just close the modal
-            closeBulkUploadModal();
-        }
+        closeBulkUploadModal();
     }
 
     async function _loadBulkShops() {
@@ -3399,11 +3596,12 @@
         const color     = allColors ? '' : hexToColorName(document.getElementById('bulk-color-hex').value);
         const useFront  = document.getElementById('bulk-side-front')?.checked ?? true;
         const useBack   = document.getElementById('bulk-side-back')?.checked ?? false;
+        const publish   = document.getElementById('bulk-publish')?.checked ?? false;
         if (!shopId)  { alert('Please select a Printify store.'); return; }
         if (!title)   { alert('Please enter a product name.'); return; }
         if (!useFront && !useBack) { alert('Select at least one side: Front or Back.'); return; }
         if (useFront && !_bulkUploadFrontImageSrc) { alert('No front design selected.'); return; }
-        if (useBack && !_bulkUploadBackImageSrc) { alert('No back design loaded in the editor.'); return; }
+        if (useBack && !_bulkUploadBackImageSrc)   { alert('No back design loaded in the editor.'); return; }
 
         const garments = [
             {type:'tshirt',    label:'T-Shirt'},
@@ -3428,99 +3626,56 @@
             {type:'scarves',   label:'Bufandas'},
         ];
 
-        // Switch to progress view
-        document.getElementById('bulk-form-section').classList.add('hidden');
-        document.getElementById('bulk-progress-section').classList.remove('hidden');
-        document.getElementById('bulk-start-btn').disabled = true;
-        document.getElementById('bulk-modal-close-btn').disabled = true;
-        document.getElementById('bulk-cancel-btn').textContent = 'Cancel';
-        document.getElementById('bulk-cancel-btn').disabled = false;
-        _bulkUploadAborted = false;
+        // Snapshot image sources (already computed when modal was opened)
+        const frontSrc = _bulkUploadFrontImageSrc;
+        const backSrc  = _bulkUploadBackImageSrc;
+
+        // Add to queue and close the modal immediately
+        const jobId = UploadQueue.add(title + ' (Turbo)', 'bulk', garments.length);
+        closeBulkUploadModal();
 
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
-        let successCount = 0;
-        let errorCount   = 0;
-        const failedItems = [];
+        const abortCtrl = new AbortController();
+        UploadQueue.setAbortFn(jobId, () => abortCtrl.abort());
 
-        const updateProgress = (cur, curLabel) => {
-            const pct    = Math.round((cur / garments.length) * 100);
-            const isDone = cur >= garments.length;
-            document.getElementById('bulk-progress-bar').style.width   = pct + '%';
-            document.getElementById('bulk-progress-count').textContent = `${cur}/${garments.length}`;
-            document.getElementById('bulk-progress-label').textContent =
-                isDone ? 'Done!' : `Uploading ${curLabel}…`;
-        };
+        void (async () => {
+            let successCount = 0;
 
-        for (let i = 0; i < garments.length; i++) {
-            if (_bulkUploadAborted) {
-                document.getElementById('bulk-progress-label').textContent = 'Cancelled';
-                failedItems.push({ label: 'Upload cancelled by user', error: '' });
-                break;
+            for (let i = 0; i < garments.length; i++) {
+                if (abortCtrl.signal.aborted) {
+                    UploadQueue.abort(jobId);
+                    return;
+                }
+                if (i > 0) await sleep(1000);
+                UploadQueue.progress(jobId, i, garments.length);
+
+                const {type, label} = garments[i];
+                try {
+                    const payload = {
+                        shop_id:      parseInt(shopId),
+                        garment_type: type,
+                        image_source: useFront ? frontSrc : null,
+                        title:        title + ' — ' + label,
+                        color,
+                        pos_x: 0.5, pos_y: 0.5, design_scale: 1,
+                        ...(useBack ? {
+                            back_image_source: backSrc,
+                            back_pos_x: 0.5, back_pos_y: 0.5, back_design_scale: 1,
+                        } : {}),
+                        publish_after_create: publish,
+                    };
+                    await createPrintifyProductWithRetry(payload, csrf, abortCtrl.signal, 3);
+                    successCount++;
+                } catch (err) {
+                    if (err?.name === 'AbortError') { UploadQueue.abort(jobId); return; }
+                    adminConsole.warn('Turbo modal upload error for', type, err.message);
+                    // Continue with next garment on non-abort errors
+                }
             }
-            // Add delay to avoid rate limiting (Printify 429)
-            if (i > 0) await sleep(1000);
-            const {type, label} = garments[i];
-            updateProgress(i, label);
-            try {
-                const payload = {
-                    shop_id:      parseInt(shopId),
-                    garment_type: type,
-                    image_source: useFront ? _bulkUploadFrontImageSrc : null,
-                    title:        title + ' — ' + label,
-                    color:        color,
-                    pos_x:        0.5,
-                    pos_y:        0.5,
-                    design_scale: 1,
-                    ...(useBack ? {
-                        back_image_source: _bulkUploadBackImageSrc,
-                        back_pos_x: 0.5,
-                        back_pos_y: 0.5,
-                        back_design_scale: 1,
-                    } : {}),
-                    publish_after_create: document.getElementById('bulk-publish')?.checked ?? false,
-                };
-                await createPrintifyProductWithRetry(payload, csrf, null, 3);
-                successCount++;
-            } catch (err) {
-                errorCount++;
-                failedItems.push({ label, error: humanizePrintifyError(err.message || 'Unknown error') });
-                adminConsole.warn('Bulk upload error for', type, err.message);
-            }
-        }
-        updateProgress(garments.length, '');
 
-        // Show summary
-        const resultsEl = document.getElementById('bulk-progress-results');
-        if (successCount > 0) {
-            const failedHtml = failedItems.length
-                ? `<div class="w-full mt-2 p-2 rounded-lg text-left" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.22)">
-                        <p class="text-[11px] font-semibold text-red-400 mb-1">Failed items</p>
-                        ${failedItems.map(f => `<p class="text-[11px] text-red-300">• ${escapeHtml(f.label)}: ${escapeHtml(f.error)}</p>`).join('')}
-                   </div>`
-                : '';
-            resultsEl.innerHTML = `
-                <div class="flex flex-col items-center gap-2 pt-2 text-center">
-                    <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
-                        <i class="fas fa-check-circle"></i>
-                        <span>${successCount} product${successCount > 1 ? 's' : ''} created${errorCount > 0 ? ` (${errorCount} failed)` : ''}</span>
-                    </div>
-                    <a href="https://printify.com/app/store/products" target="_blank" rel="noopener noreferrer"
-                       class="px-4 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl hover:bg-[#5a2275] transition-colors flex items-center gap-1.5">
-                        <i class="fas fa-external-link-alt text-[10px]"></i> View in Printify
-                    </a>
-                    ${failedHtml}
-                </div>`;
-        } else {
-            resultsEl.innerHTML = `<div class="text-xs text-red-600 text-center pt-2">All uploads failed. Please try again.</div>
-                ${failedItems.length ? `<div class="mt-2 text-left">${failedItems.map(f => `<p class="text-[11px] text-red-400">• ${escapeHtml(f.label)}: ${escapeHtml(f.error)}</p>`).join('')}</div>` : ''}`;
-        }
-
-        // Re-enable close (unless upload was cancelled)
-        document.getElementById('bulk-cancel-btn').disabled = false;
-        document.getElementById('bulk-modal-close-btn').disabled = false;
-        if (!_bulkUploadAborted) {
-            document.getElementById('bulk-cancel-btn').textContent = 'Close';
-        }
+            UploadQueue.progress(jobId, garments.length, garments.length);
+            UploadQueue.done(jobId, 'https://printify.com/app/store/products');
+        })();
     }
 
     function switchSide(side) {
@@ -4032,5 +4187,44 @@
         if (e.target === this) closeCreditPacksModal();
     });
 </script>
+
+<!-- ═══════════ UPLOAD QUEUE PANEL ═══════════ -->
+<div id="upload-queue-panel"
+     class="hidden fixed bottom-5 right-5 z-[9999] flex flex-col"
+     style="width:320px;border-radius:16px;background:#1a1032;border:1px solid rgba(124,60,160,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.55)">
+    <!-- Header -->
+    <div id="upload-queue-header"
+         class="flex items-center justify-between px-4 py-3 cursor-pointer select-none"
+         style="border-bottom:1px solid rgba(124,60,160,0.25)"
+         onclick="UploadQueue.toggleCollapse()">
+        <div class="flex items-center gap-2.5">
+            <div id="upload-queue-spinner"
+                 class="w-4 h-4 rounded-full border-2 border-[#9333ea] border-t-transparent animate-spin hidden"></div>
+            <i id="upload-queue-done-icon" class="fas fa-check-circle text-emerald-400 text-sm hidden"></i>
+            <span class="text-xs font-semibold text-white/90 tracking-wide">Upload Queue</span>
+            <span id="upload-queue-badge"
+                  class="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white"
+                  style="background:rgba(124,60,160,0.7)">0</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <button id="upload-queue-collapse-btn"
+                    class="w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                    style="background:rgba(255,255,255,0.06)"
+                    title="Collapse">
+                <i class="fas fa-chevron-down text-[10px]" id="upload-queue-chevron"></i>
+            </button>
+            <button onclick="UploadQueue.closePanel(event)"
+                    class="w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-rose-400 transition-colors"
+                    style="background:rgba(255,255,255,0.06)"
+                    title="Close">
+                <i class="fas fa-times text-[10px]"></i>
+            </button>
+        </div>
+    </div>
+    <!-- Job list -->
+    <div id="upload-queue-body" class="overflow-y-auto" style="max-height:360px;scrollbar-width:thin;scrollbar-color:rgba(124,60,160,0.4) transparent">
+        <div id="upload-queue-list" class="divide-y" style="divide-color:rgba(255,255,255,0.05)"></div>
+    </div>
+</div>
 </body>
 </html>
