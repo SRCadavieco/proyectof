@@ -172,7 +172,7 @@ class TogetherService
         $payload = [
             'model'           => $modelName,
             'prompt'          => $prompt,
-            'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels',
+            'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame',
             'width'           => 1024,
             'height'          => 1024,
             'steps'           => 28,

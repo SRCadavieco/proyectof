@@ -566,7 +566,7 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
             return trim($cleanPrompt);
         }
 
-        $legacyStyleGuide = 'Style: vector illustration with flat colors and bold outlines. Include meaningful background or composition context. Avoid gradients and heavy shadows. Use clean, printable design.';
+        $legacyStyleGuide = 'Style: vector illustration with flat colors and bold outlines. Full scene with background. Avoid gradients and heavy shadows. No badge, shield, crest, hexagon, or shaped border frame. Clean open composition.';
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
@@ -598,12 +598,12 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle, strin
         // Diffusion models (Flux, SDXL, etc.) respond best to comma-separated tags.
         // Put ALL style tags BEFORE the subject so they get maximum attention weight.
         $tags = [
-            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed, full scene, scenic background, environment, borderless illustration',
-            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, playful, expressive, cell shaded, full scene, detailed background, environment, borderless illustration',
-            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, full scene composition, background included, borderless illustration',
-            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, wide shot, environmental context, background, depth of field, ray tracing, borderless illustration',
-            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki, full scene, lush environment, borderless illustration',
-            'manga'             => 'manga illustration, monochrome, black and white, bold ink lines, screentone shading, dynamic action scene, detailed background, environment, expressive line art, borderless illustration',
+            'realistic_drawing' => 'pencil drawing, charcoal illustration, realistic sketch, fine line art, cross-hatching, graphite texture, hand-drawn, detailed, full scene, scenic background, environment, borderless illustration, no frame, no badge, no shield, no crest',
+            'cartoon_drawing'   => 'cartoon illustration, bold outlines, flat vibrant colors, simplified shapes, playful, expressive, cell shaded, full scene, detailed background, environment, borderless illustration, no frame, no badge, no shield, no crest',
+            'vector_art'        => 'flat vector art, clean geometric shapes, solid colors, hard edges, no gradients, minimal, scalable graphic, full scene composition, background included, borderless illustration, no frame, no badge, no shield, no crest',
+            'photorealistic'    => 'photorealistic, hyperrealistic, cinematic lighting, 8k, ultra detailed, wide shot, environmental context, background, depth of field, ray tracing, borderless illustration, no frame, no badge, no shield, no crest',
+            'ghibli'            => 'studio ghibli style, hand-painted anime, soft watercolor, warm palette, whimsical, atmospheric, detailed background, miyazaki, full scene, lush environment, borderless illustration, no frame, no badge, no shield, no crest',
+            'manga'             => 'manga illustration, monochrome, black and white, bold ink lines, screentone shading, dynamic action scene, detailed background, environment, expressive line art, borderless illustration, no frame, no badge, no shield, no crest',
         ];
 
         if (!isset($tags[$style])) {

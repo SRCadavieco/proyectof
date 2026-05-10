@@ -61,7 +61,7 @@ class ChutesService
             $finalPrompt .= "\nFondo sólido y uniforme de color {$colorName} ({$hex}). Sin transparencia.";
         }
 
-        $payload = ['prompt' => $finalPrompt, 'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels'];
+        $payload = ['prompt' => $finalPrompt, 'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame'];
         if (!empty($backgroundColor)) {
             $payload['backgroundColor'] = $backgroundColor;
         }
