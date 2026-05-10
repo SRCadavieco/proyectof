@@ -60,12 +60,12 @@ class NanoGptService
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         } else {
-            // No colour selected: place the illustration on a pure white background so
-            // that the background-removal step (Replicate remove-bg-2) can cleanly
-            // separate the artwork from the white. Edge-to-edge scenes have no clean
-            // background for rembg to detect, causing irregular blob cuts.
-            // A pure white background gives rembg a crisp, predictable target.
-            $finalPrompt .= "\nPure white background. The illustration is drawn on a flat, solid white canvas with clean, sharp edges around the artwork. The subject and its immediate environment (ground, surroundings) are fully illustrated and detailed. No vignette, no frame, no border, no rounded edges, no gradient background, no apparel, no clothing mockup, no text.";
+            // Strategy: ask for a contained scene illustration on pure white canvas.
+            // The scene (subject + full environment/background) is fully rendered inside
+            // the illustration area. Outside the illustration the canvas is plain white.
+            // This gives rembg a clean, predictable white target to cut while preserving
+            // the full scene context (sky, ground, surroundings) within the artwork.
+            $finalPrompt .= "\nDraw a detailed scene illustration on a pure white canvas. The illustration includes the main subject AND its full surrounding environment (sky, ground, background scenery, atmosphere) — not an isolated object. The scene is fully rendered with rich detail and colour. Outside the illustrated scene the canvas is plain solid white. No vignette, no decorative border or frame, no rounded edges, no apparel, no clothing mockup, no text.";
         }
 
         // Keep payload bounded for stability with image models.
