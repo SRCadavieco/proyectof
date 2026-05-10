@@ -60,13 +60,10 @@ class NanoGptService
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         } else {
-            // No colour selected: ask for a graphic illustration style with a full scene
-            // composition. rembg handles illustrated/graphic artwork much better than
-            // photorealistic photos — it reads the whole illustrated piece as "foreground"
-            // and strips only the plain white exterior margin.
-            // The white border/margin is added via the size/padding of the artwork itself,
-            // not by asking for a white studio backdrop (which isolates the subject).
-            $finalPrompt .= "\nGraphic illustration style. Full scene composition: include both the main subject and its surrounding environment (background, ground, atmosphere). The artwork should feel like a sticker or graphic patch — complete scene, not an isolated cutout. White empty margin only outside the artwork border. No apparel, no text.";
+            // No colour selected: ask for a full-bleed scene with no border, frame, or margin.
+            // Avoid sticker/patch/badge wording — gpt-image-2 interprets those as rounded
+            // white-bordered frames that the background remover cannot strip cleanly.
+            $finalPrompt .= "\nFull-bleed illustration. The scene fills the entire canvas edge-to-edge with no border, margin, frame, or rounded edge. Include the main subject and its full surrounding environment (background, ground, sky/atmosphere). No white frame, no sticker border, no badge outline, no vignette. No apparel, no clothing mockup, no text.";
         }
 
         // Keep payload bounded for stability with image models.
