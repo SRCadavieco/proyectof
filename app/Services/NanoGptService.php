@@ -60,10 +60,12 @@ class NanoGptService
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         } else {
-            // No colour selected: ask for a full-bleed scene with no border, frame, or margin.
-            // Avoid sticker/patch/badge wording — gpt-image-2 interprets those as rounded
-            // white-bordered frames that the background remover cannot strip cleanly.
-            $finalPrompt .= "\nFull-bleed illustration. The scene fills the entire canvas edge-to-edge with no border, margin, frame, or rounded edge. Include the main subject and its full surrounding environment (background, ground, sky/atmosphere). No white frame, no sticker border, no badge outline, no vignette. No apparel, no clothing mockup, no text.";
+            // No colour selected: place the illustration on a pure white background so
+            // that the background-removal step (Replicate remove-bg-2) can cleanly
+            // separate the artwork from the white. Edge-to-edge scenes have no clean
+            // background for rembg to detect, causing irregular blob cuts.
+            // A pure white background gives rembg a crisp, predictable target.
+            $finalPrompt .= "\nPure white background. The illustration is drawn on a flat, solid white canvas with clean, sharp edges around the artwork. The subject and its immediate environment (ground, surroundings) are fully illustrated and detailed. No vignette, no frame, no border, no rounded edges, no gradient background, no apparel, no clothing mockup, no text.";
         }
 
         // Keep payload bounded for stability with image models.
