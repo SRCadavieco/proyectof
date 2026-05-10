@@ -98,6 +98,11 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('api.tokens');
 
+    // CSRF token refresh — called by JS when a 419 is received
+    Route::get('/api/csrf-refresh', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->name('api.csrf-refresh');
+
     // Printify
     Route::post('/printify/connect',         [PrintifyController::class, 'connect'])->name('printify.connect');
     Route::post('/printify/dismiss-popup',   [PrintifyController::class, 'dismissPopup'])->name('printify.dismiss-popup');

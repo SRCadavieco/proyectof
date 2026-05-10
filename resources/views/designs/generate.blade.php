@@ -979,20 +979,32 @@
             if (!listEl || !panel) return;
 
             if (jobs.length === 0) {
-                panel.classList.add('hidden'); return;
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'uq-visible');
+                return;
             }
+            const wasHidden = panel.classList.contains('hidden');
             panel.classList.remove('hidden');
+            panel.style.display = 'flex';
+            if (wasHidden) {
+                // Re-trigger animation
+                panel.classList.remove('uq-visible');
+                requestAnimationFrame(() => panel.classList.add('uq-visible'));
+            }
 
-            const active  = jobs.filter(j => j.status === 'running').length;
-            const total   = jobs.length;
+            const active   = jobs.filter(j => j.status === 'running').length;
+            const total    = jobs.length;
+            const idleIcon = document.getElementById('upload-queue-idle-icon');
 
             _badge().textContent = total;
             if (active > 0) {
                 _spinner().classList.remove('hidden');
                 _doneIcon().classList.add('hidden');
+                if (idleIcon) idleIcon.classList.add('hidden');
             } else {
                 _spinner().classList.add('hidden');
                 _doneIcon().classList.remove('hidden');
+                if (idleIcon) idleIcon.classList.add('hidden');
             }
 
             _body().classList.toggle('hidden', _collapsed);
@@ -1005,19 +1017,22 @@
             const job = _jobs.find(j => j.id === id);
             if (!job) return;
             Object.assign(job, patch);
-            // Patch only the job row for efficiency, fall back to full render
+            // Patch only the job row for efficiency
             const row = document.getElementById(`uq-job-${id}`);
             if (row) {
                 row.outerHTML = _jobHtml(job);
             }
             // Update header state
-            const active = _jobs.filter(j => j.status === 'running').length;
+            const active   = _jobs.filter(j => j.status === 'running').length;
+            const idleIcon = document.getElementById('upload-queue-idle-icon');
             if (active > 0) {
                 _spinner().classList.remove('hidden');
                 _doneIcon().classList.add('hidden');
+                if (idleIcon) idleIcon.classList.add('hidden');
             } else {
                 _spinner().classList.add('hidden');
                 _doneIcon().classList.remove('hidden');
+                if (idleIcon) idleIcon.classList.add('hidden');
             }
         }
 
@@ -3242,9 +3257,24 @@
         return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
     }
 
+    /** Fetch a fresh CSRF token from the server and update the meta tag. Returns the new token. */
+    async function _refreshCsrfToken() {
+        try {
+            const res  = await fetch('/api/csrf-refresh', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json().catch(() => ({}));
+            if (data.token) {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) meta.setAttribute('content', data.token);
+                return data.token;
+            }
+        } catch (_) { /* silently ignore */ }
+        return null;
+    }
+
     async function createPrintifyProductWithRetry(payload, csrf, signal = null, maxRetries = 3) {
         const fallbackBackoff = [1500, 3000, 5000, 7000];
         let attempt = 0;
+        let currentCsrf = csrf;
 
         while (true) {
             if (signal?.aborted) {
@@ -3255,7 +3285,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf,
+                    'X-CSRF-TOKEN': currentCsrf,
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify(payload),
@@ -3267,7 +3297,18 @@
                 return data;
             }
 
-            const errorMessage = data.error || `HTTP ${res.status}`;
+            // 419 = CSRF mismatch — try to refresh the token and retry once
+            if (res.status === 419 && attempt === 0) {
+                const freshToken = await _refreshCsrfToken();
+                if (freshToken) {
+                    currentCsrf = freshToken;
+                    attempt++;
+                    continue;
+                }
+                throw new Error('Su sesión ha expirado. Por favor recarga la página e inténtalo de nuevo.');
+            }
+
+            const errorMessage = data.error || data.message || `HTTP ${res.status}`;
             const isRateLimited = res.status === 429 || /too many attempts|status code 429/i.test(String(errorMessage));
             if (!isRateLimited || attempt >= maxRetries) {
                 throw new Error(errorMessage);
@@ -3324,6 +3365,7 @@
         btn.disabled = false; btn.textContent = 'Queued ✓';
         setTimeout(() => { btn.textContent = 'Create Product'; }, 2000);
         resetPrintifyFeedback();
+        document.getElementById('printify-panel').classList.add('hidden');
 
         const jobId = UploadQueue.add(title, 'single');
         const csrf  = document.querySelector('meta[name="csrf-token"]').content;
@@ -3421,9 +3463,10 @@
             return;
         }
 
-        // Queue the job and restore the button immediately
+        // Queue the job, close the panel and restore the button immediately
         const jobId = UploadQueue.add(title + ' (All)', 'bulk', garments.length);
         resetPrintifyFeedback();
+        document.getElementById('printify-panel').classList.add('hidden');
         btn.disabled = false; btn.textContent = 'Queued ✓';
         setTimeout(() => { if (!_sendAllInProgress) btn.textContent = 'Upload to All'; }, 2000);
 
@@ -3474,7 +3517,11 @@
                     UploadQueue.abort(jobId);
                 } else {
                     UploadQueue.progress(jobId, garments.length, garments.length);
-                    UploadQueue.done(jobId, 'https://printify.com/app/store/products');
+                    if (successCount > 0) {
+                        UploadQueue.done(jobId, 'https://printify.com/app/store/products');
+                    } else {
+                        UploadQueue.fail(jobId, 'Todos los productos fallaron. Comprueba tu conexión a Printify.');
+                    }
                 }
             } finally {
                 _sendAllInProgress = false;
@@ -3674,7 +3721,11 @@
             }
 
             UploadQueue.progress(jobId, garments.length, garments.length);
-            UploadQueue.done(jobId, 'https://printify.com/app/store/products');
+            if (successCount > 0) {
+                UploadQueue.done(jobId, 'https://printify.com/app/store/products');
+            } else {
+                UploadQueue.fail(jobId, 'Todos los productos fallaron. Comprueba tu conexión a Printify.');
+            }
         })();
     }
 
@@ -4189,18 +4240,29 @@
 </script>
 
 <!-- ═══════════ UPLOAD QUEUE PANEL ═══════════ -->
+<style>
+    @keyframes uq-slide-in {
+        from { opacity: 0; transform: translateY(16px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #upload-queue-panel.uq-visible {
+        animation: uq-slide-in 0.22s cubic-bezier(0.34,1.26,0.64,1) forwards;
+    }
+    #upload-queue-body { transition: max-height 0.2s ease; }
+</style>
 <div id="upload-queue-panel"
-     class="hidden fixed bottom-5 right-5 z-[9999] flex flex-col"
-     style="width:320px;border-radius:16px;background:#1a1032;border:1px solid rgba(124,60,160,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.55)">
+     class="hidden fixed bottom-5 right-5 z-[9999] flex-col"
+     style="width:320px;border-radius:16px;background:#1a1032;border:1px solid rgba(124,60,160,0.45);box-shadow:0 12px 40px rgba(0,0,0,0.65)">
     <!-- Header -->
     <div id="upload-queue-header"
          class="flex items-center justify-between px-4 py-3 cursor-pointer select-none"
-         style="border-bottom:1px solid rgba(124,60,160,0.25)"
+         style="border-bottom:1px solid rgba(124,60,160,0.25);border-radius:16px 16px 0 0"
          onclick="UploadQueue.toggleCollapse()">
         <div class="flex items-center gap-2.5">
             <div id="upload-queue-spinner"
                  class="w-4 h-4 rounded-full border-2 border-[#9333ea] border-t-transparent animate-spin hidden"></div>
             <i id="upload-queue-done-icon" class="fas fa-check-circle text-emerald-400 text-sm hidden"></i>
+            <i id="upload-queue-idle-icon" class="fas fa-layer-group text-[#a78bfa] text-sm"></i>
             <span class="text-xs font-semibold text-white/90 tracking-wide">Upload Queue</span>
             <span id="upload-queue-badge"
                   class="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white"
@@ -4210,13 +4272,13 @@
             <button id="upload-queue-collapse-btn"
                     class="w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-white transition-colors"
                     style="background:rgba(255,255,255,0.06)"
-                    title="Collapse">
+                    title="Minimizar">
                 <i class="fas fa-chevron-down text-[10px]" id="upload-queue-chevron"></i>
             </button>
             <button onclick="UploadQueue.closePanel(event)"
                     class="w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-rose-400 transition-colors"
                     style="background:rgba(255,255,255,0.06)"
-                    title="Close">
+                    title="Cerrar">
                 <i class="fas fa-times text-[10px]"></i>
             </button>
         </div>
