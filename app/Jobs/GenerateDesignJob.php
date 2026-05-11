@@ -54,17 +54,23 @@ class GenerateDesignJob implements ShouldQueue
                 $imageUrl = $result['imageUrl']    ?? $result['image_url']    ?? $result['url']    ?? null;
 
                 if ($base64) {
-                    $noBg = $backgrounds->removeBackground($base64);
-                    $bgRemovalMethod = $backgrounds->getLastMethod();
-                    $bgRemovalEngine = $backgrounds->getEngineId();
-                    try {
-                        ApiUsageLog::record('replicate', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
-                    } catch (\Throwable) {}
+                    $shouldRemoveBg = $this->shouldApplyBackgroundRemoval($this->userPrompt, $this->backgroundColor);
 
-                    if ($noBg) {
-                        $base64 = $noBg;
+                    if ($shouldRemoveBg) {
+                        $noBg = $backgrounds->removeBackground($base64);
+                        $bgRemovalMethod = $backgrounds->getLastMethod();
+                        $bgRemovalEngine = $backgrounds->getEngineId();
+                        try {
+                            ApiUsageLog::record('replicate', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
+                        } catch (\Throwable) {}
+
+                        if ($noBg) {
+                            $base64 = $noBg;
+                        } else {
+                            $bgRemovalFailed = true;
+                        }
                     } else {
-                        $bgRemovalFailed = true;
+                        $bgRemovalMethod = 'skipped_scene_intent';
                     }
 
                     if (!str_starts_with($base64, 'data:')) {
@@ -125,5 +131,19 @@ class GenerateDesignJob implements ShouldQueue
                 'error'  => 'Generation failed: ' . $e->getMessage(),
             ], now()->addMinutes(10));
         }
+    }
+
+    /**
+     * Decide whether Replicate background removal should run.
+     *
+     * For NanoGPT generation we keep background removal enabled by default,
+     * except when the user explicitly selected a fixed background color.
+     */
+    private function shouldApplyBackgroundRemoval(string $userPrompt, ?string $backgroundColor): bool
+    {
+        if (!empty($backgroundColor)) {
+            return false;
+        }
+        return true;
     }
 }
