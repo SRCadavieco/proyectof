@@ -153,7 +153,7 @@ class DesignController extends Controller
             'user_prompt' => mb_substr($userPrompt, 0, 150),
         ]);
 
-        $enriched = $together->enrichPrompt($userPrompt, $enrichModelKey);
+        $enriched = $nanogpt->enrichPrompt($userPrompt, $enrichModelKey);
 
         \Log::info('[LLM enrichment] result', [
             'optimized_prompt' => mb_substr($enriched['optimized_prompt'] ?? '', 0, 300),

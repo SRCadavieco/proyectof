@@ -77,13 +77,13 @@ return [
     ],
 
     'together' => [
-        'key'       => env('TOGETHER_API_KEY'),
-        'llm_model' => env('TOGETHER_LLM_MODEL', 'deepseek-ai/DeepSeek-V3-0324'),
+        'key' => env('TOGETHER_API_KEY'),
     ],
 
     'nanogpt' => [
         'key' => env('NANOGPT_API_KEY'),
         'image_url' => env('NANOGPT_IMAGE_URL', 'https://nano-gpt.com/v1/images/generations'),
+        'llm_model' => env('NANOGPT_LLM_MODEL', 'deepseek/deepseek-v4-flash'),
         'models' => [
             'juggernaut_z' => env('NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z', 'juggernaut-z'),
         ],

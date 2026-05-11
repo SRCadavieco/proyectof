@@ -154,4 +154,103 @@ class NanoGptService
         }
     }
 
+    private const CHAT_URL    = 'https://nano-gpt.com/v1/chat/completions';
+    private const LLM_MODEL   = 'deepseek/deepseek-v4-flash';
+
+    private const IMAGE_MODEL_NAMES = [
+        'juggernaut_z' => 'Juggernaut-Z (cinematic photorealistic model)',
+        'flux_dev'     => 'FLUX.2-dev (high-quality text-to-image diffusion)',
+        'fabric_pro'   => 'Z-Image Turbo (fast artistic diffusion)',
+        'fabric_light' => 'Z-Image Turbo (fast artistic diffusion)',
+    ];
+
+    /**
+     * Optimizes the user's prompt for the target image model and generates
+     * product title + description — all in a single LLM call via NanoGPT.
+     *
+     * Returns: ['optimized_prompt' => ..., 'title' => ..., 'description' => ...]
+     * All values are null on failure so callers can fall back gracefully.
+     */
+    public function enrichPrompt(string $userPrompt, string $modelKey): array
+    {
+        $fallback = ['optimized_prompt' => null, 'title' => null, 'description' => null];
+
+        $modelName = self::IMAGE_MODEL_NAMES[$modelKey] ?? 'AI image generation model';
+
+        $system = <<<SYSTEM
+You are an expert AI prompt engineer and e-commerce copywriter for print-on-demand apparel.
+Given the user's image idea, respond ONLY with valid JSON in this exact format (no markdown, no extra text):
+{
+  "optimized_prompt": "...",
+  "title": "...",
+  "description": "..."
+}
+
+Rules:
+- "optimized_prompt": Rewrite the user's idea as a precise, vivid prompt optimized for {$modelName}. Preserve the original subject and mood; make it more descriptive and specific. Max 350 characters.
+- "title": Short product title for an apparel/merch store. Max 60 characters. No quotes.
+- "description": Compelling 2-3 sentence product description for the store. Max 200 characters. No quotes.
+SYSTEM;
+
+        $content = $this->chatComplete([
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user',   'content' => $userPrompt],
+        ]);
+
+        if ($content === null) {
+            return $fallback;
+        }
+
+        $json = preg_replace('/^```(?:json)?\s*|\s*```$/s', '', trim($content));
+
+        try {
+            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            Log::warning('NanoGptService::enrichPrompt JSON decode failed', ['raw' => mb_substr($content, 0, 200)]);
+            return $fallback;
+        }
+
+        return [
+            'optimized_prompt' => isset($decoded['optimized_prompt']) ? trim((string) $decoded['optimized_prompt']) : null,
+            'title'            => isset($decoded['title'])            ? trim((string) $decoded['title'])            : null,
+            'description'      => isset($decoded['description'])      ? trim((string) $decoded['description'])      : null,
+        ];
+    }
+
+    private function chatComplete(array $messages): ?string
+    {
+        $apiKey = (string) config('services.nanogpt.key');
+        if (empty($apiKey)) {
+            return null;
+        }
+
+        $llmModel = (string) config('services.nanogpt.llm_model', self::LLM_MODEL);
+
+        try {
+            $response = Http::withHeaders(['x-api-key' => $apiKey])
+                ->withToken($apiKey)
+                ->timeout(30)
+                ->post(self::CHAT_URL, [
+                    'model'       => $llmModel,
+                    'messages'    => $messages,
+                    'max_tokens'  => 512,
+                    'temperature' => 0.7,
+                ]);
+
+            if (!$response->successful()) {
+                Log::warning('NanoGptService::chatComplete HTTP error', [
+                    'status' => $response->status(),
+                    'model'  => $llmModel,
+                    'body'   => mb_substr($response->body(), 0, 500),
+                ]);
+                return null;
+            }
+
+            return $response->json('choices.0.message.content');
+        } catch (\Throwable $e) {
+            Log::warning('NanoGptService::chatComplete exception', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
 }
