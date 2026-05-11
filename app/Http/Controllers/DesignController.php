@@ -647,7 +647,9 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle, strin
         return $prompt;
     }
 
-    $isDiffusion = in_array($provider, ['chutes', 'together', 'nanogpt'], true);
+    // NanoGPT (gpt-image-2) understands natural language — do NOT use comma-separated
+    // CLIP-style diffusion tags for it; use the same natural-language path as Gemini.
+    $isDiffusion = in_array($provider, ['chutes', 'together'], true);
 
     if ($isDiffusion) {
         // Diffusion models (Flux, SDXL, etc.) respond best to comma-separated tags.
@@ -669,14 +671,14 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle, strin
         return $tags[$style] . ', ' . $prompt;
     }
 
-    // Gemini / LLM backends: natural language instruction prefix
+    // Gemini / LLM backends (including NanoGPT): natural language instruction prefix
     $instructions = [
-        'realistic_drawing' => 'Draw in a traditional realistic pencil and charcoal style with natural proportions, cross-hatching, and fine line work. Subject: ',
-        'cartoon_drawing'   => 'Draw in a bold cartoon illustration style with thick outlines, flat vibrant colors, and exaggerated playful shapes. Subject: ',
-        'vector_art'        => 'Generate as flat vector graphic art with clean geometric shapes, solid colors, crisp edges, no gradients, minimal and print-ready. Subject: ',
-        'photorealistic'    => 'Generate as a hyper-photorealistic image with cinematic lighting, studio-quality depth of field, and ultra-detailed textures. Subject: ',
-        'ghibli'            => 'Draw in the Studio Ghibli hand-painted animation style with soft watercolor washes, warm earthy palette, and whimsical atmospheric depth. Subject: ',
-        'manga'             => 'Draw as a Japanese manga illustration: bold expressive ink outlines, screentone dot shading, dynamic composition, speed lines, monochrome only, no color. Subject: ',
+        'realistic_drawing' => 'Draw in a traditional realistic pencil and charcoal style with natural proportions, cross-hatching, and fine line work. Render the full composition with a detailed scenic background and environment. Subject: ',
+        'cartoon_drawing'   => 'Draw in a bold cartoon illustration style with thick outlines, flat vibrant colors, and exaggerated playful shapes. Include a full detailed background scene. Subject: ',
+        'vector_art'        => 'Generate as flat vector graphic art with clean geometric shapes, solid colors, crisp edges, no gradients. Include a full scene composition with background. Subject: ',
+        'photorealistic'    => 'Generate as a hyper-photorealistic cinematic image with dramatic lighting, studio-quality depth of field, ultra-detailed textures, and a complete environmental background scene. Subject: ',
+        'ghibli'            => 'Draw in the Studio Ghibli hand-painted animation style with soft watercolor washes, warm earthy palette, whimsical atmospheric depth, and a lush detailed background. Subject: ',
+        'manga'             => 'Draw as a Japanese manga: bold expressive ink outlines, screentone dot shading, dynamic composition, speed lines, detailed background environment, monochrome only, no color. Subject: ',
     ];
 
     if (!isset($instructions[$style])) {

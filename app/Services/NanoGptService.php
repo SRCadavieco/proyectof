@@ -63,7 +63,7 @@ class NanoGptService
             // Let the prompt drive the composition: scenes get a full background,
             // isolated subjects render naturally. The Replicate + flood-fill pipeline
             // handles background removal afterwards regardless.
-            $finalPrompt .= "\nDetailed illustration with clean, sharp edges. No vignette, no decorative border or frame, no rounded edges, no apparel, no clothing mockup, no text.";
+            $finalPrompt .= "\nNo decorative border or frame around the image, no apparel or clothing mockup, no text overlays.";            
         }
 
         // Keep payload bounded for stability with image models.
