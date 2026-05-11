@@ -126,6 +126,29 @@ class DesignController extends Controller
     // Diffusion models are sensitive to long prompts, keep user intent concise.
     $userPromptForDiffusion = mb_substr($userPrompt, 0, 270);
 
+    // LLM enrichment: optimize prompt for the target image model + generate product meta.
+    // Runs only for diffusion providers in text-to-image mode (not edit / reference-image).
+    $productMeta = ['title' => null, 'description' => null];
+    $isDiffusionProvider = in_array($provider, ['chutes', 'nanogpt', 'together'], true);
+    $isEditOrRef         = $hasReferenceImage || !empty($validated['is_edit']);
+
+    if ($isDiffusionProvider && !$isEditOrRef) {
+        $enrichModelKey = $validated['model'] ?? match ($provider) {
+            'nanogpt'  => 'juggernaut_z',
+            'together' => 'flux_dev',
+            default    => 'fabric_pro',
+        };
+        $enriched = $together->enrichPrompt($userPrompt, $enrichModelKey);
+        if (!empty($enriched['optimized_prompt'])) {
+            // Use the LLM-optimised text as the creative base; allow slightly longer than raw input
+            $userPromptForDiffusion = mb_substr($enriched['optimized_prompt'], 0, 400);
+        }
+        $productMeta = [
+            'title'       => $enriched['title']       ?? null,
+            'description' => $enriched['description'] ?? null,
+        ];
+    }
+
     if ($hasReferenceImage || !empty($validated['is_edit'])) {
         // Edit/reference-image mode: pass only the raw user prompt.
         // No style guides, no chat context — the model only needs the image and the instruction.
@@ -306,11 +329,13 @@ if ($isEdit) {
         );
 
         return response()->json([
-            'success'       => true,
-            'status'        => 'generating',
-            'generation_id' => $generationId,
-            'provider'      => $provider,
-            'model'         => $model,
+            'success'             => true,
+            'status'              => 'generating',
+            'generation_id'       => $generationId,
+            'provider'            => $provider,
+            'model'               => $model,
+            'product_title'       => $productMeta['title'],
+            'product_description' => $productMeta['description'],
         ]);
     }
 
@@ -450,8 +475,10 @@ if ($isEdit) {
     // Expose the effective provider/model used (after any runtime fallback)
     // so the frontend can confirm exactly which engine generated the image.
     if (is_array($result)) {
-        $result['provider'] = $provider;
-        $result['model'] = $model;
+        $result['provider']            = $provider;
+        $result['model']               = $model;
+        $result['product_title']       = $productMeta['title'];
+        $result['product_description'] = $productMeta['description'];
     }
 
     return response()->json($result, $status);

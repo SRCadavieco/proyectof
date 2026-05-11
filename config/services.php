@@ -77,7 +77,8 @@ return [
     ],
 
     'together' => [
-        'key' => env('TOGETHER_API_KEY'),
+        'key'       => env('TOGETHER_API_KEY'),
+        'llm_model' => env('TOGETHER_LLM_MODEL', 'deepseek-ai/DeepSeek-V4-Flash'),
     ],
 
     'nanogpt' => [
