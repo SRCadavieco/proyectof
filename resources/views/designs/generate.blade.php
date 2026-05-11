@@ -830,6 +830,9 @@
                         <input id="printify-title" type="text" placeholder="Product name"
                                class="w-full rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
                                style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                        <textarea id="printify-description" rows="2" placeholder="Product description (optional)"
+                                  class="w-full rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors resize-none"
+                                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
                         <select id="printify-shop"
                                 class="w-full rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
                                 style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
@@ -1150,6 +1153,7 @@
     let currentChatId       = null;
     let isEditMode          = false;
     let isSubmitting        = false;
+    let lastProductMeta     = { title: null, description: null }; // populated by LLM enrichment (admin)
     let isCreatingChat      = false;
     let chats               = [];
     let pendingDeleteId     = null;
@@ -1794,8 +1798,43 @@
 
             // NanoGPT returns immediately with a generation_id — poll for the result
             if (data.status === 'generating' && data.generation_id) {
+                // Save LLM-generated product meta that came with the initial response
+                lastProductMeta = {
+                    title:            data.product_title        || null,
+                    description:      data.product_description  || null,
+                    optimizedPrompt:  data.llm_optimized_prompt || null,
+                    originalPrompt:   data.llm_original_prompt  || null,
+                };
+                if (lastProductMeta.optimizedPrompt) {
+                    console.group('%c[FabricAI] LLM Prompt Enrichment (async/NanoGPT)', 'color:#a855f7;font-weight:bold');
+                    console.info('%cOriginal prompt:',   'color:#94a3b8', lastProductMeta.originalPrompt);
+                    console.info('%cOptimized prompt:',  'color:#34d399', lastProductMeta.optimizedPrompt);
+                    console.info('%cProduct title:',     'color:#60a5fa', lastProductMeta.title);
+                    console.info('%cProduct description:','color:#f9a8d4', lastProductMeta.description);
+                    console.groupEnd();
+                } else {
+                    adminConsole.info('[FabricAI] LLM enrichment skipped (non-admin plan or edit mode)');
+                }
                 await pollGeneration(data.generation_id, placeholderId, generationEngine.cost);
                 return; // finally block handled inside pollGeneration
+            }
+
+            // Save LLM-generated product meta for the Printify panel
+            lastProductMeta = {
+                title:            data.product_title        || null,
+                description:      data.product_description  || null,
+                optimizedPrompt:  data.llm_optimized_prompt || null,
+                originalPrompt:   data.llm_original_prompt  || null,
+            };
+            if (lastProductMeta.optimizedPrompt) {
+                console.group('%c[FabricAI] LLM Prompt Enrichment', 'color:#a855f7;font-weight:bold');
+                console.info('%cOriginal prompt:',    'color:#94a3b8', lastProductMeta.originalPrompt);
+                console.info('%cOptimized prompt:',   'color:#34d399', lastProductMeta.optimizedPrompt);
+                console.info('%cProduct title:',      'color:#60a5fa', lastProductMeta.title);
+                console.info('%cProduct description:','color:#f9a8d4', lastProductMeta.description);
+                console.groupEnd();
+            } else {
+                adminConsole.info('[FabricAI] LLM enrichment skipped (non-admin plan or edit mode)');
             }
 
             const imageUrl = data.imageUrl || data.image_url || data.url;
@@ -3206,7 +3245,9 @@
         if (isHidden) {
             const gs    = document.getElementById('garment-select');
             const label = gs.options[gs.selectedIndex]?.text ?? 'Custom Design';
-            document.getElementById('printify-title').value = `FabricAI — ${label}`;
+            // Use LLM-generated title if available, otherwise fall back to garment label
+            document.getElementById('printify-title').value       = lastProductMeta.title || `FabricAI — ${label}`;
+            document.getElementById('printify-description').value = lastProductMeta.description || '';
             resetPrintifyFeedback(); loadPrintifyShops();
             const hex    = document.getElementById('garment-color').value;
             const pch    = document.getElementById('printify-color-hex');
@@ -3330,8 +3371,9 @@
     let _sendAllInProgress = false;
 
     async function sendToPrintify() {
-        const shopId = document.getElementById('printify-shop').value;
-        const title  = document.getElementById('printify-title').value.trim();
+        const shopId      = document.getElementById('printify-shop').value;
+        const title       = document.getElementById('printify-title').value.trim();
+        const description = document.getElementById('printify-description').value.trim();
         const type   = document.getElementById('garment-select').value;
         const btn    = document.getElementById('printify-send-btn');
         if (!shopId)               { showPrintifyFeedback('Please select a Printify shop.'); return; }
@@ -3373,6 +3415,7 @@
         const csrf  = document.querySelector('meta[name="csrf-token"]').content;
         const payload = {
             shop_id:parseInt(shopId), garment_type:type, image_source:imageSrc, title,
+            description: description || undefined,
             color:hexToColorName(document.getElementById('printify-color-hex').value),
             pos_x:        isBakedFront ? 0.5 : 0.5+posX*0.5,
             pos_y:        isBakedFront ? 0.5 : 0.5+posY*0.5,

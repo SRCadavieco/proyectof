@@ -266,7 +266,7 @@ class PrintifyService
         return $placeholders;
     }
 
-    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, ?string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = '', ?string $backImageUrl = null, float $backPosX = 0.5, float $backPosY = 0.5, float $backScale = 1.0): array
+    public function sendDesign(string $token, int $shopId, string $title, string $garmentType, ?string $imageUrl, float $posX = 0.5, float $posY = 0.5, float $scale = 1.0, string $color = '', ?string $backImageUrl = null, float $backPosX = 0.5, float $backPosY = 0.5, float $backScale = 1.0, ?string $description = null): array
     {
         $blueprintId = self::BLUEPRINT_MAP[$garmentType] ?? self::BLUEPRINT_MAP['tshirt'];
 
@@ -341,6 +341,7 @@ class PrintifyService
                 // 5. Build product payload
                 $payload = [
                     'title'             => $title,
+                    'description'       => $description ?? '',
                     'blueprint_id'      => $blueprintId,
                     'print_provider_id' => $providerId,
                     'variants'          => array_map(fn($v) => [

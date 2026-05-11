@@ -128,7 +128,7 @@ class DesignController extends Controller
 
     // LLM enrichment: optimize prompt for the target image model + generate product meta.
     // Temporarily restricted to admin plan for testing.
-    $productMeta = ['title' => null, 'description' => null];
+    $productMeta = ['title' => null, 'description' => null, 'optimized_prompt' => null];
     $isDiffusionProvider = in_array($provider, ['chutes', 'nanogpt', 'together'], true);
     $isEditOrRef         = $hasReferenceImage || !empty($validated['is_edit']);
     $llmEnrichEnabled    = $effectivePlan === 'admin' && $isDiffusionProvider && !$isEditOrRef;
@@ -165,8 +165,9 @@ class DesignController extends Controller
             $userPromptForDiffusion = mb_substr($enriched['optimized_prompt'], 0, 400);
         }
         $productMeta = [
-            'title'       => $enriched['title']       ?? null,
-            'description' => $enriched['description'] ?? null,
+            'title'            => $enriched['title']            ?? null,
+            'description'      => $enriched['description']      ?? null,
+            'optimized_prompt' => $enriched['optimized_prompt'] ?? null,
         ];
     }
 
@@ -350,13 +351,15 @@ if ($isEdit) {
         );
 
         return response()->json([
-            'success'             => true,
-            'status'              => 'generating',
-            'generation_id'       => $generationId,
-            'provider'            => $provider,
-            'model'               => $model,
-            'product_title'       => $productMeta['title'],
-            'product_description' => $productMeta['description'],
+            'success'              => true,
+            'status'               => 'generating',
+            'generation_id'        => $generationId,
+            'provider'             => $provider,
+            'model'                => $model,
+            'product_title'        => $productMeta['title'],
+            'product_description'  => $productMeta['description'],
+            'llm_optimized_prompt' => $productMeta['optimized_prompt'],
+            'llm_original_prompt'  => $llmEnrichEnabled ? $userPrompt : null,
         ]);
     }
 
@@ -496,10 +499,12 @@ if ($isEdit) {
     // Expose the effective provider/model used (after any runtime fallback)
     // so the frontend can confirm exactly which engine generated the image.
     if (is_array($result)) {
-        $result['provider']            = $provider;
-        $result['model']               = $model;
-        $result['product_title']       = $productMeta['title'];
-        $result['product_description'] = $productMeta['description'];
+        $result['provider']             = $provider;
+        $result['model']                = $model;
+        $result['product_title']        = $productMeta['title'];
+        $result['product_description']  = $productMeta['description'];
+        $result['llm_optimized_prompt'] = $productMeta['optimized_prompt'];
+        $result['llm_original_prompt']  = $llmEnrichEnabled ? $userPrompt : null;
     }
 
     return response()->json($result, $status);

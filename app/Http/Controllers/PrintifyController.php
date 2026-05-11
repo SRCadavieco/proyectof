@@ -143,6 +143,7 @@ class PrintifyController extends Controller
             'garment_type'         => 'required|string|in:tshirt,hoodie,zip_hoodie,tanktop,longsleeve,sweatshirt,vneck,womens_tee,leggings,joggers,shorts,dresses,skirts,bikinis,socks,underwear,pajamas,caps,beanies,tote_bags,scarves',
             'image_source'         => 'nullable|string|required_without:back_image_source',
             'title'                => 'required|string|max:140',
+            'description'          => 'nullable|string|max:500',
             'color'                => 'nullable|string|max:50',
             'pos_x'                => 'nullable|numeric|min:0|max:1',
             'pos_y'                => 'nullable|numeric|min:0|max:1',
@@ -168,7 +169,8 @@ class PrintifyController extends Controller
                 $data['back_image_source']          ?? null,
                 (float) ($data['back_pos_x']        ?? 0.5),
                 (float) ($data['back_pos_y']        ?? 0.5),
-                (float) ($data['back_design_scale'] ?? 1.0)
+                (float) ($data['back_design_scale'] ?? 1.0),
+                $data['description']                ?? null
             );
 
             $shopId    = $data['shop_id'];
