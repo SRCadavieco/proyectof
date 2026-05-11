@@ -67,6 +67,14 @@ class GenerateDesignJob implements ShouldQueue
                         $bgRemovalFailed = true;
                     }
 
+                    // Always flood-fill any residual near-white canvas pixels left after
+                    // Replicate. Safe for scenes because it only removes contiguous white
+                    // reachable from the image edges, never touching interior artwork.
+                    if (!empty($this->backgroundColor) === false) {
+                        $dataUrl = str_starts_with($base64, 'data:') ? $base64 : 'data:image/png;base64,' . $base64;
+                        $base64 = $backgrounds->removeWhiteBackground($dataUrl, 28);
+                    }
+
                     if (!str_starts_with($base64, 'data:')) {
                         $base64 = 'data:image/png;base64,' . $base64;
                     }

@@ -487,4 +487,98 @@ class BackgroundRemovalService
         $mid = (int) floor(count($samples) / 2);
         return [$r[$mid], $g[$mid], $b[$mid]];
     }
+
+    /**
+     * Remove pure-white (or near-white) background using flood-fill from all four corners.
+     * Safe to use on illustrations that have a white canvas around the artwork — it only
+     * removes contiguous near-white pixels reachable from the image edges, leaving any
+     * white areas inside the artwork untouched.
+     *
+     * @param  string $dataUrl   data URL (data:image/png;base64,...)
+     * @param  int    $tolerance RGB distance from pure white (255,255,255) to treat as bg
+     * @return string            data URL with white background removed, or original on failure
+     */
+    public function removeWhiteBackground(string $dataUrl, int $tolerance = 30): string
+    {
+        try {
+            $raw    = $this->stripDataHeader($dataUrl);
+            $binary = base64_decode($raw, true);
+            if (!$binary) return $dataUrl;
+
+            $src = @imagecreatefromstring($binary);
+            if (!$src) return $dataUrl;
+
+            $w = imagesx($src);
+            $h = imagesy($src);
+
+            // Work on a true-colour copy with alpha
+            $out = imagecreatetruecolor($w, $h);
+            imagealphablending($out, false);
+            imagesavealpha($out, true);
+            imagecopy($out, $src, 0, 0, 0, 0, $w, $h);
+            imagedestroy($src);
+
+            // Build a visited map and a queue for iterative flood-fill
+            $visited = array_fill(0, $w * $h, false);
+            $queue   = new \SplQueue();
+
+            // Seed from all four edges
+            for ($x = 0; $x < $w; $x++) {
+                $queue->enqueue([$x, 0]);
+                $queue->enqueue([$x, $h - 1]);
+            }
+            for ($y = 1; $y < $h - 1; $y++) {
+                $queue->enqueue([0, $y]);
+                $queue->enqueue([$w - 1, $y]);
+            }
+
+            while (!$queue->isEmpty()) {
+                [$cx, $cy] = $queue->dequeue();
+                $idx = $cy * $w + $cx;
+                if ($visited[$idx]) continue;
+                $visited[$idx] = true;
+
+                $col = imagecolorat($out, $cx, $cy);
+                $a   = ($col >> 24) & 0x7F; // 0 = opaque, 127 = transparent
+                if ($a > 64) {
+                    // Already transparent — mark and propagate
+                    imagesetpixel($out, $cx, $cy, imagecolorallocatealpha($out, 255, 255, 255, 127));
+                    foreach ([[$cx-1,$cy],[$cx+1,$cy],[$cx,$cy-1],[$cx,$cy+1]] as [$nx,$ny]) {
+                        if ($nx >= 0 && $nx < $w && $ny >= 0 && $ny < $h && !$visited[$ny*$w+$nx]) {
+                            $queue->enqueue([$nx, $ny]);
+                        }
+                    }
+                    continue;
+                }
+
+                $r = ($col >> 16) & 0xFF;
+                $g = ($col >> 8)  & 0xFF;
+                $b =  $col        & 0xFF;
+
+                // Euclidean distance from pure white
+                $dist = sqrt((255-$r)**2 + (255-$g)**2 + (255-$b)**2);
+                if ($dist > $tolerance) continue; // not white-ish, stop here
+
+                // Make transparent and propagate to 4-connected neighbours
+                imagesetpixel($out, $cx, $cy, imagecolorallocatealpha($out, $r, $g, $b, 127));
+                foreach ([[$cx-1,$cy],[$cx+1,$cy],[$cx,$cy-1],[$cx,$cy+1]] as [$nx,$ny]) {
+                    if ($nx >= 0 && $nx < $w && $ny >= 0 && $ny < $h && !$visited[$ny*$w+$nx]) {
+                        $queue->enqueue([$nx, $ny]);
+                    }
+                }
+            }
+
+            ob_start();
+            imagepng($out, null, 6);
+            $png = ob_get_clean();
+            imagedestroy($out);
+
+            if (!$png) return $dataUrl;
+            return 'data:image/png;base64,' . base64_encode($png);
+
+        } catch (\Throwable $e) {
+            Log::warning('removeWhiteBackground failed, returning original', ['error' => $e->getMessage()]);
+            return $dataUrl;
+        }
+    }
 }
