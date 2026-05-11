@@ -1093,15 +1093,23 @@
                 _render();
             },
 
-            /** Close / hide panel (clears all done/error jobs, keeps running). */
+            /** Close/hide panel and clear all jobs (running jobs are aborted). */
             closePanel(e) {
-                e.stopPropagation();
-                _jobs = _jobs.filter(j => j.status === 'running');
-                if (_jobs.length === 0) {
-                    _panel().classList.add('hidden');
-                } else {
-                    _render();
+                if (e && typeof e.stopPropagation === 'function') {
+                    e.stopPropagation();
                 }
+
+                // Close means fully dismiss the queue UI and clear all in-memory rows.
+                // Abort running jobs so they don't keep updating a hidden queue.
+                _jobs.forEach(job => {
+                    if (job.status === 'running' && typeof job.abortFn === 'function') {
+                        try { job.abortFn(); } catch (_) { /* ignore */ }
+                    }
+                });
+
+                _jobs = [];
+                _collapsed = false;
+                _render();
             },
         };
     })();
@@ -3253,9 +3261,17 @@
         if (isHidden) {
             const gs    = document.getElementById('garment-select');
             const label = gs.options[gs.selectedIndex]?.text ?? 'Custom Design';
-            // Use LLM-generated title if available, otherwise fall back to garment label
-            document.getElementById('printify-title').value       = lastProductMeta.title || `FabricAI — ${label}`;
-            document.getElementById('printify-description').value = lastProductMeta.description || '';
+            const titleInput = document.getElementById('printify-title');
+            const descInput  = document.getElementById('printify-description');
+
+            // Do not overwrite user edits when reopening the panel.
+            if (titleInput && !titleInput.value.trim()) {
+                titleInput.value = lastProductMeta.title || `FabricAI — ${label}`;
+            }
+            if (descInput && !descInput.value.trim() && lastProductMeta.description) {
+                descInput.value = lastProductMeta.description;
+            }
+
             resetPrintifyFeedback(); loadPrintifyShops();
             const hex    = document.getElementById('garment-color').value;
             const pch    = document.getElementById('printify-color-hex');
@@ -3464,6 +3480,7 @@
 
         const shopId = document.getElementById('printify-shop').value;
         const title  = document.getElementById('printify-title').value.trim();
+        const description = document.getElementById('printify-description').value.trim();
         const btn    = document.getElementById('printify-bulk-btn');
         if (!shopId || !title || !_layers.front.length) {
             showPrintifyFeedback('Please fill in all fields and load a design.'); return;
@@ -3548,6 +3565,7 @@
                         const payload = {
                             shop_id: parseInt(shopId), garment_type: type, image_source: imageSrc,
                             title: title + ' — ' + label, color,
+                            description: description || undefined,
                             pos_x: 0.5 + posX * 0.5, pos_y: 0.5 + posY * 0.5, design_scale: sc,
                             publish_after_create: publish,
                         };
