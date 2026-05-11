@@ -54,36 +54,23 @@ class GenerateDesignJob implements ShouldQueue
                 $imageUrl = $result['imageUrl']    ?? $result['image_url']    ?? $result['url']    ?? null;
 
                 if ($base64) {
-                    $dataUrl = str_starts_with($base64, 'data:') ? $base64 : 'data:image/png;base64,' . $base64;
+                    $noBg = $backgrounds->removeBackground($base64);
+                    $bgRemovalMethod = $backgrounds->getLastMethod();
+                    $bgRemovalEngine = $backgrounds->getEngineId();
+                    try {
+                        ApiUsageLog::record('replicate', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
+                    } catch (\Throwable) {}
 
-                    // Detect whether the image has a white canvas (isolated subject)
-                    // or a coloured scene background.
-                    // - White edges → call Replicate to isolate the subject, then flood-fill residual white.
-                    // - Coloured edges (scene) → skip Replicate; only flood-fill any white margin.
-                    $isWhiteCanvas = empty($this->backgroundColor) && $backgrounds->hasWhiteEdges($dataUrl);
-
-                    if ($isWhiteCanvas) {
-                        $noBg = $backgrounds->removeBackground($base64);
-                        $bgRemovalMethod = $backgrounds->getLastMethod();
-                        $bgRemovalEngine = $backgrounds->getEngineId();
-                        try {
-                            ApiUsageLog::record('replicate', 'remove_bg', 'remove_bg', $this->userId, $noBg !== null);
-                        } catch (\Throwable) {}
-
-                        if ($noBg) {
-                            $dataUrl = str_starts_with($noBg, 'data:') ? $noBg : 'data:image/png;base64,' . $noBg;
-                        } else {
-                            $bgRemovalFailed = true;
-                        }
+                    if ($noBg) {
+                        $base64 = $noBg;
+                    } else {
+                        $bgRemovalFailed = true;
                     }
 
-                    // Flood-fill removes any residual near-white margin from either path.
-                    // For scenes this only touches exterior white padding, never coloured pixels.
-                    if (empty($this->backgroundColor)) {
-                        $dataUrl = $backgrounds->removeWhiteBackground($dataUrl, 28);
+                    if (!str_starts_with($base64, 'data:')) {
+                        $base64 = 'data:image/png;base64,' . $base64;
                     }
 
-                    $base64     = $dataUrl;
                     $imageValue = $base64;
                 } elseif ($imageUrl) {
                     $imageValue = $imageUrl;
