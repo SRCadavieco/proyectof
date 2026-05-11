@@ -60,8 +60,10 @@ class NanoGptService
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         } else {
-            // Sticker-like output that still has ground contact, without thick white borders.
-            $finalPrompt .= "\nIsolated hero composition with only minimal ground contact (road/floor/shadow) under the subject. No sky, no distant landscape, no full environment scene. No decorative border or frame, no apparel or clothing mockup, no text overlays. No white sticker outline, no white outer margin, no rounded white patch behind the subject.";
+            // Let the prompt drive the composition: scenes get a full background,
+            // isolated subjects render naturally. The Replicate + flood-fill pipeline
+            // handles background removal afterwards regardless.
+            $finalPrompt .= "\nNo decorative border or frame around the image, no apparel or clothing mockup, no text overlays.";
         }
 
         // Keep payload bounded for stability with image models.

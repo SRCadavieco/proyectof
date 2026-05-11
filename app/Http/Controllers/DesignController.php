@@ -611,8 +611,8 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
     $cleanPrompt = trim($userPrompt);
     $style = trim(strtolower((string) $imageStyle));
 
-    // Context instruction for NanoGPT: grounded subject without full environment scene.
-    $contextGuide = 'Centered subject composition with clear ground contact (floor/road/base) and no full environment scene. Avoid sky and distant landscape backgrounds.';
+    // Context instruction kept for NanoGPT only — it understands natural language.
+    $contextGuide = 'Full scene with detailed background and environment. Complete composition with foreground and background elements.';
 
     // Chutes/Together are diffusion models — applyImageStyleGuide() handles style steering.
     // For non-default styles, just pass the user prompt clean; the style prefix will be prepended by applyImageStyleGuide.
@@ -625,7 +625,8 @@ private function buildHybridPrompt(string $userPrompt, string $provider, ?string
         return trim($cleanPrompt . ' ' . $legacyStyleGuide);
     }
 
-    // NanoGPT (juggernaut-z / gpt-image-2): keep it grounded but not a full scenic shot.
+    // NanoGPT (juggernaut-z / gpt-image-2) is a high-quality photorealistic/artistic
+    // model — enhance with context but keep artistic quality
     if ($provider === 'nanogpt') {
         return trim($cleanPrompt . ' ' . $contextGuide);
     }
@@ -670,25 +671,7 @@ private function applyImageStyleGuide(string $prompt, ?string $imageStyle, strin
         return $tags[$style] . ', ' . $prompt;
     }
 
-    // NanoGPT-specific style guidance: grounded sticker-like composition without sky scene.
-    if ($provider === 'nanogpt') {
-        $nanoInstructions = [
-            'realistic_drawing' => 'Draw in a realistic pencil/charcoal style. Keep the subject isolated with a simple ground/base contact only (road/floor/shadow), no sky or full scenic background. Subject: ',
-            'cartoon_drawing'   => 'Draw in a bold cartoon style. Keep the subject isolated with a small ground/base contact only, no sky or full scenic background. Subject: ',
-            'vector_art'        => 'Generate as clean flat vector art. Keep the subject isolated with a simple base/ground contact only, no sky or full scenic background. Subject: ',
-            'photorealistic'    => 'Generate as a photorealistic hero shot with strong detail. Keep the subject isolated with realistic road/floor contact and subtle ground shadow only, no sky or full environmental scene. Subject: ',
-            'ghibli'            => 'Draw in Studio Ghibli-inspired style. Keep the subject isolated with a minimal painted ground/base contact only, no sky or full scenic background. Subject: ',
-            'manga'             => 'Draw as manga line art. Keep the subject isolated with minimal ground/action base contact only, no sky or full scenic background. Subject: ',
-        ];
-
-        if (!isset($nanoInstructions[$style])) {
-            return $prompt;
-        }
-
-        return $nanoInstructions[$style] . $prompt;
-    }
-
-    // Gemini / other LLM backends: natural language instruction prefix
+    // Gemini / LLM backends (including NanoGPT): natural language instruction prefix
     $instructions = [
         'realistic_drawing' => 'Draw in a traditional realistic pencil and charcoal style with natural proportions, cross-hatching, and fine line work. Render the full composition with a detailed scenic background and environment. Subject: ',
         'cartoon_drawing'   => 'Draw in a bold cartoon illustration style with thick outlines, flat vibrant colors, and exaggerated playful shapes. Include a full detailed background scene. Subject: ',

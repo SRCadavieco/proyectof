@@ -136,14 +136,65 @@ class GenerateDesignJob implements ShouldQueue
     /**
      * Decide whether Replicate background removal should run.
      *
-     * For NanoGPT generation we keep background removal enabled by default,
-     * except when the user explicitly selected a fixed background color.
+     * Rules:
+     * - If user picked a solid background color, never remove.
+     * - If prompt explicitly asks for isolated/transparent output, remove.
+     * - If prompt describes a scene/environment, skip removal.
+     * - Default: remove (backward compatible for simple object prompts).
      */
     private function shouldApplyBackgroundRemoval(string $userPrompt, ?string $backgroundColor): bool
     {
         if (!empty($backgroundColor)) {
             return false;
         }
+
+        $text = mb_strtolower($userPrompt);
+
+        $isolateKeywords = [
+            'sin fondo',
+            'fondo transparente',
+            'transparent background',
+            'no background',
+            'aislado',
+            'isolated',
+            'sticker',
+            'logo',
+            'png',
+        ];
+
+        foreach ($isolateKeywords as $keyword) {
+            if (str_contains($text, $keyword)) {
+                return true;
+            }
+        }
+
+        $sceneKeywords = [
+            'escena',
+            'circuito',
+            'en la calle',
+            'carretera',
+            'paisaje',
+            'fondo',
+            'entorno',
+            'background',
+            'environment',
+            'scene',
+            'city',
+            'forest',
+            'beach',
+            'mountain',
+            'sky',
+            'road',
+            'track',
+            'racing',
+        ];
+
+        foreach ($sceneKeywords as $keyword) {
+            if (str_contains($text, $keyword)) {
+                return false;
+            }
+        }
+
         return true;
     }
 }
