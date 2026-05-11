@@ -549,14 +549,15 @@ class BackgroundRemovalService
     }
 
     /**
-     * Remove pure-white (or near-white) background using flood-fill from all four corners.
-     * Safe to use on illustrations that have a white canvas around the artwork — it only
-     * removes contiguous near-white pixels reachable from the image edges, leaving any
-     * white areas inside the artwork untouched.
+     * Remove bright canvas background (white and warm off-white/cream) using flood-fill
+     * from all four corners.
+     *
+     * This only removes contiguous bright-neutral pixels reachable from image edges,
+     * leaving interior bright details untouched.
      *
      * @param  string $dataUrl   data URL (data:image/png;base64,...)
-     * @param  int    $tolerance RGB distance from pure white (255,255,255) to treat as bg
-     * @return string            data URL with white background removed, or original on failure
+     * @param  int    $tolerance RGB distance from pure white (255,255,255)
+     * @return string            data URL with edge canvas removed, or original on failure
      */
     public function removeWhiteBackground(string $dataUrl, int $tolerance = 30): string
     {
@@ -615,9 +616,16 @@ class BackgroundRemovalService
                 $g = ($col >> 8)  & 0xFF;
                 $b =  $col        & 0xFF;
 
-                // Euclidean distance from pure white
+                // Treat both pure white and warm paper/cream tones as removable canvas.
+                // Conditions:
+                // 1) close to white in Euclidean RGB distance, OR
+                // 2) all channels are bright and fairly neutral (low channel spread).
                 $dist = sqrt((255-$r)**2 + (255-$g)**2 + (255-$b)**2);
-                if ($dist > $tolerance) continue; // not white-ish, stop here
+                $maxChannel = max($r, $g, $b);
+                $minChannel = min($r, $g, $b);
+                $isWarmPaperTone = ($minChannel >= 210) && (($maxChannel - $minChannel) <= 48);
+                $isCanvasLike = ($dist <= $tolerance) || $isWarmPaperTone;
+                if (!$isCanvasLike) continue; // edge reached real artwork/background
 
                 // Make transparent and propagate to 4-connected neighbours
                 imagesetpixel($out, $cx, $cy, imagecolorallocatealpha($out, $r, $g, $b, 127));
