@@ -60,10 +60,10 @@ class NanoGptService
             $hex = strtolower(trim($backgroundColor));
             $finalPrompt .= "\nSolid uniform background color {$hex}. No transparency.";
         } else {
-            // Pure white background so rembg can cleanly separate the artwork.
-            // We do NOT force any scene/environment — the user's own prompt decides
-            // whether there is a background context or just an isolated subject.
-            $finalPrompt .= "\nDraw on a pure solid white background. Detailed illustration with clean, sharp edges. No vignette, no decorative border or frame, no rounded edges, no apparel, no clothing mockup, no text.";
+            // Let the prompt drive the composition: scenes get a full background,
+            // isolated subjects render naturally. The Replicate + flood-fill pipeline
+            // handles background removal afterwards regardless.
+            $finalPrompt .= "\nDetailed illustration with clean, sharp edges. No vignette, no decorative border or frame, no rounded edges, no apparel, no clothing mockup, no text.";
         }
 
         // Keep payload bounded for stability with image models.
