@@ -358,6 +358,7 @@ if ($isEdit) {
             'model'                => $model,
             'product_title'        => $productMeta['title'],
             'product_description'  => $productMeta['description'],
+            'llm_attempted'        => $llmEnrichEnabled,
             'llm_optimized_prompt' => $productMeta['optimized_prompt'],
             'llm_original_prompt'  => $llmEnrichEnabled ? $userPrompt : null,
         ]);
@@ -503,6 +504,7 @@ if ($isEdit) {
         $result['model']                = $model;
         $result['product_title']        = $productMeta['title'];
         $result['product_description']  = $productMeta['description'];
+        $result['llm_attempted']        = $llmEnrichEnabled;
         $result['llm_optimized_prompt'] = $productMeta['optimized_prompt'];
         $result['llm_original_prompt']  = $llmEnrichEnabled ? $userPrompt : null;
     }

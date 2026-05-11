@@ -1805,13 +1805,17 @@
                     optimizedPrompt:  data.llm_optimized_prompt || null,
                     originalPrompt:   data.llm_original_prompt  || null,
                 };
-                if (lastProductMeta.optimizedPrompt) {
-                    console.group('%c[FabricAI] LLM Prompt Enrichment (async/NanoGPT)', 'color:#a855f7;font-weight:bold');
-                    console.info('%cOriginal prompt:',   'color:#94a3b8', lastProductMeta.originalPrompt);
-                    console.info('%cOptimized prompt:',  'color:#34d399', lastProductMeta.optimizedPrompt);
-                    console.info('%cProduct title:',     'color:#60a5fa', lastProductMeta.title);
-                    console.info('%cProduct description:','color:#f9a8d4', lastProductMeta.description);
-                    console.groupEnd();
+                if (data.llm_attempted) {
+                    if (lastProductMeta.optimizedPrompt) {
+                        console.group('%c[FabricAI] LLM Prompt Enrichment (async/NanoGPT)', 'color:#a855f7;font-weight:bold');
+                        console.info('%cOriginal prompt:',    'color:#94a3b8', lastProductMeta.originalPrompt);
+                        console.info('%cOptimized prompt:',   'color:#34d399', lastProductMeta.optimizedPrompt);
+                        console.info('%cProduct title:',      'color:#60a5fa', lastProductMeta.title);
+                        console.info('%cProduct description:','color:#f9a8d4', lastProductMeta.description);
+                        console.groupEnd();
+                    } else {
+                        console.warn('%c[FabricAI] LLM enrichment attempted but LLM returned empty (API error or model unavailable)', 'color:#f97316;font-weight:bold', { original: lastProductMeta.originalPrompt });
+                    }
                 } else {
                     adminConsole.info('[FabricAI] LLM enrichment skipped (non-admin plan or edit mode)');
                 }
@@ -1826,13 +1830,17 @@
                 optimizedPrompt:  data.llm_optimized_prompt || null,
                 originalPrompt:   data.llm_original_prompt  || null,
             };
-            if (lastProductMeta.optimizedPrompt) {
-                console.group('%c[FabricAI] LLM Prompt Enrichment', 'color:#a855f7;font-weight:bold');
-                console.info('%cOriginal prompt:',    'color:#94a3b8', lastProductMeta.originalPrompt);
-                console.info('%cOptimized prompt:',   'color:#34d399', lastProductMeta.optimizedPrompt);
-                console.info('%cProduct title:',      'color:#60a5fa', lastProductMeta.title);
-                console.info('%cProduct description:','color:#f9a8d4', lastProductMeta.description);
-                console.groupEnd();
+            if (data.llm_attempted) {
+                if (lastProductMeta.optimizedPrompt) {
+                    console.group('%c[FabricAI] LLM Prompt Enrichment', 'color:#a855f7;font-weight:bold');
+                    console.info('%cOriginal prompt:',    'color:#94a3b8', lastProductMeta.originalPrompt);
+                    console.info('%cOptimized prompt:',   'color:#34d399', lastProductMeta.optimizedPrompt);
+                    console.info('%cProduct title:',      'color:#60a5fa', lastProductMeta.title);
+                    console.info('%cProduct description:','color:#f9a8d4', lastProductMeta.description);
+                    console.groupEnd();
+                } else {
+                    console.warn('%c[FabricAI] LLM enrichment attempted but LLM returned empty (API error or model unavailable)', 'color:#f97316;font-weight:bold', { original: lastProductMeta.originalPrompt });
+                }
             } else {
                 adminConsole.info('[FabricAI] LLM enrichment skipped (non-admin plan or edit mode)');
             }

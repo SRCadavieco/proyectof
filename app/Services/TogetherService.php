@@ -16,7 +16,7 @@ class TogetherService
 {
     private const API_URL     = 'https://api.together.xyz/v1/images/generations';
     private const CHAT_URL    = 'https://api.together.xyz/v1/chat/completions';
-    private const LLM_MODEL   = 'deepseek-ai/DeepSeek-V4-Flash';
+    private const LLM_MODEL   = 'deepseek-ai/DeepSeek-V3-0324';
 
     private const MODEL_MAP = [
         'flux_dev' => 'black-forest-labs/FLUX.2-dev',
