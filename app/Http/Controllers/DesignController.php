@@ -127,20 +127,41 @@ class DesignController extends Controller
     $userPromptForDiffusion = mb_substr($userPrompt, 0, 270);
 
     // LLM enrichment: optimize prompt for the target image model + generate product meta.
-    // Runs only for diffusion providers in text-to-image mode (not edit / reference-image).
+    // Temporarily restricted to admin plan for testing.
     $productMeta = ['title' => null, 'description' => null];
     $isDiffusionProvider = in_array($provider, ['chutes', 'nanogpt', 'together'], true);
     $isEditOrRef         = $hasReferenceImage || !empty($validated['is_edit']);
+    $llmEnrichEnabled    = $effectivePlan === 'admin' && $isDiffusionProvider && !$isEditOrRef;
 
-    if ($isDiffusionProvider && !$isEditOrRef) {
+    \Log::info('[LLM enrichment] eligibility check', [
+        'user_id'         => $user->id,
+        'plan'            => $effectivePlan,
+        'provider'        => $provider,
+        'is_edit_or_ref'  => $isEditOrRef,
+        'enrich_enabled'  => $llmEnrichEnabled,
+    ]);
+
+    if ($llmEnrichEnabled) {
         $enrichModelKey = $validated['model'] ?? match ($provider) {
             'nanogpt'  => 'juggernaut_z',
             'together' => 'flux_dev',
             default    => 'fabric_pro',
         };
+
+        \Log::info('[LLM enrichment] calling enrichPrompt', [
+            'model_key'   => $enrichModelKey,
+            'user_prompt' => mb_substr($userPrompt, 0, 150),
+        ]);
+
         $enriched = $together->enrichPrompt($userPrompt, $enrichModelKey);
+
+        \Log::info('[LLM enrichment] result', [
+            'optimized_prompt' => mb_substr($enriched['optimized_prompt'] ?? '', 0, 300),
+            'title'            => $enriched['title']       ?? null,
+            'description'      => $enriched['description'] ?? null,
+        ]);
+
         if (!empty($enriched['optimized_prompt'])) {
-            // Use the LLM-optimised text as the creative base; allow slightly longer than raw input
             $userPromptForDiffusion = mb_substr($enriched['optimized_prompt'], 0, 400);
         }
         $productMeta = [
