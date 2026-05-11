@@ -489,6 +489,66 @@ class BackgroundRemovalService
     }
 
     /**
+     * Returns true when the image's edges are predominantly near-white (isolated subject
+     * on a white canvas). Returns false when edges contain significant colour (scene image).
+     * Used to decide whether to call Replicate AI background removal or just flood-fill.
+     *
+     * @param  string $dataUrl  data URL (data:image/png;base64,...)
+     * @param  int    $tolerance RGB distance from white to consider "white"
+     * @param  float  $threshold fraction of edge pixels that must be white (0–1)
+     */
+    public function hasWhiteEdges(string $dataUrl, int $tolerance = 40, float $threshold = 0.75): bool
+    {
+        try {
+            $raw    = $this->stripDataHeader($dataUrl);
+            $binary = base64_decode($raw, true);
+            if (!$binary) return true;
+
+            $img = @imagecreatefromstring($binary);
+            if (!$img) return true;
+
+            $w = imagesx($img);
+            $h = imagesy($img);
+            $margin = max(4, (int) round(min($w, $h) * 0.03));
+
+            $total = 0;
+            $white = 0;
+
+            // Sample a strip along each edge
+            for ($x = 0; $x < $w; $x++) {
+                foreach ([0, min($margin - 1, $h - 1)] as $y) {
+                    $col  = imagecolorat($img, $x, $y);
+                    $a    = ($col >> 24) & 0x7F;
+                    if ($a > 64) { $white++; $total++; continue; } // transparent = white
+                    $r = ($col >> 16) & 0xFF;
+                    $g = ($col >> 8)  & 0xFF;
+                    $b =  $col        & 0xFF;
+                    if (sqrt((255-$r)**2 + (255-$g)**2 + (255-$b)**2) <= $tolerance) $white++;
+                    $total++;
+                }
+            }
+            for ($y = $margin; $y < $h - $margin; $y++) {
+                foreach ([0, min($margin - 1, $w - 1)] as $x) {
+                    $col  = imagecolorat($img, $x, $y);
+                    $a    = ($col >> 24) & 0x7F;
+                    if ($a > 64) { $white++; $total++; continue; }
+                    $r = ($col >> 16) & 0xFF;
+                    $g = ($col >> 8)  & 0xFF;
+                    $b =  $col        & 0xFF;
+                    if (sqrt((255-$r)**2 + (255-$g)**2 + (255-$b)**2) <= $tolerance) $white++;
+                    $total++;
+                }
+            }
+
+            imagedestroy($img);
+            return $total === 0 || ($white / $total) >= $threshold;
+
+        } catch (\Throwable) {
+            return true; // assume white if detection fails → safe fallback
+        }
+    }
+
+    /**
      * Remove pure-white (or near-white) background using flood-fill from all four corners.
      * Safe to use on illustrations that have a white canvas around the artwork — it only
      * removes contiguous near-white pixels reachable from the image edges, leaving any
