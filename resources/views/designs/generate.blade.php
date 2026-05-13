@@ -486,7 +486,7 @@
                            transition-colors flex items-center gap-1.5 border border-white/20 backdrop-blur-sm">
                 <i class="fas fa-tshirt text-[10px]"></i> Preview
             </button>
-            <button onclick="_closeLightboxThen(() => openBulkUploadModal(_lightboxSrc))"
+            <button onclick="_closeLightboxThen(() => openGarmentListModal(_lightboxSrc))"
                     class="px-4 py-2 bg-[#7c3ca0]/80 hover:bg-[#7c3ca0] text-white text-xs font-medium rounded-xl
                            transition-colors flex items-center gap-1.5 border border-purple-400/30 backdrop-blur-sm">
                 <i class="fas fa-cloud-upload-alt text-[10px]"></i> Upload to Printify
@@ -544,136 +544,102 @@
     </div>
 </div>
 
-<!-- ═══════════ BULK UPLOAD MODAL ═══════════ -->
-<div id="bulk-upload-modal"
+<!-- ═══════════ GARMENT LIST MODAL ═══════════ -->
+<div id="garment-list-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="shadow-2xl w-full max-w-md rounded-2xl overflow-hidden flex flex-col" style="background:#111;border:1px solid rgba(255,255,255,0.09)">
+    <div class="shadow-2xl w-full max-w-lg rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+        <div class="flex items-center justify-between px-5 py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
             <div class="flex items-center gap-2">
                 <i class="fas fa-cloud-upload-alt text-[#c084fc] text-sm"></i>
-                <h2 class="text-sm font-semibold text-white">Upload to All Garments</h2>
+                <h2 class="text-sm font-semibold text-white">Upload to Printify</h2>
             </div>
-            <button onclick="closeBulkUploadModal()" id="bulk-modal-close-btn" class="icon-btn">
+            <button onclick="closeGarmentListModal()" class="icon-btn">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <!-- Body -->
-        <div class="px-5 py-4 space-y-4 overflow-y-auto">
-            <div id="bulk-form-section">
-                <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-white/40">Product name</label>
-                    <input id="bulk-title" type="text" placeholder="FabricAI — My Design"
+        <!-- Config -->
+        <div class="px-5 py-4 flex-shrink-0 space-y-3" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-2 flex flex-col gap-1">
+                    <label class="text-[10px] uppercase tracking-wider text-white/30">Product name</label>
+                    <input id="gl-title" type="text" placeholder="FabricAI — My Design"
                            class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
-                           style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                           style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)"
+                           onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
                 </div>
-                <div class="flex flex-col gap-1 mb-3">
-                    <label class="text-xs text-white/40">Printify store</label>
-                    <select id="bulk-shop"
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase tracking-wider text-white/30">Store</label>
+                    <select id="gl-shop"
                             class="rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
                             style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
-                        <option value="">Loading stores…</option>
+                        <option value="">Loading…</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs text-white/40">Garment color</label>
-                    <div class="flex items-center gap-3">
-                        <input type="color" id="bulk-color-hex" value="#ffffff"
-                               oninput="document.getElementById('bulk-color-name').textContent=hexToColorName(this.value)"
-                               class="w-10 h-10 rounded-lg cursor-pointer bg-transparent" style="border:1px solid rgba(255,255,255,0.12)">
-                        <span id="bulk-color-name" class="text-xs text-white/70 font-medium">White</span>
+                    <label class="text-[10px] uppercase tracking-wider text-white/30">Color</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="gl-color-hex" value="#ffffff"
+                               oninput="document.getElementById('gl-color-name').textContent=hexToColorName(this.value)"
+                               class="w-8 h-8 rounded-lg cursor-pointer flex-shrink-0" style="border:1px solid rgba(255,255,255,0.12)">
+                        <span id="gl-color-name" class="text-xs text-white/60 font-medium">White</span>
                     </div>
-                </div>
-                <div class="mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    <label class="text-xs text-white/40 block mb-2">Sides</label>
-                    <div class="flex flex-col gap-2">
-                        <label class="flex items-center gap-2.5 cursor-pointer group">
-                            <input type="checkbox" id="bulk-side-front" class="w-4 h-4 rounded border-white/20 bg-transparent text-[#9333ea] focus:ring-[#9333ea] focus:ring-offset-0" checked>
-                            <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Front</span>
-                        </label>
-                        @if(
-                            in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'studio', 'business'])
-                            || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
-                        )
-                        <label class="flex items-center gap-2.5 cursor-pointer group">
-                            <input type="checkbox" id="bulk-side-back" class="w-4 h-4 rounded border-white/20 bg-transparent text-[#9333ea] focus:ring-[#9333ea] focus:ring-offset-0">
-                            <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Back</span>
-                        </label>
-                        <p id="bulk-side-back-note" class="text-[10px] text-white/30 ml-6 hidden">Uses the current back design from the editor.</p>
-                        @else
-                        <div class="flex items-center gap-2.5 opacity-50 cursor-not-allowed" title="Back side is available from Pro plan">
-                            <input type="checkbox" disabled class="w-4 h-4 rounded border-white/20 bg-transparent pointer-events-none">
-                            <span class="text-xs text-white/40 font-medium">Back</span>
-                            <a href="/pricing" class="ml-1 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider hover:underline">Upgrade</a>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-                <div class="mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    @if(
-                        in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'studio', 'business'])
-                        || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin')
-                    )
-                    <label class="flex items-center gap-2.5 cursor-pointer group">
-                        <div class="relative">
-                            <input type="checkbox" id="bulk-all-colors" class="sr-only peer">
-                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#9333ea]" style="background:rgba(255,255,255,0.12); --tw-shadow: none;"></div>
-                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
-                        </div>
-                        <div>
-                            <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Upload in all available colors</span>
-                            <span class="ml-1.5 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider">Turbo</span>
-                        </div>
-                    </label>
-                    <p id="bulk-all-colors-note" class="text-[10px] text-white/30 mt-1.5 ml-11 hidden">
-                        Creates one product per garment with every available color variant enabled.
-                    </p>
-                    @else
-                    <div class="flex items-center gap-2.5 opacity-50 cursor-not-allowed" title="Available from Pro plan">
-                        <div class="w-9 h-5 rounded-full" style="background:rgba(255,255,255,0.12)">
-                            <div class="w-4 h-4 bg-white/40 rounded-full mt-0.5 ml-0.5"></div>
-                        </div>
-                        <div>
-                            <span class="text-xs text-white/40 font-medium">Upload in all available colors</span>
-                            <a href="/pricing" class="ml-1.5 text-[10px] text-[#c084fc] font-semibold uppercase tracking-wider hover:underline">Upgrade</a>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-                <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    <label class="flex items-center gap-2.5 cursor-pointer group">
-                        <div class="relative">
-                            <input type="checkbox" id="bulk-publish" class="sr-only peer">
-                            <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#9333ea]" style="background:rgba(255,255,255,0.12)"></div>
-                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
-                        </div>
-                        <span class="text-xs text-white/70 font-medium group-hover:text-white transition-colors">Publish directly to store</span>
-                    </label>
-                    <p class="text-[10px] text-white/30 mt-1.5 ml-11">Makes products visible in your store immediately after creation.</p>
                 </div>
             </div>
-            <div id="bulk-progress-section" class="hidden space-y-3">
-                <div class="flex justify-between text-xs text-white/40 mb-1">
-                    <span id="bulk-progress-label">Uploading…</span>
-                    <span id="bulk-progress-count">0/5</span>
-                </div>
-                <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,0.08)">
-                    <div id="bulk-progress-bar" class="bg-[#7c3ca0] h-2 rounded-full transition-all duration-300" style="width:0%"></div>
-                </div>
-                <div id="bulk-progress-results" class="space-y-1 pt-1 text-xs max-h-40 overflow-y-auto"></div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <!-- All colors toggle -->
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <div class="relative">
+                        <input type="checkbox" id="gl-all-colors" class="sr-only peer"
+                               onchange="document.getElementById('gl-color-hex').closest('.flex.flex-col').style.opacity=this.checked?'0.35':'1';document.getElementById('gl-color-hex').closest('.flex.flex-col').style.pointerEvents=this.checked?'none':''">
+                        <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#9333ea]" style="background:rgba(255,255,255,0.12)"></div>
+                        <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
+                    </div>
+                    <span class="text-xs text-white/50 group-hover:text-white/80 transition-colors">All colors</span>
+                </label>
+                <!-- Sides -->
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="gl-side-front" checked class="w-3.5 h-3.5 rounded">
+                    <span class="text-xs text-white/50">Front</span>
+                </label>
+                @if(in_array(strtolower(Auth::user()->plan ?? 'free'), ['pro', 'studio', 'business']) || (Auth::user()->is_admin && strtolower(Auth::user()->plan ?? 'free') === 'admin'))
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="gl-side-back" class="w-3.5 h-3.5 rounded">
+                    <span class="text-xs text-white/50">Back</span>
+                </label>
+                @else
+                <span class="text-xs text-white/20">Back <a href="/pricing" class="text-[#c084fc] hover:underline text-[10px]">Upgrade</a></span>
+                @endif
+                <!-- Publish toggle -->
+                <label class="flex items-center gap-2 cursor-pointer group ml-auto">
+                    <div class="relative">
+                        <input type="checkbox" id="gl-publish" class="sr-only peer">
+                        <div class="w-9 h-5 rounded-full transition-colors duration-200 peer-checked:bg-[#9333ea]" style="background:rgba(255,255,255,0.12)"></div>
+                        <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></div>
+                    </div>
+                    <span class="text-xs text-white/50 group-hover:text-white/80 transition-colors">Publish to store</span>
+                </label>
             </div>
         </div>
-        <!-- Footer -->
-        <div class="px-5 py-4 flex gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
-            <button onclick="handleBulkUploadCancel()" id="bulk-cancel-btn"
-                    class="flex-1 py-2.5 text-white/50 hover:text-white text-xs font-medium tracking-wide uppercase rounded-xl transition-colors" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
-                Cancel
+        <!-- Toolbar: select all + upload all -->
+        <div class="flex items-center gap-3 px-5 py-3 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02)">
+            <label class="flex items-center gap-2 cursor-pointer group select-none">
+                <input type="checkbox" id="gl-select-all" checked
+                       onchange="selectAllGarments(this.checked)"
+                       class="w-4 h-4 rounded border-white/20 accent-purple-600">
+                <span class="text-xs text-white/40 group-hover:text-white/70 transition-colors">Select all</span>
+            </label>
+            <button onclick="startGarmentListUpload()" id="gl-upload-all-btn"
+                    class="ml-auto flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl transition-colors"
+                    style="background:#7c3ca0;border:1px solid rgba(192,132,252,0.2)"
+                    onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
+                <i class="fas fa-cloud-upload-alt text-[10px]"></i>
+                <span id="gl-upload-all-label">Upload 20 selected</span>
             </button>
-            <button onclick="startBulkUpload()" id="bulk-start-btn"
-                    class="flex-1 py-2.5 bg-[#7c3ca0] text-white text-xs font-medium tracking-wide
-                           uppercase rounded-xl hover:bg-[#5a2275] transition-colors disabled:opacity-50">
-                <i class="fas fa-cloud-upload-alt mr-1"></i> Upload All
-            </button>
+        </div>
+        <!-- Garment list -->
+        <div id="garment-list-items" class="overflow-y-auto flex-1">
+            <!-- populated by JS -->
         </div>
     </div>
 </div>
@@ -804,15 +770,17 @@
 
                 <!-- Actions -->
                 <div class="flex gap-2">
-                    <button onclick="downloadPreview()"
+                    <button id="editor-secondary-btn" onclick="handleEditorSecondary()"
                             class="flex-1 py-2 text-white/60 hover:text-white text-xs font-medium rounded-xl
                                    transition-colors flex items-center justify-center gap-1.5" style="border:1px solid rgba(255,255,255,0.12)" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
-                        <i class="fas fa-download text-[10px]"></i> Download
+                        <i id="editor-secondary-icon" class="fas fa-download text-[10px]"></i>
+                        <span id="editor-secondary-label">Download</span>
                     </button>
-                    <button onclick="togglePrintifyPanel()"
+                    <button id="editor-primary-btn" onclick="handleEditorPrimary()"
                             class="flex-1 py-2 bg-[#7c3ca0] text-white text-xs font-medium rounded-xl
                                    hover:bg-[#5a2275] transition-colors flex items-center justify-center gap-1.5">
-                        <i class="fas fa-store text-[10px]"></i> Create Product
+                        <i id="editor-primary-icon" class="fas fa-store text-[10px]"></i>
+                        <span id="editor-primary-label">Create Product</span>
                     </button>
                 </div>
 
@@ -1438,24 +1406,19 @@
                     <input type="color" onchange="changeBg('${uniqueId}',this.value)"
                            class="w-4 h-4 rounded cursor-pointer" style="border:1px solid rgba(255,255,255,0.15)" title="Custom colour">
                 </div>
-                <div class="px-2 py-2 flex items-center justify-center gap-1" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    <a href="${imageUrl}" download="design.png" title="Download"
-                       class="icon-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,0.1);border-radius:10px">
-                        <i class="fas fa-download"></i>
-                        <span style="font-size:8px;opacity:0.6">Save</span>
-                    </a>
-                    <button type="button" title="Retouch this design" class="icon-btn accent edit-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#c084fc;background:rgba(124,60,160,0.2);border-radius:10px">
+                <div class="px-3 py-2.5 flex items-center gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <button type="button" title="Retouch this design with AI"
+                            class="icon-btn accent edit-btn flex-col gap-0.5 shrink-0"
+                            style="width:52px;height:40px;font-size:13px;color:#c084fc;background:rgba(124,60,160,0.18);border-radius:10px">
                         <i class="fas fa-magic"></i>
-                        <span style="font-size:8px;opacity:0.7">Edit</span>
+                        <span style="font-size:8px;opacity:0.7">Retouch</span>
                     </button>
-                    <button type="button" title="Preview on garment" class="icon-btn preview-btn flex-col gap-0.5" data-preview-idx="${idx}" style="width:52px;height:44px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,0.1);border-radius:10px">
-                        <i class="fas fa-tshirt"></i>
-                        <span style="font-size:8px;opacity:0.6">Try on</span>
-                    </button>
-                    <button type="button" title="Turbo upload to all garments" onclick="openBulkUploadModal('${imageUrl}')"
-                            class="icon-btn flex-col gap-0.5" style="width:52px;height:44px;font-size:14px;color:#c084fc;background:rgba(124,60,160,0.2);border-radius:10px">
-                        <i class="fas fa-bolt"></i>
-                        <span style="font-size:8px;opacity:0.75">Upload</span>
+                    <button type="button" title="Upload to Printify"
+                            onclick="openGarmentListModal('${imageUrl}')"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2 text-white text-xs font-semibold rounded-xl transition-colors"
+                            style="background:#7c3ca0;border:1px solid rgba(192,132,252,0.2)"
+                            onmouseover="this.style.background='#5a2275'" onmouseout="this.style.background='#7c3ca0'">
+                        <i class="fas fa-cloud-upload-alt text-[11px]"></i> Upload to store
                     </button>
                 </div>
             </div>`;
@@ -2761,6 +2724,7 @@
         _layers.front    = [{id, src: imageSrc, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null}];
         _layers.back     = [];
         _selectedLayerId = id;
+        _setEditorMode(false, null);
         document.getElementById('pos-x-val').textContent    = '0';
         document.getElementById('pos-y-val').textContent    = '0';
         document.getElementById('scale-val').textContent    = '1.00';
@@ -2783,6 +2747,8 @@
         _layers.back     = [];
         _activeSide      = 'front';
         _selectedLayerId = null;
+        _editorFromGarmentList = false;
+        _editorForGarmentType  = null;
     }
 
     function addLayerToCanvas(src) {
@@ -3605,169 +3571,408 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    //  BULK UPLOAD MODAL
+    //  GARMENT LIST MODAL  (replaces old Bulk Upload Modal)
     // ═══════════════════════════════════════════════════════════════
-    let _bulkUploadFrontImageSrc = null;
-    let _bulkUploadBackImageSrc  = null;
-    let _bulkShopsLoaded    = false;
-    let _bulkUploadAborted  = false;
 
-    async function openBulkUploadModal(imageSrc) {
-        _bulkUploadFrontImageSrc = imageSrc || (_layers.front.length ? await getFlattenedSrc(_layers.front) : null);
-        _bulkUploadBackImageSrc  = _layers.back.length ? await getFlattenedSrc(_layers.back) : null;
-        // Reset UI to form state
-        document.getElementById('bulk-form-section').classList.remove('hidden');
-        document.getElementById('bulk-progress-section').classList.add('hidden');
-        document.getElementById('bulk-start-btn').disabled = false;
-        document.getElementById('bulk-start-btn').innerHTML = '<i class="fas fa-cloud-upload-alt mr-1"></i> Upload All';
-        document.getElementById('bulk-cancel-btn').textContent = 'Cancel';
-        document.getElementById('bulk-modal-close-btn').disabled = false;
-        document.getElementById('bulk-progress-results').innerHTML = '';
-        document.getElementById('bulk-progress-bar').style.width = '0%';
-        const bulkPublish = document.getElementById('bulk-publish');
-        if (bulkPublish) bulkPublish.checked = false;
-        const bulkFront = document.getElementById('bulk-side-front');
-        const bulkBack = document.getElementById('bulk-side-back');
-        const bulkBackNote = document.getElementById('bulk-side-back-note');
-        if (bulkFront) {
-            bulkFront.checked = !!_bulkUploadFrontImageSrc;
-            bulkFront.disabled = !_bulkUploadFrontImageSrc;
-        }
-        if (bulkBack) {
-            bulkBack.checked = !!_bulkUploadBackImageSrc;
-            bulkBack.disabled = !_bulkUploadBackImageSrc;
-            if (bulkBackNote) bulkBackNote.classList.toggle('hidden', !_bulkUploadBackImageSrc);
-        }
+    // Garments that have Printify-sourced SVGs + exact print areas → show Editor button
+    const GARMENTS_WITH_EDITOR = new Set(['tshirt', 'hoodie', 'zip_hoodie', 'tanktop', 'longsleeve', 'sweatshirt']);
 
-        // Pre-fill title from current design
-        const existing = document.getElementById('printify-title')?.value;
-        document.getElementById('bulk-title').value = existing || 'FabricAI — My Design';
+    // Per-garment layer overrides saved via the in-modal editor
+    const _garmentLayerOverrides = {};
 
-        // Mirror garment color
-        const hexSrc = document.getElementById('garment-color')?.value || '#ffffff';
-        document.getElementById('bulk-color-hex').value = hexSrc;
-        document.getElementById('bulk-color-name').textContent = hexToColorName(hexSrc);
+    // State for editor opened from the garment list
+    let _editorFromGarmentList   = false;
+    let _editorForGarmentType    = null;
+    let _currentGarmentListImageSrc = null;
+    let _glShopsLoaded           = false;
 
-        // Wire up all-colors toggle
-        const allColorsChk  = document.getElementById('bulk-all-colors');
-        const allColorsNote = document.getElementById('bulk-all-colors-note');
-        const colorRow      = document.getElementById('bulk-color-hex')?.closest('.flex.flex-col.gap-1');
-        if (allColorsChk) {
-            allColorsChk.checked = false;
-            if (allColorsNote) allColorsNote.classList.add('hidden');
-            if (colorRow) { colorRow.style.opacity = '1'; colorRow.style.pointerEvents = ''; }
-            allColorsChk.onchange = () => {
-                const on = allColorsChk.checked;
-                if (allColorsNote) allColorsNote.classList.toggle('hidden', !on);
-                if (colorRow) colorRow.style.opacity = on ? '0.35' : '1';
-                if (colorRow) colorRow.style.pointerEvents = on ? 'none' : '';
-            };
-        }
-
-        // Show modal
-        const modal = document.getElementById('bulk-upload-modal');
+    function openGarmentListModal(imageSrc, reopening = false) {
+        _currentGarmentListImageSrc = imageSrc;
+        const modal = document.getElementById('garment-list-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-
-        // Load shops
-        await _loadBulkShops();
+        _renderGarmentListRows();
+        _loadGarmentListShops();
+        // Pre-fill title unless re-opening after editor save/cancel
+        const titleInput = document.getElementById('gl-title');
+        if (titleInput && !reopening && !titleInput.value.trim()) {
+            titleInput.value = lastProductMeta?.title || 'FabricAI — My Design';
+        }
+        _updateUploadAllBtn();
     }
 
-    function closeBulkUploadModal() {
-        const modal = document.getElementById('bulk-upload-modal');
+    function closeGarmentListModal() {
+        const modal = document.getElementById('garment-list-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        _bulkUploadFrontImageSrc = null;
-        _bulkUploadBackImageSrc = null;
     }
 
-    function handleBulkUploadCancel() {
-        closeBulkUploadModal();
-    }
+    function _renderGarmentListRows() {
+        const container = document.getElementById('garment-list-items');
+        if (!container) return;
+        container.innerHTML = '';
 
-    async function _loadBulkShops() {
-        if (_bulkShopsLoaded) return;
-        const sel = document.getElementById('bulk-shop');
-        sel.innerHTML = '<option value="">Loading…</option>';
-        try {
-            const statusRes = await fetch('/printify/status', { headers: { 'Accept': 'application/json' } });
-            const status    = await statusRes.json();
-            if (!status.connected) {
-                sel.innerHTML = '<option value="">Not connected</option>'; return;
-            }
-            const res   = await fetch('/printify/shops', { headers: { 'Accept': 'application/json' } });
-            const shops = await res.json();
-            if (!res.ok || !Array.isArray(shops) || !shops.length) {
-                sel.innerHTML = '<option value="">No shops found</option>'; return;
-            }
-            sel.innerHTML = shops.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
-            _bulkShopsLoaded = true;
-        } catch (err) {
-            sel.innerHTML = `<option value="">Error: ${escapeHtml(err.message)}</option>`;
-        }
-    }
-
-    async function startBulkUpload() {
-        const shopId    = document.getElementById('bulk-shop').value;
-        const title     = document.getElementById('bulk-title').value.trim();
-        const allColors = document.getElementById('bulk-all-colors')?.checked ?? false;
-        const color     = allColors ? '' : hexToColorName(document.getElementById('bulk-color-hex').value);
-        const useFront  = document.getElementById('bulk-side-front')?.checked ?? true;
-        const useBack   = document.getElementById('bulk-side-back')?.checked ?? false;
-        const publish   = document.getElementById('bulk-publish')?.checked ?? false;
-        if (!shopId)  { alert('Please select a Printify store.'); return; }
-        if (!title)   { alert('Please enter a product name.'); return; }
-        if (!useFront && !useBack) { alert('Select at least one side: Front or Back.'); return; }
-        if (useFront && !_bulkUploadFrontImageSrc) { alert('No front design selected.'); return; }
-        if (useBack && !_bulkUploadBackImageSrc)   { alert('No back design loaded in the editor.'); return; }
-
-        const garments = [
+        const editableGarments = [
             {type:'tshirt',    label:'T-Shirt'},
             {type:'hoodie',    label:'Hoodie'},
             {type:'zip_hoodie',label:'Zip Hoodie'},
             {type:'tanktop',   label:'Tank Top'},
             {type:'longsleeve',label:'Long Sleeve'},
             {type:'sweatshirt',label:'Sweatshirt'},
+        ];
+        const otherGarments = [
             {type:'womens_tee',label:"Women's Tee"},
             {type:'leggings',  label:'Leggings'},
             {type:'joggers',   label:'Joggers'},
             {type:'shorts',    label:'Shorts'},
-            {type:'dresses',   label:'Vestidos'},
-            {type:'skirts',    label:'Faldas'},
-            {type:'bikinis',   label:'Bikinis / Swimwear'},
-            {type:'socks',     label:'Calcetines'},
-            {type:'underwear', label:'Ropa interior'},
-            {type:'pajamas',   label:'Pijamas'},
-            {type:'caps',      label:'Gorras'},
+            {type:'dresses',   label:'Dresses'},
+            {type:'skirts',    label:'Skirts'},
+            {type:'bikinis',   label:'Bikinis'},
+            {type:'socks',     label:'Socks'},
+            {type:'underwear', label:'Underwear'},
+            {type:'pajamas',   label:'Pajamas'},
+            {type:'caps',      label:'Caps'},
             {type:'beanies',   label:'Beanies'},
             {type:'tote_bags', label:'Tote Bags'},
-            {type:'scarves',   label:'Bufandas'},
+            {type:'scarves',   label:'Scarves'},
         ];
 
-        // Snapshot image sources (already computed when modal was opened)
-        const frontSrc = _bulkUploadFrontImageSrc;
-        const backSrc  = _bulkUploadBackImageSrc;
+        // ── Editable garments — 3-column card grid ───────────────────
+        const gridSection = document.createElement('div');
+        gridSection.className = 'px-4 pt-4 pb-3';
 
-        // Add to queue and close the modal immediately
-        const jobId = UploadQueue.add(title + ' (Turbo)', 'bulk', garments.length);
-        closeBulkUploadModal();
+        const gridLabel = document.createElement('p');
+        gridLabel.className = 'text-[10px] uppercase tracking-wider text-white/25 mb-3';
+        gridLabel.textContent = 'Customizable';
+        gridSection.appendChild(gridLabel);
 
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-3 gap-2';
+        gridSection.appendChild(grid);
+
+        const thumbsToRender = [];
+
+        editableGarments.forEach(({type, label}) => {
+            const hasOverride = !!_garmentLayerOverrides[type];
+
+            const card = document.createElement('div');
+            card.className = 'rounded-xl flex flex-col overflow-hidden';
+            card.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)';
+
+            // ── Thumbnail canvas (click = open full preview) ─────────
+            const thumbWrap = document.createElement('div');
+            thumbWrap.className = 'relative cursor-pointer';
+            thumbWrap.style.cssText = 'background:rgba(0,0,0,0.25)';
+            thumbWrap.title = 'Click to preview';
+            thumbWrap.onclick = () => { closeGarmentListModal(); openPreviewForGarment(type, _currentGarmentListImageSrc); };
+            thumbWrap.onmouseover = () => { thumbWrap.style.background = 'rgba(124,60,160,0.12)'; };
+            thumbWrap.onmouseout  = () => { thumbWrap.style.background = 'rgba(0,0,0,0.25)'; };
+
+            const cvs = document.createElement('canvas');
+            cvs.width = 100; cvs.height = 110;
+            cvs.style.cssText = 'width:100%;height:auto;display:block';
+            thumbWrap.appendChild(cvs);
+
+            // Checkbox overlay (top-right)
+            const chkWrap = document.createElement('div');
+            chkWrap.className = 'absolute top-1.5 right-1.5 flex items-center gap-1';
+            chkWrap.onclick = e => e.stopPropagation();
+            if (hasOverride) {
+                const ind = document.createElement('i');
+                ind.className = 'fas fa-circle text-[5px] text-purple-400';
+                ind.title = 'Custom position saved';
+                chkWrap.appendChild(ind);
+            }
+            const chk = document.createElement('input');
+            chk.type = 'checkbox'; chk.checked = true;
+            chk.className = 'garment-row-chk w-3.5 h-3.5 rounded accent-purple-600 cursor-pointer';
+            chk.dataset.garment = type;
+            chk.addEventListener('change', _updateUploadAllBtn);
+            chkWrap.appendChild(chk);
+            thumbWrap.appendChild(chkWrap);
+
+            card.appendChild(thumbWrap);
+            thumbsToRender.push({cvs, type});
+
+            // ── Bottom: label + Edit + Publish ───────────────────────
+            const bottom = document.createElement('div');
+            bottom.className = 'flex flex-col gap-1.5 p-2';
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'text-[11px] font-semibold text-white/70 leading-tight truncate';
+            nameEl.textContent = label;
+            bottom.appendChild(nameEl);
+
+            const actRow = document.createElement('div');
+            actRow.className = 'flex gap-1';
+
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium rounded-lg transition-colors flex-shrink-0';
+            editBtn.style.cssText = 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,0.45)';
+            editBtn.innerHTML = '<i class="fas fa-pen" style="font-size:8px"></i> Edit';
+            editBtn.onmouseover = () => { editBtn.style.background='rgba(124,60,160,0.2)'; editBtn.style.color='#c084fc'; editBtn.style.borderColor='rgba(124,60,160,0.4)'; };
+            editBtn.onmouseout  = () => { editBtn.style.background='rgba(255,255,255,0.06)'; editBtn.style.color='rgba(255,255,255,0.45)'; editBtn.style.borderColor='rgba(255,255,255,0.09)'; };
+            editBtn.onclick = () => { closeGarmentListModal(); openEditorForGarment(type, _currentGarmentListImageSrc); };
+            actRow.appendChild(editBtn);
+
+            const pubBtn = document.createElement('button');
+            pubBtn.type = 'button';
+            pubBtn.className = 'garment-publish-btn flex-1 flex items-center justify-center gap-1 py-1 text-[10px] font-semibold rounded-lg transition-colors';
+            pubBtn.style.cssText = 'background:rgba(124,60,160,0.15);border:1px solid rgba(124,60,160,0.3);color:#c084fc';
+            pubBtn.dataset.garment = type;
+            pubBtn.innerHTML = '<i class="fas fa-cloud-upload-alt" style="font-size:8px"></i> Publish';
+            pubBtn.onmouseover = () => { pubBtn.style.background='rgba(124,60,160,0.35)'; };
+            pubBtn.onmouseout  = () => { pubBtn.style.background='rgba(124,60,160,0.15)'; };
+            pubBtn.onclick = () => publishSingleGarment(type, label);
+            actRow.appendChild(pubBtn);
+
+            const statusEl = document.createElement('span');
+            statusEl.className = 'garment-row-status text-[11px] flex-shrink-0 hidden w-4 text-center';
+            statusEl.dataset.garment = type;
+            actRow.appendChild(statusEl);
+
+            bottom.appendChild(actRow);
+            card.appendChild(bottom);
+            grid.appendChild(card);
+        });
+
+        // Render thumbnails async after DOM is ready
+        requestAnimationFrame(() => {
+            thumbsToRender.forEach(({cvs, type}) => _drawGarmentThumb(cvs, type, _currentGarmentListImageSrc));
+        });
+
+        container.appendChild(gridSection);
+
+        // ── Divider ──────────────────────────────────────────────────
+        const divider = document.createElement('div');
+        divider.style.cssText = 'height:1px;background:rgba(255,255,255,0.06);margin:0 16px';
+        container.appendChild(divider);
+
+        // ── Other garments — compact checkbox chips ──────────────────
+        const chipsSection = document.createElement('div');
+        chipsSection.className = 'px-4 py-4';
+
+        const chipsLabel = document.createElement('p');
+        chipsLabel.className = 'text-[10px] uppercase tracking-wider text-white/25 mb-3';
+        chipsLabel.textContent = 'Other garments';
+        chipsSection.appendChild(chipsLabel);
+
+        const chipsWrap = document.createElement('div');
+        chipsWrap.className = 'flex flex-wrap gap-1.5';
+        chipsSection.appendChild(chipsWrap);
+
+        otherGarments.forEach(({type, label}) => {
+            const chip = document.createElement('label');
+            chip.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors select-none';
+            chip.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07)';
+            chip.onmouseover = () => { chip.style.background='rgba(255,255,255,0.08)'; };
+            chip.onmouseout  = () => { chip.style.background='rgba(255,255,255,0.04)'; };
+
+            const chk = document.createElement('input');
+            chk.type = 'checkbox'; chk.checked = true;
+            chk.className = 'garment-row-chk w-3 h-3 rounded accent-purple-600 cursor-pointer';
+            chk.dataset.garment = type;
+            chk.addEventListener('change', _updateUploadAllBtn);
+            chip.appendChild(chk);
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'text-xs text-white/55';
+            nameEl.textContent = label;
+            chip.appendChild(nameEl);
+
+            const statusEl = document.createElement('span');
+            statusEl.className = 'garment-row-status text-[11px] hidden';
+            statusEl.dataset.garment = type;
+            chip.appendChild(statusEl);
+
+            chipsWrap.appendChild(chip);
+        });
+
+        container.appendChild(chipsSection);
+    }
+
+    async function _drawGarmentThumb(canvas, garmentType, imageSrc) {
+        const g = GARMENTS[garmentType];
+        if (!g || !g.draw) return;
+
+        // Off-screen at full garment coordinate space (500×550)
+        const off = document.createElement('canvas');
+        off.width = 500; off.height = 550;
+        const ctx = off.getContext('2d');
+
+        // Draw garment silhouette
+        const color = document.getElementById('gl-color-hex')?.value || '#ffffff';
+        g.draw(ctx, color);
+
+        // Composite design into print area
+        const pa = g.printArea;
+        if (imageSrc && pa) {
+            await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => { ctx.drawImage(img, pa.x, pa.y, pa.w, pa.h); resolve(); };
+                img.onerror = resolve;
+                img.src = imageSrc;
+            });
+        }
+
+        // Scale down to thumbnail canvas
+        const tc = canvas.getContext('2d');
+        tc.clearRect(0, 0, canvas.width, canvas.height);
+        tc.drawImage(off, 0, 0, 500, 550, 0, 0, canvas.width, canvas.height);
+    }
+
+    async function _loadGarmentListShops() {
+        if (_glShopsLoaded) return;
+        const sel = document.getElementById('gl-shop');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Loading…</option>';
+        try {
+            const statusRes = await fetch('/printify/status', { headers: { 'Accept': 'application/json' } });
+            const status    = await statusRes.json();
+            if (!status.connected) {
+                sel.innerHTML = '<option value="">Not connected — <a href="/profile">connect here</a></option>';
+                return;
+            }
+            const res   = await fetch('/printify/shops', { headers: { 'Accept': 'application/json' } });
+            const shops = await res.json();
+            if (!res.ok || !Array.isArray(shops) || !shops.length) {
+                sel.innerHTML = '<option value="">No shops found</option>';
+                return;
+            }
+            sel.innerHTML = shops.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+            _glShopsLoaded = true;
+        } catch (err) {
+            sel.innerHTML = '<option value="">Error loading stores</option>';
+        }
+    }
+
+    function _getGarmentListConfig() {
+        const shopId    = document.getElementById('gl-shop')?.value || '';
+        const title     = document.getElementById('gl-title')?.value.trim() || '';
+        const allColors = document.getElementById('gl-all-colors')?.checked ?? false;
+        const colorHex  = document.getElementById('gl-color-hex')?.value || '#ffffff';
+        const color     = allColors ? '' : hexToColorName(colorHex);
+        const useFront  = document.getElementById('gl-side-front')?.checked ?? true;
+        const useBack   = document.getElementById('gl-side-back')?.checked ?? false;
+        const publish   = document.getElementById('gl-publish')?.checked ?? false;
+        return { shopId, title, color, useFront, useBack, publish };
+    }
+
+    async function _resolveGarmentImageSrc(garmentType) {
+        const override = _garmentLayerOverrides[garmentType];
+        if (!override) {
+            return { frontSrc: _currentGarmentListImageSrc, backSrc: null, posX: 0, posY: 0, sc: 1 };
+        }
+        const tmpFront = override.front;
+        const tmpBack  = override.back;
+        // Temporarily swap active layers and garment select for getFlattenedSrc
+        const savedFront   = _layers.front, savedBack = _layers.back;
+        const garmentSel   = document.getElementById('garment-select');
+        const savedGarment = garmentSel?.value;
+        _layers.front = tmpFront; _layers.back = tmpBack;
+        if (garmentSel) garmentSel.value = garmentType;
+        try {
+            const frontSrc = tmpFront.length ? await getFlattenedSrc(tmpFront) : _currentGarmentListImageSrc;
+            const backSrc  = tmpBack.length  ? await getFlattenedSrc(tmpBack)  : null;
+            const sel      = tmpFront[0];
+            const isBaked  = tmpFront.length > 1 || !!(sel?.rotation);
+            return {
+                frontSrc,
+                backSrc,
+                posX: isBaked ? 0 : (sel?.posX  ?? 0),
+                posY: isBaked ? 0 : (sel?.posY  ?? 0),
+                sc:   isBaked ? 1 : (sel?.scale ?? 1),
+            };
+        } finally {
+            _layers.front = savedFront; _layers.back = savedBack;
+            if (garmentSel && savedGarment) garmentSel.value = savedGarment;
+        }
+    }
+
+    async function publishSingleGarment(garmentType, garmentLabel) {
+        const { shopId, title, useFront, publish } = _getGarmentListConfig();
+        if (!shopId) { showToast('Please select a Printify store first', 'error'); return; }
+        if (!title)  { showToast('Please enter a product name', 'error'); return; }
+
+        const pubBtn   = document.querySelector(`.garment-publish-btn[data-garment="${garmentType}"]`);
+        const statusEl = document.querySelector(`.garment-row-status[data-garment="${garmentType}"]`);
+        if (pubBtn) { pubBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:9px"></i>'; pubBtn.disabled = true; }
+
+        let frontSrc, backSrc, posX = 0, posY = 0, sc = 1;
+        try {
+            ({ frontSrc, backSrc, posX, posY, sc } = await _resolveGarmentImageSrc(garmentType));
+        } catch(e) { frontSrc = _currentGarmentListImageSrc; }
+
+        const productTitle = title + ' — ' + garmentLabel;
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        const payload = {
+            shop_id:      parseInt(shopId),
+            garment_type: garmentType,
+            image_source: useFront ? frontSrc : null,
+            title:        productTitle,
+            color:        '', // all colors
+            pos_x:        0.5 + posX * 0.5,
+            pos_y:        0.5 + posY * 0.5,
+            design_scale: sc,
+            publish_after_create: true,
+        };
+        if (backSrc) { payload.back_image_source = backSrc; payload.back_pos_x = 0.5; payload.back_pos_y = 0.5; payload.back_design_scale = 1; }
+
+        const jobId = UploadQueue.add(productTitle, 'single');
+        void (async () => {
+            try {
+                const data = await createPrintifyProductWithRetry(payload, csrf, null, 3);
+                UploadQueue.done(jobId, data.printify_url);
+                if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = '#34d399'; statusEl.classList.remove('hidden'); }
+            } catch (err) {
+                UploadQueue.fail(jobId, err.message);
+                if (statusEl) { statusEl.textContent = '✗'; statusEl.style.color = '#f87171'; statusEl.classList.remove('hidden'); }
+            } finally {
+                if (pubBtn) { pubBtn.innerHTML = '<i class="fas fa-cloud-upload-alt" style="font-size:9px"></i> Publish'; pubBtn.disabled = false; }
+            }
+        })();
+    }
+
+    async function startGarmentListUpload() {
+        const { shopId, title, color, useFront, useBack, publish } = _getGarmentListConfig();
+        if (!shopId) { showToast('Please select a Printify store first', 'error'); return; }
+        if (!title)  { showToast('Please enter a product name', 'error'); return; }
+
+        const checked = Array.from(document.querySelectorAll('.garment-row-chk:checked'))
+            .map(el => el.dataset.garment);
+        if (!checked.length) { showToast('Select at least one garment', 'error'); return; }
+
+        const garmentLabelMap = {
+            tshirt:'T-Shirt', hoodie:'Hoodie', zip_hoodie:'Zip Hoodie', tanktop:'Tank Top',
+            longsleeve:'Long Sleeve', sweatshirt:'Sweatshirt', womens_tee:"Women's Tee",
+            leggings:'Leggings', joggers:'Joggers', shorts:'Shorts', dresses:'Vestidos',
+            skirts:'Faldas', bikinis:'Bikinis / Swimwear', socks:'Calcetines',
+            underwear:'Ropa interior', pajamas:'Pijamas', caps:'Gorras', beanies:'Beanies',
+            tote_bags:'Tote Bags', scarves:'Bufandas',
+        };
+
+        const jobId = UploadQueue.add(title + ' (All)', 'bulk', checked.length);
+        closeGarmentListModal();
+
+        const csrf     = document.querySelector('meta[name="csrf-token"]').content;
         const abortCtrl = new AbortController();
         UploadQueue.setAbortFn(jobId, () => abortCtrl.abort());
 
         void (async () => {
             let successCount = 0;
-
-            for (let i = 0; i < garments.length; i++) {
-                if (abortCtrl.signal.aborted) {
-                    UploadQueue.abort(jobId);
-                    return;
-                }
+            for (let i = 0; i < checked.length; i++) {
+                if (abortCtrl.signal.aborted) { UploadQueue.abort(jobId); return; }
                 if (i > 0) await sleep(1000);
-                UploadQueue.progress(jobId, i, garments.length);
+                UploadQueue.progress(jobId, i, checked.length);
 
-                const {type, label} = garments[i];
+                const type  = checked[i];
+                const label = garmentLabelMap[type] || type;
+                let frontSrc = _currentGarmentListImageSrc, backSrc = null, posX = 0, posY = 0, sc = 1;
+                try {
+                    ({ frontSrc, backSrc, posX, posY, sc } = await _resolveGarmentImageSrc(type));
+                } catch(e) { /* use defaults */ }
+
                 try {
                     const payload = {
                         shop_id:      parseInt(shopId),
@@ -3775,29 +3980,155 @@
                         image_source: useFront ? frontSrc : null,
                         title:        title + ' — ' + label,
                         color,
-                        pos_x: 0.5, pos_y: 0.5, design_scale: 1,
-                        ...(useBack ? {
-                            back_image_source: backSrc,
-                            back_pos_x: 0.5, back_pos_y: 0.5, back_design_scale: 1,
-                        } : {}),
+                        pos_x:        0.5 + posX * 0.5,
+                        pos_y:        0.5 + posY * 0.5,
+                        design_scale: sc,
                         publish_after_create: publish,
                     };
+                    if (useBack && backSrc) {
+                        payload.back_image_source = backSrc;
+                        payload.back_pos_x = 0.5; payload.back_pos_y = 0.5; payload.back_design_scale = 1;
+                    }
                     await createPrintifyProductWithRetry(payload, csrf, abortCtrl.signal, 3);
                     successCount++;
                 } catch (err) {
                     if (err?.name === 'AbortError') { UploadQueue.abort(jobId); return; }
-                    adminConsole.warn('Turbo modal upload error for', type, err.message);
-                    // Continue with next garment on non-abort errors
+                    adminConsole.warn('Garment list upload error for', type, err.message);
                 }
             }
-
-            UploadQueue.progress(jobId, garments.length, garments.length);
+            UploadQueue.progress(jobId, checked.length, checked.length);
             if (successCount > 0) {
                 UploadQueue.done(jobId, 'https://printify.com/app/store/products');
             } else {
-                UploadQueue.fail(jobId, 'Todos los productos fallaron. Comprueba tu conexión a Printify.');
+                UploadQueue.fail(jobId, 'All garments failed. Check your Printify connection.');
             }
         })();
+    }
+
+    function selectAllGarments(checked) {
+        document.querySelectorAll('.garment-row-chk').forEach(el => { el.checked = checked; });
+        _updateUploadAllBtn();
+    }
+
+    function _updateUploadAllBtn() {
+        const checked = document.querySelectorAll('.garment-row-chk:checked').length;
+        const total   = document.querySelectorAll('.garment-row-chk').length;
+        const lbl = document.getElementById('gl-upload-all-label');
+        if (lbl) lbl.textContent = checked > 0 ? `Upload ${checked} selected` : 'Upload All';
+        const allChk = document.getElementById('gl-select-all');
+        if (allChk) {
+            allChk.checked       = checked === total && total > 0;
+            allChk.indeterminate = checked > 0 && checked < total;
+        }
+    }
+
+    // ─── Editor mode (standalone vs. from garment list) ─────────────
+    function _setEditorMode(fromGarmentList, garmentType) {
+        _editorFromGarmentList = fromGarmentList;
+        _editorForGarmentType  = garmentType;
+        const secLabel = document.getElementById('editor-secondary-label');
+        const secIcon  = document.getElementById('editor-secondary-icon');
+        const priLabel = document.getElementById('editor-primary-label');
+        const priIcon  = document.getElementById('editor-primary-icon');
+        const panel    = document.getElementById('printify-panel');
+        if (fromGarmentList === 'preview') {
+            if (secLabel) secLabel.textContent = 'Close';
+            if (secIcon)  secIcon.className    = 'fas fa-arrow-left text-[10px]';
+            if (priLabel) priLabel.textContent = 'Save';
+            if (priIcon)  priIcon.className    = 'fas fa-check text-[10px]';
+            if (panel)    panel.classList.add('hidden');
+        } else if (fromGarmentList) {
+            if (secLabel) secLabel.textContent = 'Cancel';
+            if (secIcon)  secIcon.className    = 'fas fa-times text-[10px]';
+            if (priLabel) priLabel.textContent = 'Save';
+            if (priIcon)  priIcon.className    = 'fas fa-check text-[10px]';
+            if (panel)    panel.classList.add('hidden');
+        } else {
+            if (secLabel) secLabel.textContent = 'Download';
+            if (secIcon)  secIcon.className    = 'fas fa-download text-[10px]';
+            if (priLabel) priLabel.textContent = 'Create Product';
+            if (priIcon)  priIcon.className    = 'fas fa-store text-[10px]';
+        }
+    }
+
+    function handleEditorSecondary() {
+        if (_editorFromGarmentList) {
+            closePreviewModal();
+            openGarmentListModal(_currentGarmentListImageSrc, true);
+        } else {
+            downloadPreview();
+        }
+    }
+
+    function handleEditorPrimary() {
+        if (_editorFromGarmentList) {
+            _saveGarmentEditorOverride();
+            closePreviewModal();
+            openGarmentListModal(_currentGarmentListImageSrc, true);
+        } else {
+            togglePrintifyPanel();
+        }
+    }
+
+    function _saveGarmentEditorOverride() {
+        if (!_editorForGarmentType) return;
+        _garmentLayerOverrides[_editorForGarmentType] = {
+            front: JSON.parse(JSON.stringify(_layers.front)),
+            back:  JSON.parse(JSON.stringify(_layers.back)),
+        };
+        showToast((GARMENTS[_editorForGarmentType]?.name || _editorForGarmentType) + ' position saved ✓');
+    }
+
+    function openEditorForGarment(garmentType, imageSrc) {
+        const override = _garmentLayerOverrides[garmentType];
+        if (override) {
+            _activeSide      = 'front';
+            _layers.front    = JSON.parse(JSON.stringify(override.front));
+            _layers.back     = JSON.parse(JSON.stringify(override.back));
+            _selectedLayerId = _layers.front[0]?.id ?? null;
+        } else {
+            const id = Date.now();
+            _activeSide      = 'front';
+            _layers.front    = [{id, src: imageSrc, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null}];
+            _layers.back     = [];
+            _selectedLayerId = id;
+        }
+        const sel = document.getElementById('garment-select');
+        if (sel) sel.value = garmentType;
+        updateControlsFromSelected();
+        document.getElementById('preview-modal').classList.remove('hidden');
+        document.getElementById('preview-modal').classList.add('flex');
+        _setEditorMode('edit', garmentType);
+        initDesignDrag();
+        renderPreview();
+        renderLayersList();
+        loadSavedDesigns();
+    }
+
+    function openPreviewForGarment(garmentType, imageSrc) {
+        const override = _garmentLayerOverrides[garmentType];
+        if (override) {
+            _activeSide      = 'front';
+            _layers.front    = JSON.parse(JSON.stringify(override.front));
+            _layers.back     = JSON.parse(JSON.stringify(override.back));
+            _selectedLayerId = _layers.front[0]?.id ?? null;
+        } else {
+            const id = Date.now();
+            _activeSide      = 'front';
+            _layers.front    = [{id, src: imageSrc, posX: 0, posY: 0, scale: 1, rotation: 0, imgW: null, imgH: null}];
+            _layers.back     = [];
+            _selectedLayerId = id;
+        }
+        const sel = document.getElementById('garment-select');
+        if (sel) sel.value = garmentType;
+        updateControlsFromSelected();
+        document.getElementById('preview-modal').classList.remove('hidden');
+        document.getElementById('preview-modal').classList.add('flex');
+        _setEditorMode('preview', garmentType);
+        initDesignDrag();
+        renderPreview();
+        renderLayersList();
+        loadSavedDesigns();
     }
 
     function switchSide(side) {

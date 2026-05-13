@@ -127,11 +127,10 @@ class DesignController extends Controller
     $userPromptForDiffusion = mb_substr($userPrompt, 0, 270);
 
     // LLM enrichment: optimize prompt for the target image model + generate product meta.
-    // Temporarily restricted to admin plan for testing.
     $productMeta = ['title' => null, 'description' => null, 'optimized_prompt' => null];
     $isDiffusionProvider = in_array($provider, ['chutes', 'nanogpt', 'together'], true);
     $isEditOrRef         = $hasReferenceImage || !empty($validated['is_edit']);
-    $llmEnrichEnabled    = $effectivePlan === 'admin' && $isDiffusionProvider && !$isEditOrRef;
+    $llmEnrichEnabled    = $isDiffusionProvider && !$isEditOrRef;
 
     \Log::info('[LLM enrichment] eligibility check', [
         'user_id'         => $user->id,
