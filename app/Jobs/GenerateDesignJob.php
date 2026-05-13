@@ -54,7 +54,9 @@ class GenerateDesignJob implements ShouldQueue
                 $imageUrl = $result['imageUrl']    ?? $result['image_url']    ?? $result['url']    ?? null;
 
                 if ($base64) {
-                    $shouldRemoveBg = $this->shouldApplyBackgroundRemoval($this->userPrompt, $this->backgroundColor);
+                    // Use the final enriched prompt (not only raw user text) so scene
+                    // intent is detected reliably (e.g., race/action/environment context).
+                    $shouldRemoveBg = $this->shouldApplyBackgroundRemoval($this->prompt, $this->backgroundColor);
 
                     if ($shouldRemoveBg) {
                         $noBg = $backgrounds->removeBackground($base64);
@@ -171,6 +173,10 @@ class GenerateDesignJob implements ShouldQueue
         $sceneKeywords = [
             'escena',
             'circuito',
+            'carrera',
+            'coche contra',
+            'vs',
+            'versus',
             'en la calle',
             'carretera',
             'paisaje',
@@ -179,6 +185,8 @@ class GenerateDesignJob implements ShouldQueue
             'background',
             'environment',
             'scene',
+            'race',
+            'racing',
             'city',
             'forest',
             'beach',
@@ -186,7 +194,6 @@ class GenerateDesignJob implements ShouldQueue
             'sky',
             'road',
             'track',
-            'racing',
         ];
 
         foreach ($sceneKeywords as $keyword) {
