@@ -23,6 +23,7 @@ async function searchListings(keyword, limit = 60) {
     limit: String(Math.min(limit, 100)),
     sort_on: 'score',
     sort_order: 'desc',
+    taxonomy_id: '69150454',   // Etsy v3 taxonomy: T-Shirts & Tank Tops (sub-category of Clothing)
   });
   // Etsy v3 uses repeated bracket notation for includes
   params.append('includes[]', 'Images');

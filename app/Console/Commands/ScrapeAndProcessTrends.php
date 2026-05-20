@@ -14,11 +14,27 @@ class ScrapeAndProcessTrends extends Command
     protected $description = 'Dispatch Etsy scraping + trend processing for configured keywords';
 
     private const DEFAULT_KEYWORDS = [
-        'tshirt funny',
-        'retro shirt',
-        'cat shirt',
-        'camping shirt',
-        'motivational quote shirt',
+        // Evergreen humour & pets
+        'funny cat tshirt',
+        'dog lover shirt',
+        'funny quote graphic tee',
+        // Lifestyle & hobbies
+        'hiking camping shirt',
+        'yoga fitness tshirt',
+        'fishing dad shirt',
+        'gaming tshirt',
+        // Professions & gifting
+        'nurse gift shirt',
+        'teacher appreciation tee',
+        'firefighter shirt',
+        // Aesthetic styles
+        'vintage retro graphic tshirt',
+        'minimalist aesthetic shirt',
+        'botanical floral tee',
+        // Pop-culture & music
+        'music band graphic shirt',
+        'halloween costume tshirt',
+        'pride rainbow shirt',
     ];
 
     public function handle(): int

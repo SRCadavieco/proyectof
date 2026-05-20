@@ -18,11 +18,12 @@ const CARD_SELECTORS = [
 ];
 
 /**
- * Build the Etsy search URL for a given keyword.
+ * Build the Etsy search URL for a given keyword — scoped to Clothing category.
+ * taxonomy_id 68887475 = Clothing (Etsy buyer taxonomy, used in browse URLs).
  */
 function buildSearchUrl(keyword) {
   const encoded = encodeURIComponent(keyword.trim());
-  return `https://www.etsy.com/search?q=${encoded}&type=handmade`;
+  return `https://www.etsy.com/search?q=${encoded}&type=handmade&explicit=1&ref=pagination`;
 }
 
 /**
@@ -40,8 +41,46 @@ async function waitForAnySelector(page, selectors, timeout = 18000) {
  * Extract all listing links + metadata directly from anchors with /listing/ href.
  * More resilient than relying on specific card wrappers.
  */
-async function extractFromLinks(page) {
+async function extractFromLinks(page, max) {
   return await page.evaluate((max) => {
+    /**
+     * Find the best available image URL from a container element.
+     * Tries multiple strategies to handle Etsy's lazy-loading patterns.
+     */
+    function getBestImage(container) {
+      if (!container) return null;
+
+      // 1. Direct Etsy CDN src already loaded
+      const etsyDirect = container.querySelector('img[src*="etsystatic.com"], img[src*="etsy.com/il/"]');
+      if (etsyDirect) return etsyDirect.src;
+
+      // 2. Lazy-loaded data attributes (various Etsy patterns)
+      const lazySelectors = ['img[data-src]', 'img[data-lazy-src]', 'img[data-original]', '[data-src]'];
+      for (const sel of lazySelectors) {
+        const el = container.querySelector(sel);
+        if (el) {
+          const url = el.dataset.src || el.dataset.lazySrc || el.dataset.original;
+          if (url && url.startsWith('http') && !url.includes('blank') && !url.includes('placeholder')) return url;
+        }
+      }
+
+      // 3. srcset — pick the first real URL
+      const srcsetImg = container.querySelector('img[srcset]');
+      if (srcsetImg && srcsetImg.srcset) {
+        const first = srcsetImg.srcset.split(',')[0]?.trim().split(' ')[0];
+        if (first && first.startsWith('http')) return first;
+      }
+
+      // 4. Any https img src that isn't a known placeholder
+      const anyImg = container.querySelector('img[src^="https"]');
+      if (anyImg) {
+        const s = anyImg.src;
+        if (!s.includes('blank') && !s.includes('placeholder') && !s.includes('spinner') && !s.includes('1x1')) return s;
+      }
+
+      return null;
+    }
+
     const seen = new Set();
     const results = [];
 
@@ -54,7 +93,7 @@ async function extractFromLinks(page) {
       const title = a.textContent?.trim();
       if (!title || title.length < 5) return;
 
-      // Clean URL
+      // Clean URL — strip query string
       let cleanUrl = href;
       try {
         const u = new URL(href);
@@ -64,15 +103,11 @@ async function extractFromLinks(page) {
       if (seen.has(cleanUrl)) return;
       seen.add(cleanUrl);
 
-      // Image: look in parent or sibling
-      let image = null;
-      const container = a.closest('li, div[class], article') ?? a.parentElement;
-      if (container) {
-        const img = container.querySelector('img[src], img[data-src]');
-        if (img) image = img.src || img.dataset.src;
-      }
+      // Search container hierarchy (Etsy cards are often li > div > a)
+      const container = a.closest('[data-listing-id], li[class], div[data-search-results-card], article') ?? a.parentElement;
+      const image = getBestImage(container);
 
-      // Price: look for currency-value near the link
+      // Price
       let price = null;
       if (container) {
         const priceEl = container.querySelector('[class*="currency"], [class*="price"], [class*="Price"]');
@@ -83,54 +118,91 @@ async function extractFromLinks(page) {
     });
 
     return results;
-  }, MAX_LISTINGS);
+  }, max);
 }
 
 /**
- * Scroll the page incrementally to load more listings.
+ * Scroll the page incrementally to load more listings AND trigger lazy image loading.
  */
 async function infiniteScroll(page, targetCount) {
-  let previous = 0;
-  let stuckRounds = 0;
+  let previousLinks = 0;
+  let stuckRounds   = 0;
 
-  for (let round = 0; round < 8; round++) {
+  for (let round = 0; round < 10; round++) {
     const links = await page.$$('a[href*="/listing/"]');
-    const unique = new Set(links.map ? [] : []);
     if (links.length >= targetCount) break;
-    if (links.length === previous) {
+    if (links.length === previousLinks) {
       stuckRounds++;
       if (stuckRounds >= 3) break;
     } else {
       stuckRounds = 0;
     }
-    previous = links.length;
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 2.5));
+    previousLinks = links.length;
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 2));
+    // Wait for lazy images to load after scroll
     await page.waitForTimeout(SCROLL_DELAY_MS);
   }
+
+  // Scroll back to top so the full page re-renders images in view
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(800);
+  // Final slow scroll to ensure ALL images in the listing grid have loaded
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(1200);
+}
+
+// Terms that indicate a clothing / apparel listing
+const CLOTHING_TERMS = [
+  'shirt', 'tshirt', 't-shirt', 'tee', 'hoodie', 'sweatshirt',
+  'tank', 'crewneck', 'pullover', 'jersey', 'top', 'blouse',
+  'jacket', 'vest', 'cardigan', 'sweater', 'dress', 'skirt',
+  'apparel', 'clothing', 'wear',
+];
+
+/**
+ * Return true if the listing title suggests it is a clothing / apparel item.
+ */
+function isClothing(listing) {
+  const title = (listing.title ?? '').toLowerCase();
+  return CLOTHING_TERMS.some(term => title.includes(term));
 }
 
 /**
  * Main scraper.  Uses official Etsy API if ETSY_API_KEY is set; falls back to Playwright.
+ * Results are always filtered to clothing / apparel items.
  */
 async function scrapeEtsy(keyword) {
+  let listings;
   if (hasApiKey()) {
     try {
       console.log('[scraper] Using Etsy Open API v3');
-      return await searchListings(keyword, MAX_LISTINGS);
+      listings = await searchListings(keyword, MAX_LISTINGS);
     } catch (err) {
       console.warn(`[scraper] Etsy API failed (${err.message}) — falling back to mock data`);
+      listings = null;
     }
   }
-  // Try Playwright browser scrape
-  try {
-    console.log('[scraper] Trying Playwright browser scrape');
-    return await scrapeEtsyBrowser(keyword);
-  } catch (err) {
-    console.warn(`[scraper] Playwright failed (${err.message}) — using mock data`);
+
+  if (!listings) {
+    try {
+      console.log('[scraper] Trying Playwright browser scrape');
+      listings = await scrapeEtsyBrowser(keyword);
+    } catch (err) {
+      console.warn(`[scraper] Playwright failed (${err.message}) — using mock data`);
+      listings = null;
+    }
   }
-  // Final fallback: deterministic mock data
-  console.log('[scraper] Using mock listings for:', keyword);
-  return generateMockListings(keyword, MAX_LISTINGS);
+
+  if (!listings) {
+    console.log('[scraper] Using mock listings for:', keyword);
+    listings = generateMockListings(keyword, MAX_LISTINGS);
+  }
+
+  // Keep only apparel results; fall back to full set if filter removes everything
+  const clothingOnly = listings.filter(isClothing);
+  const result = clothingOnly.length >= 3 ? clothingOnly : listings;
+  console.log(`[scraper] Clothing filter: ${listings.length} → ${result.length} listings`);
+  return result;
 }
 
 /**
@@ -189,7 +261,7 @@ async function scrapeEtsyBrowser(keyword) {
     // Scroll to load more
     await infiniteScroll(page, MAX_LISTINGS);
 
-    const results = await extractFromLinks(page);
+    const results = await extractFromLinks(page, MAX_LISTINGS);
     return results.slice(0, MAX_LISTINGS);
   } finally {
     await browser.close();

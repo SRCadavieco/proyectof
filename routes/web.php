@@ -106,9 +106,10 @@ Route::middleware('auth')->group(function () {
 
     // Trend intelligence API
     Route::prefix('api/trends')->name('api.trends.')->controller(TrendController::class)->group(function () {
-        Route::get('/',          'index')->name('index');
-        Route::get('/{id}',      'show')->name('show')->whereNumber('id');
-        Route::post('/refresh',  'refresh')->name('refresh');
+        Route::get('/',               'index')->name('index');
+        Route::get('/{id}',           'show')->name('show')->whereNumber('id');
+        Route::post('/refresh',       'refresh')->name('refresh');
+        Route::post('/niche-preview', 'nichePreview')->name('niche-preview');
     });
 
     // Printify

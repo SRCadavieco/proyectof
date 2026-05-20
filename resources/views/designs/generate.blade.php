@@ -406,33 +406,6 @@
                     </div>
                     @endif
                     <div class="ml-auto flex items-center gap-2">
-                        <!-- Trend context badge (inline, shows when a niche is active) -->
-                        <div id="trend-context-badge" class="hidden items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium"
-                             style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc;max-width:160px">
-                            <i class="fas fa-fire-alt" style="font-size:8px;flex-shrink:0"></i>
-                            <span id="trend-context-label" class="truncate"></span>
-                            <button type="button" id="trend-context-clear" class="ml-1 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
-                                <i class="fas fa-times" style="font-size:8px"></i>
-                            </button>
-                        </div>
-                        {{-- Hidden select keeps value for existing JS that reads style-selector --}}
-                        <select id="style-selector" class="sr-only" aria-hidden="true" tabindex="-1">
-                            <option value="default" selected>default</option>
-                            <option value="realistic_drawing">realistic_drawing</option>
-                            <option value="cartoon_drawing">cartoon_drawing</option>
-                            <option value="vector_art">vector_art</option>
-                            <option value="photorealistic">photorealistic</option>
-                            <option value="ghibli">ghibli</option>
-                            <option value="manga">manga</option>
-                        </select>
-                        {{-- Visible button opens the picker --}}
-                        <button type="button" id="style-selector-btn" onclick="openStylePicker()"
-                                class="flex items-center gap-1.5 text-[11px] rounded-lg px-2.5 py-1.5 font-medium transition-colors"
-                                style="background:#1f2b4d;color:#dbeafe;border:1px solid rgba(147,197,253,0.45)">
-                            <i class="fas fa-palette" style="font-size:9px"></i>
-                            <span id="style-selector-label">Your Style</span>
-                            <i class="fas fa-chevron-down opacity-40" style="font-size:8px"></i>
-                        </button>
                         <!-- Char counter -->
                         <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0</div>
                     </div>
@@ -543,6 +516,9 @@
 </div>
 
 <!-- ═══════════ TRENDING NICHES MODAL ═══════════ -->
+<style>
+@keyframes shimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+</style>
 <div id="trends-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
     <div class="shadow-2xl w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
@@ -569,6 +545,17 @@
                 <button onclick="closeTrendsModal()" class="icon-btn">
                     <i class="fas fa-times text-lg"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- Search bar -->
+        <div class="px-6 py-3 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2" style="font-size:11px;color:rgba(255,255,255,0.25);pointer-events:none"></i>
+                <input id="trends-search" type="search" placeholder="Search niches or keywords…"
+                       class="w-full pl-8 pr-3 py-2 text-sm rounded-xl text-white/80 focus:outline-none transition-colors"
+                       style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09)"
+                       onfocus="this.style.borderColor='rgba(124,60,160,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.09)'">
             </div>
         </div>
 
@@ -631,13 +618,7 @@
         <!-- Keywords -->
         <div class="trend-keywords px-4 py-2.5 flex flex-wrap gap-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)"></div>
 
-        <!-- Design brief preview -->
-        <div class="trend-brief-wrap px-4 py-2.5 hidden" style="border-bottom:1px solid rgba(255,255,255,0.06)">
-            <p class="text-[10px] font-medium uppercase tracking-widest mb-1.5" style="color:rgba(192,132,252,0.4);letter-spacing:.08em">Style context</p>
-            <p class="trend-brief text-[11px] leading-relaxed line-clamp-3" style="color:rgba(255,255,255,0.4)"></p>
-        </div>
-
-        <!-- Sample listings -->
+        <!-- Sample photos (3 niche-relevant images) -->
         <div class="trend-listings px-4 py-3 grid grid-cols-3 gap-2" style="border-bottom:1px solid rgba(255,255,255,0.06)"></div>
 
         <!-- CTA -->
@@ -1280,10 +1261,6 @@
     const chatContainer     = document.getElementById('chat-container');
     const previewImageStore = [];
 
-    // Trend context: set when user clicks "Generate Collection" from a niche card
-    let trendContext = null;
-
-
 
     // ─── Helpers ─────────────────────────────────────────────────────
     function escapeHtml(text) {
@@ -1410,14 +1387,6 @@
 
         return { provider: 'chutes', model: 'fabric_pro', cost: 1 };
     }
-
-    // ─── Trend context badge ──────────────────────────────────────────
-    document.getElementById('trend-context-clear').addEventListener('click', () => {
-        trendContext = null;
-        document.getElementById('trend-context-badge').classList.add('hidden');
-        document.getElementById('trend-context-badge').classList.remove('inline-flex');
-        promptInput.placeholder = 'Describe the graphic decoration: motif, style, mood, colors…';
-    });
 
     // ─── Textarea auto-resize ─────────────────────────────────────────
     promptInput.addEventListener('input', function () {
@@ -1834,7 +1803,6 @@
             document.getElementById('chat-title').textContent = 'New Design';
             updateWelcomeScreen();
             await loadChats();
-            if (typeof openStylePicker === 'function') openStylePicker();
             return data.id;
         } finally {
             isCreatingChat = false;
@@ -1871,14 +1839,9 @@
         e.preventDefault();
         if (isSubmitting) return;
         const userText = promptInput.value.trim();
-        if (!userText && !trendContext) { showError('Please enter a prompt'); return; }
+        if (!userText) { showError('Please enter a prompt'); return; }
 
-        // Build final AI prompt: user subject + style context
-        // The design context is STYLE-ONLY — user text is the subject
-        const aiPrompt   = trendContext
-            ? `${userText || trendContext.name}, ${trendContext.designPrompt}. Graphic artwork, isolated design, no clothing, no garment, transparent background.`
-            : userText;
-        const displayText = (trendContext && !userText) ? trendContext.name : userText;
+        const aiPrompt = userText;
 
         const peekCost = resolveGenerationEngine(uploadedImageBase64).cost;
         if (TokenManager.get() < peekCost) {
@@ -1889,16 +1852,8 @@
         isSubmitting = true;
         if (!currentChatId) currentChatId = await newChat();
 
-        addUserMessage(displayText, uploadedImageBase64);
+        addUserMessage(userText, uploadedImageBase64);
         promptInput.value = ''; promptInput.style.height = 'auto';
-
-        // Clear trend context after submit
-        if (trendContext) {
-            trendContext = null;
-            document.getElementById('trend-context-badge').classList.add('hidden');
-            document.getElementById('trend-context-badge').classList.remove('inline-flex');
-            promptInput.placeholder = 'Describe the graphic decoration: motif, style, mood, colors…';
-        }
 
         const snapshotImage = uploadedImageBase64;
         const snapshotMime  = uploadedImageMime;
@@ -1914,11 +1869,11 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
                 body: JSON.stringify({
-                    prompt: aiPrompt, display_prompt: displayText, chat_id: currentChatId,
+                    prompt: aiPrompt, chat_id: currentChatId,
                     imageBase64: snapshotImage, mimeType: snapshotMime,
                     model: generationEngine.model,
                     provider: generationEngine.provider,
-                    imageStyle: document.getElementById('style-selector')?.value || 'default',
+                    imageStyle: 'default',
                     is_edit: isEditMode,
                 }),
             });
@@ -4509,10 +4464,14 @@
     const refreshBtn= () => document.getElementById('trends-refresh-btn');
     const refreshIcon = () => document.getElementById('trends-refresh-icon');
 
+    let allClusters = [];
+
     window.openTrendsModal = function () {
         const m = modal();
         m.classList.remove('hidden');
         m.classList.add('flex');
+        const s = document.getElementById('trends-search');
+        if (s) s.value = '';
         if (!grid().dataset.loaded) loadTrends();
     };
 
@@ -4543,6 +4502,7 @@
             const json = await res.json();
             const clusters = json.data ?? [];
             if (clusters.length === 0) { setView('empty'); return; }
+            allClusters = clusters;
             renderClusters(clusters);
             grid().dataset.loaded = '1';
             setView('grid');
@@ -4558,6 +4518,9 @@
         btn.disabled = true;
         icon.classList.add('fa-spin');
         grid().dataset.loaded = '';
+        allClusters = [];
+        const s = document.getElementById('trends-search');
+        if (s) s.value = '';
 
         // Kick off pipeline
         try {
@@ -4636,41 +4599,106 @@
                 kwContainer.classList.add('hidden');
             }
 
-            // Sample listings
+            // Sample images — 3 niche-relevant photos using Unsplash Source.
+            // Each slot uses a DIFFERENT theme keyword so images are visually distinct.
+            // Clothing/generic terms are stripped so only thematic words drive the search.
+            // Only strip generic product-type words — keep thematic words (birthday, retro, boho, etc.)
+            const stopKws = new Set(['shirt','tshirt','t-shirt','tee','hoodie','sweatshirt',
+                'tank','crewneck','apparel','clothing','wear','unisex','custom']);
+            const themeKws = (c.top_keywords ?? [])
+                .filter(k => typeof k === 'string' && !stopKws.has(k.toLowerCase()));
+            const nameWords = (c.name ?? '').split(/\s+/).filter(w => w.length > 3 && !stopKws.has(w.toLowerCase()));
+            const pool = [...new Set([...themeKws, ...nameWords])];
+
+            // Build a niche description from the cluster name, stripping only product-type words
+            const nicheDesc = (c.name ?? 'graphic design')
+                .toLowerCase()
+                .replace(/\b(shirts?|tees?|t-shirts?|hoodies?|sweatshirts?|apparel)\b/gi, '')
+                .replace(/\s+/g, ' ').trim();
+
+            const scraperListings = c.sample_listings ?? [];
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+            // Collect only confirmed real images (not mock placeholders)
+            const realImages = scraperListings
+                .map(l => l?.image)
+                .filter(img => img && !img.includes('loremflickr') && !img.includes('picsum'));
+
+            // Pre-cached Z Image URLs sent inline by the API (avoids extra fetch calls on repeat loads)
+            const previewImages = Array.isArray(c.preview_images) ? c.preview_images : [];
+
+            console.log(`[TRENDS:${c.name}] realImages=${realImages.length} previewImages=${previewImages.filter(Boolean).length}`);
+
+            const getSlotImage = (idx) => {
+                // 1. Real Etsy scraper image
+                if (realImages.length > 0) return realImages[idx % realImages.length] ?? null;
+                // 2. Pre-cached Z Image (no fetch needed)
+                if (previewImages[idx]) return previewImages[idx];
+                return null;
+            };
+
             const listingsContainer = card.querySelector('.trend-listings');
-            const listings = (c.sample_listings ?? []).slice(0, 3);
-            if (listings.length) {
-                listings.forEach(l => {
-                    const a = document.createElement('a');
-                    a.href   = l.url ?? '#';
-                    a.target = '_blank';
-                    a.rel    = 'noopener';
-                    a.className = 'block rounded-lg overflow-hidden transition-opacity hover:opacity-80';
-                    a.style.aspectRatio = '1';
-                    a.style.background  = 'rgba(255,255,255,0.05)';
+            [0, 1, 2].forEach(idx => {
+                const kw      = (pool[idx] ?? nicheDesc.split(' ')[idx] ?? 'graphic');
+                const slotImg = getSlotImage(idx);
 
-                    if (l.image) {
-                        const img = document.createElement('img');
-                        img.src     = l.image;
-                        img.alt     = l.title ?? '';
-                        img.className = 'w-full h-full object-cover';
-                        img.onerror = () => { img.style.display = 'none'; };
-                        a.appendChild(img);
-                    } else {
-                        a.innerHTML = '<div class="w-full h-full flex items-center justify-center"><i class="fas fa-image" style="color:rgba(255,255,255,0.08);font-size:16px"></i></div>';
-                    }
-                    listingsContainer.appendChild(a);
-                });
-            } else {
-                listingsContainer.classList.add('hidden');
-            }
+                const box = document.createElement('div');
+                box.className = 'rounded-lg overflow-hidden';
+                box.style.cssText = 'aspect-ratio:1;position:relative;background:linear-gradient(135deg,rgba(124,60,160,0.15),rgba(60,60,160,0.1))';
 
-            // Design brief preview
-            if (c.design_prompt) {
-                const briefWrap = card.querySelector('.trend-brief-wrap');
-                card.querySelector('.trend-brief').textContent = c.design_prompt;
-                briefWrap.classList.remove('hidden');
-            }
+                const showFallback = () => {
+                    box.innerHTML = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:0.35">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                        <span style="font-size:10px;color:currentColor">${nicheDesc}</span>
+                    </div>`;
+                };
+
+                const shimmer = document.createElement('div');
+                shimmer.style.cssText = 'position:absolute;inset:0;background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,0.04) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 1.4s infinite';
+                box.appendChild(shimmer);
+
+                const img = document.createElement('img');
+                img.alt       = kw;
+                img.className = 'w-full h-full object-cover';
+                img.style.cssText = 'position:relative;transition:opacity .4s;opacity:0';
+
+                const showImg = (src) => {
+                    img.onload  = () => { img.style.opacity = '1'; shimmer.remove(); };
+                    img.onerror = () => { shimmer.remove(); showFallback(); };
+                    img.src = src;
+                };
+
+                const generateWithZImage = () => {
+                    const slotVariants = ['', 'vintage style', 'colorful bold'];
+                    const zKw = slotVariants[idx] ?? '';
+                    fetch('/api/trends/niche-preview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                        body: JSON.stringify({ cluster_id: c.id ?? 0, slot: idx, niche_desc: nicheDesc, keyword: zKw }),
+                    })
+                    .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+                    .then(data => {
+                        if (data.image) showImg(data.image); else { shimmer.remove(); showFallback(); }
+                    })
+                    .catch(() => { shimmer.remove(); showFallback(); });
+                };
+
+                if (slotImg) {
+                    img.onload  = () => { img.style.opacity = '1'; shimmer.remove(); };
+                    img.onerror = () => {
+                        img.onload = null; img.onerror = null;
+                        img.remove();
+                        // scraper image failed → try Z Image (will likely be cached)
+                        generateWithZImage();
+                    };
+                    img.src = slotImg;
+                } else {
+                    generateWithZImage();
+                }
+
+                box.appendChild(img);
+                listingsContainer.appendChild(box);
+            });
 
             // CTA
             card.querySelector('.trend-cta').addEventListener('click', () => {
@@ -4684,27 +4712,33 @@
     function generateFromCluster(name, keywords, designPrompt) {
         closeTrendsModal();
 
-        // Store context invisibly — will be prepended to the AI prompt on submit
-        if (designPrompt && designPrompt.trim().length > 10) {
-            trendContext = { name, designPrompt: designPrompt.trim() };
-        } else {
-            // Fallback: build a basic brief from name + keywords
-            const kws = keywords.filter(k => typeof k === 'string').slice(0, 5).join(', ');
-            trendContext = { name, designPrompt: `${name} t-shirt design${kws ? ' — ' + kws : ''}` };
-        }
-
-        // Show the badge with the niche name (inline in bottom bar)
-        document.getElementById('trend-context-label').textContent = name;
-        const badge = document.getElementById('trend-context-badge');
-        badge.classList.remove('hidden'); badge.classList.add('inline-flex');
-
-        // Clear textarea and update placeholder
-        promptInput.value = '';
+        // Put the full prompt into the textarea so the user can see and edit it
+        const style = designPrompt && designPrompt.trim().length > 10
+            ? designPrompt.trim()
+            : keywords.filter(k => typeof k === 'string').slice(0, 5).join(', ');
+        promptInput.value = `${name}, ${style}. Graphic artwork, isolated design, no clothing, no garment, transparent background.`;
         promptInput.style.height = 'auto';
-        promptInput.placeholder = 'Add any extra details or leave blank to use niche context…';
+        promptInput.style.height = Math.min(promptInput.scrollHeight, 128) + 'px';
         updateCharCounter();
         promptInput.focus();
     }
+
+    // ─── Niche search filter ──────────────────────────────────────────────────
+    document.getElementById('trends-search')?.addEventListener('input', function () {
+        const q = this.value.toLowerCase().trim();
+        if (!q) {
+            renderClusters(allClusters);
+            setView(allClusters.length ? 'grid' : 'empty');
+            return;
+        }
+        const filtered = allClusters.filter(c => {
+            const name = (c.name ?? '').toLowerCase();
+            const kws  = (c.top_keywords ?? []).join(' ').toLowerCase();
+            return name.includes(q) || kws.includes(q);
+        });
+        renderClusters(filtered);
+        setView(filtered.length ? 'grid' : 'empty');
+    });
 })();
 </script>
 

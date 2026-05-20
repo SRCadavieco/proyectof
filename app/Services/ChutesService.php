@@ -30,7 +30,7 @@ class ChutesService
      *   - Binaria (image/jpeg, image/png) → se convierte a base64.
      *   - JSON con campo `image` o `imageBase64` (base64 puro).
      */
-    public function generateDesign(string $prompt, ?string $backgroundColor = null, string $model = 'z_image_turbo'): array
+    public function generateDesign(string $prompt, ?string $backgroundColor = null, string $model = 'z_image_turbo', ?string $negativePrompt = null): array
     {
         $urls    = config('services.chutes.urls', []);
         $baseUrl = (string) ($urls[$model] ?? $urls['z_image_turbo'] ?? '');
@@ -61,7 +61,8 @@ class ChutesService
             $finalPrompt .= "\nFondo sólido y uniforme de color {$colorName} ({$hex}). Sin transparencia.";
         }
 
-        $payload = ['prompt' => $finalPrompt, 'negative_prompt' => 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame'];
+        $baseNegative = 'comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame';
+        $payload = ['prompt' => $finalPrompt, 'negative_prompt' => $negativePrompt ?? $baseNegative];
         if (!empty($backgroundColor)) {
             $payload['backgroundColor'] = $backgroundColor;
         }

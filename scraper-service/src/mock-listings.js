@@ -69,9 +69,9 @@ function generateMockListings(keyword, count = 50) {
     const listingId = 1000000000 + Math.floor(rand() * 900000000);
     const url       = `https://www.etsy.com/listing/${listingId}/${kwStr.replace(/\s+/g,'-').toLowerCase()}-${style}-${product.toLowerCase().replace(/\s+/g,'-')}`;
 
-    // Use a placeholder image from picsum seeded on listing id
-    const imgSeed = (listingId % 1000);
-    const image   = `https://picsum.photos/seed/${imgSeed}/400/400`;
+    // Keyword-specific image via loremflickr: "shirt + niche keywords" gives relevant clothing photos
+    const flickrKws = ['shirt', kwWords[0] ?? 'apparel'].join(',');
+    const image     = `https://loremflickr.com/400/400/${encodeURIComponent(flickrKws)}?lock=${listingId % 500}`;
 
     // 2–4 tags from the base set
     const tagCount = 2 + Math.floor(rand() * 3);
