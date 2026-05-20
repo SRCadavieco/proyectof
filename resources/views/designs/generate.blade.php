@@ -198,7 +198,7 @@
                     class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors"
                     style="background:rgba(124,60,160,0.1);border:1px solid rgba(124,60,160,0.22)"
                     onmouseover="this.style.background='rgba(124,60,160,0.2)'" onmouseout="this.style.background='rgba(124,60,160,0.1)'">
-                <span class="text-base leading-none">🔥</span>
+                <i class="fas fa-chart-line text-purple-400" style="font-size:13px;width:16px;text-align:center"></i>
                 <div class="flex-1 min-w-0">
                     <span class="text-xs font-semibold text-purple-300 block leading-tight">Trending Niches</span>
                     <span class="text-[9px] text-white/30 tracking-wide uppercase">Market intelligence</span>
@@ -550,7 +550,9 @@
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
             <div class="flex items-center gap-3">
-                <span class="text-xl leading-none">🔥</span>
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.3)">
+                    <i class="fas fa-chart-line text-purple-400" style="font-size:13px"></i>
+                </div>
                 <div>
                     <h2 class="text-base font-semibold text-white">Trending Niches</h2>
                     <p class="text-xs text-white/40 mt-0.5">Live market intelligence from Etsy · sorted by trend score</p>
@@ -581,15 +583,11 @@
 
             <!-- Empty -->
             <div id="trends-empty" class="hidden flex-col items-center justify-center py-20 text-center">
-                <span class="text-4xl mb-4">📊</span>
-                <p class="text-sm font-medium text-white/60 mb-1">No trend data yet</p>
-                <p class="text-xs text-white/30 mb-5">Run the pipeline to analyse Etsy listings.</p>
-                <button onclick="refreshTrends()"
-                        class="px-5 py-2 rounded-xl text-sm font-medium transition-colors"
-                        style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc"
-                        onmouseover="this.style.background='rgba(124,60,160,0.35)'" onmouseout="this.style.background='rgba(124,60,160,0.2)'">
-                    Run Pipeline Now
-                </button>
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:rgba(124,60,160,0.12);border:1px solid rgba(124,60,160,0.2)">
+                    <i class="fas fa-chart-line text-purple-400/60 text-xl"></i>
+                </div>
+                <p class="text-sm font-semibold text-white/60 mb-2">Trend data is on its way</p>
+                <p class="text-xs text-white/30 leading-relaxed max-w-xs">Market analysis runs automatically. Check back in a few minutes.</p>
             </div>
 
             <!-- Grid -->
@@ -635,8 +633,8 @@
 
         <!-- Design brief preview -->
         <div class="trend-brief-wrap px-4 py-2.5 hidden" style="border-bottom:1px solid rgba(255,255,255,0.06)">
-            <p class="text-[10px] font-semibold uppercase tracking-widest mb-1" style="color:rgba(192,132,252,0.5)">AI Design Brief</p>
-            <p class="trend-brief text-[11px] leading-relaxed line-clamp-3" style="color:rgba(255,255,255,0.45)"></p>
+            <p class="text-[10px] font-medium uppercase tracking-widest mb-1.5" style="color:rgba(192,132,252,0.4);letter-spacing:.08em">Style context</p>
+            <p class="trend-brief text-[11px] leading-relaxed line-clamp-3" style="color:rgba(255,255,255,0.4)"></p>
         </div>
 
         <!-- Sample listings -->
@@ -644,11 +642,12 @@
 
         <!-- CTA -->
         <div class="px-4 py-3">
-            <button class="trend-cta w-full py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
+            <button class="trend-cta w-full py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 flex items-center justify-center gap-2"
                     style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc"
-                    onmouseover="this.style.background='rgba(124,60,160,0.35)';this.style.transform='scale(1.01)'"
-                    onmouseout="this.style.background='rgba(124,60,160,0.2)';this.style.transform='scale(1)'">
-                ✦ Generate Collection →
+                    onmouseover="this.style.background='rgba(124,60,160,0.35)'"
+                    onmouseout="this.style.background='rgba(124,60,160,0.2)'">
+                <i class="fas fa-wand-magic-sparkles" style="font-size:10px"></i>
+                Generate from this niche
             </button>
         </div>
     </div>
@@ -4580,9 +4579,9 @@
     };
 
     function growthBadge(rate) {
-        if (rate >= 0.6) return { label: '🔥 Hot',    bg: 'rgba(239,68,68,0.18)',  color: '#f87171' };
-        if (rate >= 0.3) return { label: '📈 Rising',  bg: 'rgba(234,179,8,0.15)', color: '#fcd34d' };
-        return                   { label: '📊 Stable', bg: 'rgba(255,255,255,0.08)', color: '#9ca3af' };
+        if (rate >= 0.6) return { label: 'Hot',    bg: 'rgba(239,68,68,0.15)',   color: '#f87171', dot: '#f87171' };
+        if (rate >= 0.3) return { label: 'Rising', bg: 'rgba(234,179,8,0.13)',   color: '#fbbf24', dot: '#fbbf24' };
+        return                   { label: 'Stable', bg: 'rgba(255,255,255,0.06)', color: '#9ca3af', dot: '#6b7280' };
     }
 
     function competitionLabel(score) {
@@ -4604,7 +4603,7 @@
 
             const badge = growthBadge(c.growth_rate ?? 0);
             const growthEl = card.querySelector('.trend-growth');
-            growthEl.textContent = badge.label;
+            growthEl.innerHTML = `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${badge.dot};margin-right:4px;vertical-align:middle"></span>${badge.label}`;
             growthEl.style.background = badge.bg;
             growthEl.style.color      = badge.color;
 
@@ -4658,7 +4657,7 @@
                         img.onerror = () => { img.style.display = 'none'; };
                         a.appendChild(img);
                     } else {
-                        a.innerHTML = '<div class="w-full h-full flex items-center justify-center text-white/10 text-xl">🖼</div>';
+                        a.innerHTML = '<div class="w-full h-full flex items-center justify-center"><i class="fas fa-image" style="color:rgba(255,255,255,0.08);font-size:16px"></i></div>';
                     }
                     listingsContainer.appendChild(a);
                 });

@@ -24,8 +24,14 @@ substitutions:
 
   # GCS — gestionado manualmente en Cloud Run Console
   # (FILESYSTEM_DISK, GCS_BUCKET, GCS_PROJECT_ID)
+
+  # Scraper service — _SCRAPER_SECRET debe configurarse en el trigger de Cloud Build
+  _SCRAPER_IMAGE: gcr.io/gen-lang-client-0352261941/scraper-service
+  _SCRAPER_SERVICE: scraper-service
+  _SCRAPER_SECRET: ""
+
 steps:
-  # Limpiar caché de Laravel y mostrar APP_URL
+  # ── 1. Limpiar caché de Laravel ───────────────────────────────────────────
   - name: 'php:8.2-cli'
     entrypoint: 'bash'
     args:
@@ -34,8 +40,8 @@ steps:
         php artisan config:clear
         php artisan cache:clear
         php artisan view:clear
-        echo "APP_URL: $(php -r 'echo env(\"APP_URL\");')"
-  # Limpiar y construir assets frontend
+
+  # ── 2. Construir assets frontend ──────────────────────────────────────────
   - name: node:20
     entrypoint: bash
     args:
@@ -45,28 +51,59 @@ steps:
         npm install
         npm run build
 
-  # Construir imagen Docker
+  # ── 3. Construir imagen principal (Laravel) ───────────────────────────────
   - name: gcr.io/cloud-builders/docker
     args: ["build", "-t", "$_IMAGE", "."]
 
-  # Subir imagen al registro
+  # ── 4. Construir imagen del scraper (Playwright/Node) ─────────────────────
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "$_SCRAPER_IMAGE", "scraper-service/"]
+
+  # ── 5. Subir ambas imágenes al registro ───────────────────────────────────
   - name: gcr.io/cloud-builders/docker
     args: ["push", "$_IMAGE"]
 
-  # Desplegar a Cloud Run
-  - name: gcr.io/cloud-builders/gcloud
-    args:
-      - run
-      - deploy
-      - $_SERVICE
-      - --image=$_IMAGE
-      - --region=$_REGION
-      - --allow-unauthenticated
-      - --update-env-vars=APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr,SESSION_DRIVER=database,CACHE_STORE=database,APP_KEY=$_APP_KEY,GEMINI_BACKEND_URL=$_GEMINI_BACKEND_URL,GEMINI_BACKEND_TOKEN=$_GEMINI_BACKEND_TOKEN,GEMINI_BACKEND_PATH=/generate,GEMINI_BACKEND_AUTH_HEADER=none,GEMINI_BACKEND_METHOD=POST,DB_CONNECTION=mysql,DB_HOST=127.0.0.1,DB_PORT=3306,DB_DATABASE=Fabricai,DB_USERNAME=fabricai,DB_PASSWORD=fabricai,DB_SOCKET=/cloudsql/gen-lang-client-0352261941:europe-west1:fabricai-sql,QUEUE_CONNECTION=sync,APP_URL=https://fabricai.net,CASHIER_CURRENCY=usd,STRIPE_STARTER_MONTHLY_PRICE=$_STRIPE_STARTER_MONTHLY_PRICE,STRIPE_PRO_MONTHLY_PRICE=$_STRIPE_PRO_MONTHLY_PRICE,STRIPE_BUSINESS_MONTHLY_PRICE=$_STRIPE_BUSINESS_MONTHLY_PRICE,CHUTES_URL_ZIMAGE=$_CHUTES_URL_ZIMAGE,CHUTES_URL_FLUX=$_CHUTES_URL_FLUX,NANOGPT_IMAGE_URL=$_NANOGPT_IMAGE_URL,NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z=$_NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z,FILESYSTEM_DISK=local
-      - --timeout=300
-      - --add-cloudsql-instances=gen-lang-client-0352261941:europe-west1:fabricai-sql
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "$_SCRAPER_IMAGE"]
 
-  # Ejecutar migraciones en producción
+  # ── 6. Desplegar scraper service y capturar su URL ────────────────────────
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run deploy $_SCRAPER_SERVICE \
+          --image=$_SCRAPER_IMAGE \
+          --region=$_REGION \
+          --allow-unauthenticated \
+          --set-env-vars=SCRAPER_SECRET=$_SCRAPER_SECRET,HEADLESS=true,MAX_LISTINGS=60,SCROLL_DELAY_MS=1200 \
+          --timeout=120 \
+          --concurrency=2 \
+          --min-instances=0 \
+          --max-instances=3 \
+          --memory=2Gi \
+          --cpu=2
+        gcloud run services describe $_SCRAPER_SERVICE \
+          --region=$_REGION \
+          --format='value(status.url)' > /workspace/scraper_url.txt
+        echo "Scraper deployed at: $(cat /workspace/scraper_url.txt)"
+
+  # ── 7. Desplegar servicio principal (Laravel) ─────────────────────────────
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        SCRAPER_URL=$(cat /workspace/scraper_url.txt)
+        gcloud run deploy $_SERVICE \
+          --image=$_IMAGE \
+          --region=$_REGION \
+          --allow-unauthenticated \
+          --update-env-vars=APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr,SESSION_DRIVER=database,CACHE_STORE=database,APP_KEY=$_APP_KEY,GEMINI_BACKEND_URL=$_GEMINI_BACKEND_URL,GEMINI_BACKEND_TOKEN=$_GEMINI_BACKEND_TOKEN,GEMINI_BACKEND_PATH=/generate,GEMINI_BACKEND_AUTH_HEADER=none,GEMINI_BACKEND_METHOD=POST,DB_CONNECTION=mysql,DB_HOST=127.0.0.1,DB_PORT=3306,DB_DATABASE=Fabricai,DB_USERNAME=fabricai,DB_PASSWORD=fabricai,DB_SOCKET=/cloudsql/gen-lang-client-0352261941:europe-west1:fabricai-sql,QUEUE_CONNECTION=sync,APP_URL=https://fabricai.net,CASHIER_CURRENCY=usd,STRIPE_STARTER_MONTHLY_PRICE=$_STRIPE_STARTER_MONTHLY_PRICE,STRIPE_PRO_MONTHLY_PRICE=$_STRIPE_PRO_MONTHLY_PRICE,STRIPE_BUSINESS_MONTHLY_PRICE=$_STRIPE_BUSINESS_MONTHLY_PRICE,CHUTES_URL_ZIMAGE=$_CHUTES_URL_ZIMAGE,CHUTES_URL_FLUX=$_CHUTES_URL_FLUX,NANOGPT_IMAGE_URL=$_NANOGPT_IMAGE_URL,NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z=$_NANOGPT_IMAGE_MODEL_JUGGERNAUT_Z,FILESYSTEM_DISK=local,SCRAPER_SERVICE_URL=${SCRAPER_URL},SCRAPER_SERVICE_SECRET=$_SCRAPER_SECRET \
+          --timeout=300 \
+          --add-cloudsql-instances=gen-lang-client-0352261941:europe-west1:fabricai-sql
+
+  # ── 8. Ejecutar migraciones en producción ─────────────────────────────────
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
     args:
@@ -93,6 +130,7 @@ steps:
 
 images:
   - $_IMAGE
+  - $_SCRAPER_IMAGE
 
 options:
   logging: CLOUD_LOGGING_ONLY
