@@ -107,6 +107,13 @@ class TrendController extends Controller
         // re-scraping runs that create new cluster records with different IDs.
         $cacheKey = 'trend-preview:' . md5("{$nicheDesc}:{$keyword}");
         $cached   = Cache::get($cacheKey);
+        // Do not trust legacy local-file URLs in shared production cache: they can
+        // point to files generated on another instance and return 404.
+        if (is_string($cached) && str_starts_with($cached, '/storage/trend-previews/')) {
+            Cache::forget($cacheKey);
+            $cached = null;
+        }
+
         if ($cached) {
             return response()->json(['image' => $cached]);
         }
@@ -130,10 +137,14 @@ class TrendController extends Controller
             return response()->json(['error' => 'No image returned'], 500);
         }
 
-        $url = $this->savePreviewImage((string) $image, $cacheKey);
-        Cache::put($cacheKey, $url, now()->addDays(30));
+        $image = (string) $image;
+        if (!str_starts_with($image, 'data:') && !str_starts_with($image, 'http')) {
+            $image = 'data:image/jpeg;base64,' . $image;
+        }
 
-        return response()->json(['image' => $url]);
+        Cache::put($cacheKey, $image, now()->addDays(30));
+
+        return response()->json(['image' => $image]);
     }
 
     private function formatCluster(TrendCluster $cluster, bool $detailed = false): array
@@ -209,6 +220,10 @@ class TrendController extends Controller
             if ($cached !== null && strlen((string) $cached) > 500) {
                 $cached = null;
             }
+            // Local file URLs are not portable across Cloud Run instances.
+            if (is_string($cached) && str_starts_with($cached, '/storage/trend-previews/')) {
+                $cached = null;
+            }
             $images[] = $cached;   // null = not yet generated
         }
 
@@ -217,31 +232,4 @@ class TrendController extends Controller
         return count($valid) > 0 ? $images : [];
     }
 
-    /**
-     * Saves a generated image (base64 or data-URI) to the public storage directory
-     * and returns a public URL path. If the input is already a URL, returns it as-is.
-     */
-    private function savePreviewImage(string $image, string $cacheKey): string
-    {
-        if (str_starts_with($image, 'http')) {
-            return $image;
-        }
-
-        $hash = substr($cacheKey, strrpos($cacheKey, ':') + 1);
-        $dir  = storage_path('app/public/trend-previews');
-
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        if (str_starts_with($image, 'data:')) {
-            $b64 = (string) preg_replace('/^data:[^;]+;base64,/', '', $image);
-        } else {
-            $b64 = $image;
-        }
-
-        file_put_contents($dir . '/' . $hash . '.png', base64_decode($b64));
-
-        return '/storage/trend-previews/' . $hash . '.png';
-    }
 }
