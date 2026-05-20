@@ -122,6 +122,7 @@ images:
   - $_IMAGE
   - $_SCRAPER_IMAGE
 
+timeout: '3600s'
+
 options:
   logging: CLOUD_LOGGING_ONLY
-  timeout: '3600s'
