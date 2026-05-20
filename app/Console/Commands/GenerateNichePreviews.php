@@ -19,7 +19,7 @@ class GenerateNichePreviews extends Command
     /** Must match the slot variants used by the frontend JS */
     private const SLOT_VARIANTS = ['', 'vintage style', 'colorful bold'];
 
-    public function handle(ChutesService $chutes): int
+    public function handle(\App\Services\TogetherService $together): int
     {
         $days  = (int) $this->option('days');
         $force = (bool) $this->option('force');
@@ -79,8 +79,7 @@ class GenerateNichePreviews extends Command
                 $prompt  = mb_substr($prompt, 0, 350);
 
                 $this->line("    slot {$slot} [{$zKw}] → generating…");
-                $negativePrompt = 'text, letters, words, typography, writing, font, script, handwriting, calligraphy, watermark, caption, label, title, headline, tagline, slogan, inscription, readable text, legible text, comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame';
-                $result = $chutes->generateDesign($prompt, null, 'z_image_turbo', $negativePrompt);
+                $result = $together->generateDesign($prompt, null, 'flux_dev');
 
                 if (!($result['success'] ?? false)) {
                     $this->warn("    slot {$slot} → FAILED: " . ($result['error'] ?? 'unknown'));

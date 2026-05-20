@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\ProcessTrendsJob;
 use App\Jobs\ScrapeEtsyJob;
 use App\Models\TrendCluster;
-use App\Services\ChutesService;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -93,10 +93,10 @@ class TrendController extends Controller
 
     /**
      * POST /api/trends/niche-preview
-     * Generates a preview image for a trend niche using Z-Image (Chutes AI).
+     * Generates a preview image for a trend niche using Together AI (FLUX.2).
      * Results cached per cluster+slot for 30 days to avoid redundant generation.
      */
-    public function nichePreview(Request $request, ChutesService $chutes): JsonResponse
+    public function nichePreview(Request $request, \App\Services\TogetherService $together): JsonResponse
     {
         $clusterId = (int) $request->input('cluster_id', 0);
         $slot      = max(0, min(2, (int) $request->input('slot', 0)));
@@ -124,7 +124,7 @@ class TrendController extends Controller
 
         $negativePrompt = 'text, letters, words, typography, writing, font, script, handwriting, calligraphy, watermark, caption, label, title, headline, tagline, slogan, inscription, readable text, legible text, comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame';
         try {
-            $result = $chutes->generateDesign($prompt, null, 'z_image_turbo', $negativePrompt);
+            $result = $together->generateDesign($prompt, null, 'flux_dev');
 
             if (!($result['success'] ?? false)) {
                 $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
@@ -243,8 +243,9 @@ class TrendController extends Controller
 
     private function buildFallbackPreviewUrl(string $nicheDesc, string $keyword): string
     {
-        $prompt = trim($nicheDesc . ' ' . $keyword . ' t-shirt design, flat lay mockup, clean white background');
-        return 'https://image.pollinations.ai/prompt/' . rawurlencode($prompt) . '?width=768&height=768&nologo=true';
+        // Fallback: use a simple placeholder from Unsplash when Together fails
+        $seed = md5($nicheDesc . ':' . $keyword);
+        return 'https://picsum.photos/800/800?random=' . substr($seed, 0, 10);
     }
 
 }
