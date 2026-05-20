@@ -367,6 +367,18 @@
                         Cancel
                     </button>
                 </div>
+                <!-- Trend context badge -->
+                <div id="trend-context-badge" class="hidden mb-2 items-center gap-2">
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium"
+                         style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc">
+                        <i class="fas fa-fire-alt" style="font-size:9px"></i>
+                        <span id="trend-context-label"></span>
+                        <button type="button" id="trend-context-clear" class="ml-1 opacity-60 hover:opacity-100 transition-opacity">
+                            <i class="fas fa-times" style="font-size:9px"></i>
+                        </button>
+                    </div>
+                    <span class="text-[10px]" style="color:rgba(255,255,255,0.25)">Design context active · shown to AI only</span>
+                </div>
                 <div class="flex gap-2 items-center">
                     <!-- Attach image -->
                     <label class="cursor-pointer icon-btn shrink-0" title="Attach image" style="color:#c084fc">
@@ -379,7 +391,6 @@
                     <textarea
                         id="prompt"
                         rows="1"
-                        maxlength="270"
                         placeholder="Describe the graphic decoration: motif, style, mood, colors…"
                         class="flex-1 rounded-xl px-4 py-2.5 text-sm resize-none text-white focus:outline-none transition-colors max-h-32 scrollbar-hide leading-relaxed placeholder-white/25"
                         style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)" onfocus="this.style.borderColor='rgba(124,60,160,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
@@ -426,7 +437,7 @@
                             <i class="fas fa-chevron-down opacity-40" style="font-size:8px"></i>
                         </button>
                         <!-- Char counter -->
-                        <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0 / 270</div>
+                        <div id="char-counter" class="text-[10px] pr-1" style="color:rgba(255,255,255,0.2)">0</div>
                     </div>
                 </div>
             </form>
@@ -624,6 +635,12 @@
 
         <!-- Keywords -->
         <div class="trend-keywords px-4 py-2.5 flex flex-wrap gap-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)"></div>
+
+        <!-- Design brief preview -->
+        <div class="trend-brief-wrap px-4 py-2.5 hidden" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+            <p class="text-[10px] font-semibold uppercase tracking-widest mb-1" style="color:rgba(192,132,252,0.5)">AI Design Brief</p>
+            <p class="trend-brief text-[11px] leading-relaxed line-clamp-3" style="color:rgba(255,255,255,0.45)"></p>
+        </div>
 
         <!-- Sample listings -->
         <div class="trend-listings px-4 py-3 grid grid-cols-3 gap-2" style="border-bottom:1px solid rgba(255,255,255,0.06)"></div>
@@ -1267,6 +1284,9 @@
     const chatContainer     = document.getElementById('chat-container');
     const previewImageStore = [];
 
+    // Trend context: set when user clicks "Generate Collection" from a niche card
+    let trendContext = null;
+
 
 
     // ─── Helpers ─────────────────────────────────────────────────────
@@ -1365,20 +1385,17 @@
 
 
 
-    // ─── Char counter & dynamic maxlength ───────────────────────────
-    const LIMIT_DIFFUSION = 270;
+    // ─── Char counter (no hard limit) ────────────────────────────────
     const charCounter = document.getElementById('char-counter');
 
     function updateCharCounter() {
-        const max = parseInt(promptInput.getAttribute('maxlength') || LIMIT_DIFFUSION);
         const len = promptInput.value.length;
-        const remaining = max - len;
-        charCounter.textContent = len + ' / ' + max;
-        charCounter.style.color = remaining <= 20 ? '#ef4444' : remaining <= 60 ? '#f59e0b' : '#8a8a8a';
+        charCounter.textContent = len ? len + ' chars' : '';
+        charCounter.style.color = len > 800 ? '#f59e0b' : 'rgba(255,255,255,0.2)';
     }
 
     function syncPromptLimit() {
-        promptInput.setAttribute('maxlength', LIMIT_DIFFUSION);
+        promptInput.removeAttribute('maxlength');
         updateCharCounter();
     }
 
@@ -1397,6 +1414,14 @@
 
         return { provider: 'chutes', model: 'fabric_pro', cost: 1 };
     }
+
+    // ─── Trend context badge ──────────────────────────────────────────
+    document.getElementById('trend-context-clear').addEventListener('click', () => {
+        trendContext = null;
+        const badge = document.getElementById('trend-context-badge');
+        badge.classList.add('hidden'); badge.classList.remove('flex');
+        promptInput.placeholder = 'Describe the graphic decoration: motif, style, mood, colors…';
+    });
 
     // ─── Textarea auto-resize ─────────────────────────────────────────
     promptInput.addEventListener('input', function () {
@@ -1849,8 +1874,16 @@
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (isSubmitting) return;
-        const prompt = promptInput.value.trim();
-        if (!prompt) { showError('Please enter a prompt'); return; }
+        const userText = promptInput.value.trim();
+        if (!userText && !trendContext) { showError('Please enter a prompt'); return; }
+
+        // Build final AI prompt: user subject + style context
+        // The design context is STYLE-ONLY — user text is the subject
+        const aiPrompt   = trendContext
+            ? `${userText || trendContext.name}, ${trendContext.designPrompt}. Graphic artwork, isolated design, no clothing, no garment, transparent background.`
+            : userText;
+        const displayText = (trendContext && !userText) ? trendContext.name : userText;
+
         const peekCost = resolveGenerationEngine(uploadedImageBase64).cost;
         if (TokenManager.get() < peekCost) {
             showError(peekCost > 1 ? `You need ${peekCost} Spools to use advanced features` : 'No Spools available');
@@ -1860,8 +1893,16 @@
         isSubmitting = true;
         if (!currentChatId) currentChatId = await newChat();
 
-        addUserMessage(prompt, uploadedImageBase64);
+        addUserMessage(displayText, uploadedImageBase64);
         promptInput.value = ''; promptInput.style.height = 'auto';
+
+        // Clear trend context after submit
+        if (trendContext) {
+            trendContext = null;
+            const badge = document.getElementById('trend-context-badge');
+            badge.classList.add('hidden'); badge.classList.remove('flex');
+            promptInput.placeholder = 'Describe the graphic decoration: motif, style, mood, colors…';
+        }
 
         const snapshotImage = uploadedImageBase64;
         const snapshotMime  = uploadedImageMime;
@@ -1877,7 +1918,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
                 body: JSON.stringify({
-                    prompt, chat_id: currentChatId,
+                    prompt: aiPrompt, chat_id: currentChatId,
                     imageBase64: snapshotImage, mimeType: snapshotMime,
                     model: generationEngine.model,
                     provider: generationEngine.provider,
@@ -4636,27 +4677,45 @@
                 listingsContainer.classList.add('hidden');
             }
 
+            // Design brief preview
+            if (c.design_prompt) {
+                const briefWrap = card.querySelector('.trend-brief-wrap');
+                card.querySelector('.trend-brief').textContent = c.design_prompt;
+                briefWrap.classList.remove('hidden');
+            }
+
             // CTA
             card.querySelector('.trend-cta').addEventListener('click', () => {
-                generateFromCluster(c.name ?? '', c.top_keywords ?? []);
+                generateFromCluster(c.name ?? '', c.top_keywords ?? [], c.design_prompt ?? '');
             });
 
             container.appendChild(clone);
         });
     }
 
-    function generateFromCluster(name, keywords) {
+    function generateFromCluster(name, keywords, designPrompt) {
         closeTrendsModal();
-        const kws    = keywords.filter(k => typeof k === 'string').slice(0, 5).join(', ');
-        const prompt = `${name} t-shirt design${kws ? ' — ' + kws : ''}`;
 
-        // Pre-fill the chat input
-        const input = document.getElementById('prompt') ?? document.querySelector('textarea[name="prompt"], input[name="prompt"]');
-        if (input) {
-            input.value = prompt;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.focus();
+        // Store context invisibly — will be prepended to the AI prompt on submit
+        if (designPrompt && designPrompt.trim().length > 10) {
+            trendContext = { name, designPrompt: designPrompt.trim() };
+        } else {
+            // Fallback: build a basic brief from name + keywords
+            const kws = keywords.filter(k => typeof k === 'string').slice(0, 5).join(', ');
+            trendContext = { name, designPrompt: `${name} t-shirt design${kws ? ' — ' + kws : ''}` };
         }
+
+        // Show the badge with the niche name
+        document.getElementById('trend-context-label').textContent = name;
+        const badge = document.getElementById('trend-context-badge');
+        badge.classList.remove('hidden'); badge.classList.add('flex');
+
+        // Clear textarea and update placeholder
+        promptInput.value = '';
+        promptInput.style.height = 'auto';
+        promptInput.placeholder = 'Add any extra details or leave blank to use niche context…';
+        updateCharCounter();
+        promptInput.focus();
     }
 })();
 </script>

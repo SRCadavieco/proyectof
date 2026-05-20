@@ -95,6 +95,7 @@ class TrendController extends Controller
             'id'                => $cluster->id,
             'name'              => $cluster->name,
             'summary'           => $cluster->summary,
+            'design_prompt'     => $cluster->design_prompt,
             'top_keywords'      => $cluster->top_keywords ?? [],
             'score'             => $cluster->score,
             'growth_rate'       => $cluster->growth_rate,

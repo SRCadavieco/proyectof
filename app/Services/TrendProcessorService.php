@@ -95,11 +95,12 @@ class TrendProcessorService
             $competition     = $this->computeCompetition($clusterListings);
 
             // LLM naming (non-blocking — fall back on keyword list if LLM fails)
-            [$name, $summary] = $this->nameClusters($topKeywords, $clusterListings->take(5));
+            [$name, $summary, $designPrompt] = $this->nameClusters($topKeywords, $clusterListings->take(5));
 
             $cluster = TrendCluster::create([
                 'name'              => $name,
                 'summary'           => $summary,
+                'design_prompt'     => $designPrompt,
                 'top_keywords'      => $topKeywords,
                 'embedding_vector'  => array_slice($centroid, 0, 64), // store compact vector
                 'score'             => round($score, 4),
@@ -381,12 +382,12 @@ class TrendProcessorService
     // ─── LLM cluster naming ──────────────────────────────────────────────────
 
     /**
-     * Ask the LLM to name a cluster and produce a short market insight summary.
+     * Ask the LLM to name a cluster, produce a market insight, and generate a design prompt.
      * Falls back to joining the top keywords if the LLM call fails.
      *
      * @param  array<string> $topKeywords
      * @param  Collection<int, EtsyListing> $sampleListings
-     * @return array{0: string, 1: string}  [name, summary]
+     * @return array{0: string, 1: string, 2: string}  [name, summary, design_prompt]
      */
     private function nameClusters(array $topKeywords, Collection $sampleListings): array
     {
@@ -394,14 +395,20 @@ class TrendProcessorService
         $kwList  = implode(', ', array_slice($topKeywords, 0, 10));
 
         $prompt = <<<PROMPT
-        You are a print-on-demand market analyst.
+        You are a print-on-demand creative director.
         Given these Etsy listing titles: [{$titles}]
         And extracted keywords: [{$kwList}]
 
         1. Give a concise niche cluster name (max 5 words, e.g. "Funny Cat Lover Shirts").
         2. Write a 1-sentence market insight for this cluster.
+        3. Write a style_context: a short style descriptor (max 20 words) for t-shirt artwork in this niche.
+           Rules for style_context:
+           - Describe ONLY the artistic style, color palette (2-3 specific colors), texture/finish, and aesthetic mood.
+           - Do NOT include specific subjects, characters, objects, animals, or text content.
+           - It will be appended after the user's own subject, so keep it style-pure.
+           - Example: "bold vintage illustration, deep red and mustard yellow, distressed screen-print, 1970s Americana aesthetic"
 
-        Respond in JSON: {"name": "...", "summary": "..."}
+        Respond in JSON: {"name": "...", "summary": "...", "design_prompt": "..."}
         PROMPT;
 
         $apiKey   = (string) config('services.nanogpt.key', '');
@@ -414,8 +421,8 @@ class TrendProcessorService
                 ->post('https://nano-gpt.com/v1/chat/completions', [
                     'model'       => $llmModel,
                     'messages'    => [['role' => 'user', 'content' => $prompt]],
-                    'max_tokens'  => 200,
-                    'temperature' => 0.4,
+                    'max_tokens'  => 400,
+                    'temperature' => 0.5,
                 ]);
 
             if ($response->successful()) {
@@ -427,6 +434,7 @@ class TrendProcessorService
                         return [
                             (string) $parsed['name'],
                             (string) ($parsed['summary'] ?? ''),
+                            (string) ($parsed['design_prompt'] ?? ''),
                         ];
                     }
                 }
@@ -437,6 +445,6 @@ class TrendProcessorService
 
         // Fallback
         $fallbackName = implode(' ', array_map('ucfirst', array_slice((array) $topKeywords, 0, 3)));
-        return [$fallbackName ?: 'Unnamed Cluster', ''];
+        return [$fallbackName ?: 'Unnamed Cluster', '', ''];
     }
 }

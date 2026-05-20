@@ -11,6 +11,7 @@ class TrendCluster extends Model
     protected $fillable = [
         'name',
         'summary',
+        'design_prompt',
         'top_keywords',
         'embedding_vector',
         'score',
