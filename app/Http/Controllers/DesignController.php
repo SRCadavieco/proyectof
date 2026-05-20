@@ -89,6 +89,7 @@ class DesignController extends Controller
    try {
        $validated = $request->validate([
            'prompt' => ['required', 'string'],
+           'display_prompt' => ['nullable', 'string', 'max:500'],
            'chat_id' => ['required', 'exists:chats,id'],
            'backgroundColor' => ['nullable', 'string'],
            'imageBase64' => ['nullable', 'string'],
@@ -123,8 +124,8 @@ class DesignController extends Controller
     \Log::info('[generate] imageStyle received', ['imageStyle' => $imageStyle, 'provider' => $provider, 'prompt_raw' => mb_substr($userPrompt, 0, 80)]);
     $hasReferenceImage = !empty($validated['imageBase64']) && empty($validated['is_edit']);
 
-    // Diffusion models are sensitive to long prompts, keep user intent concise.
-    $userPromptForDiffusion = mb_substr($userPrompt, 0, 270);
+    // Diffusion models are sensitive to very long prompts; allow full context up to 600 chars.
+    $userPromptForDiffusion = mb_substr($userPrompt, 0, 600);
 
     // LLM enrichment: optimize prompt for the target image model + generate product meta.
     $productMeta = ['title' => null, 'description' => null, 'optimized_prompt' => null];
@@ -205,10 +206,11 @@ class DesignController extends Controller
     $user->decrement('tokens', $tokenCost);
     $user->increment('tokens_used', $tokenCost);
 
-    // Guardar solo el prompt del usuario (sin el prefijo del sistema)
+    // Guardar el display prompt (lo que el usuario ve) — el prompt completo va solo a la IA
+    $displayContent = trim($validated['display_prompt'] ?? $userPrompt);
     $chat->messages()->create([
         'role' => 'user',
-        'content' => $userPrompt,
+        'content' => $displayContent,
         'image' => $validated['imageBase64'] ?? null,
     ]);
 

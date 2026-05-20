@@ -367,18 +367,6 @@
                         Cancel
                     </button>
                 </div>
-                <!-- Trend context badge -->
-                <div id="trend-context-badge" class="hidden mb-2 items-center gap-2">
-                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium"
-                         style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc">
-                        <i class="fas fa-fire-alt" style="font-size:9px"></i>
-                        <span id="trend-context-label"></span>
-                        <button type="button" id="trend-context-clear" class="ml-1 opacity-60 hover:opacity-100 transition-opacity">
-                            <i class="fas fa-times" style="font-size:9px"></i>
-                        </button>
-                    </div>
-                    <span class="text-[10px]" style="color:rgba(255,255,255,0.25)">Design context active · shown to AI only</span>
-                </div>
                 <div class="flex gap-2 items-center">
                     <!-- Attach image -->
                     <label class="cursor-pointer icon-btn shrink-0" title="Attach image" style="color:#c084fc">
@@ -418,6 +406,15 @@
                     </div>
                     @endif
                     <div class="ml-auto flex items-center gap-2">
+                        <!-- Trend context badge (inline, shows when a niche is active) -->
+                        <div id="trend-context-badge" class="hidden items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium"
+                             style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc;max-width:160px">
+                            <i class="fas fa-fire-alt" style="font-size:8px;flex-shrink:0"></i>
+                            <span id="trend-context-label" class="truncate"></span>
+                            <button type="button" id="trend-context-clear" class="ml-1 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
+                                <i class="fas fa-times" style="font-size:8px"></i>
+                            </button>
+                        </div>
                         {{-- Hidden select keeps value for existing JS that reads style-selector --}}
                         <select id="style-selector" class="sr-only" aria-hidden="true" tabindex="-1">
                             <option value="default" selected>default</option>
@@ -1418,8 +1415,8 @@
     // ─── Trend context badge ──────────────────────────────────────────
     document.getElementById('trend-context-clear').addEventListener('click', () => {
         trendContext = null;
-        const badge = document.getElementById('trend-context-badge');
-        badge.classList.add('hidden'); badge.classList.remove('flex');
+        document.getElementById('trend-context-badge').classList.add('hidden');
+        document.getElementById('trend-context-badge').classList.remove('inline-flex');
         promptInput.placeholder = 'Describe the graphic decoration: motif, style, mood, colors…';
     });
 
@@ -1899,8 +1896,8 @@
         // Clear trend context after submit
         if (trendContext) {
             trendContext = null;
-            const badge = document.getElementById('trend-context-badge');
-            badge.classList.add('hidden'); badge.classList.remove('flex');
+            document.getElementById('trend-context-badge').classList.add('hidden');
+            document.getElementById('trend-context-badge').classList.remove('inline-flex');
             promptInput.placeholder = 'Describe the graphic decoration: motif, style, mood, colors…';
         }
 
@@ -1918,7 +1915,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
                 body: JSON.stringify({
-                    prompt: aiPrompt, chat_id: currentChatId,
+                    prompt: aiPrompt, display_prompt: displayText, chat_id: currentChatId,
                     imageBase64: snapshotImage, mimeType: snapshotMime,
                     model: generationEngine.model,
                     provider: generationEngine.provider,
@@ -2123,19 +2120,11 @@
         syncPromptLimit();
         await loadChats();
         if (chats.length === 0) {
-            // Create the first chat without re-rendering the sidebar (it's empty anyway)
-            try {
-                const res = await fetch('/chats', {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                });
-                const data = await res.json();
-                if (res.ok && data.id) {
-                    currentChatId = data.id;
-                    chats = [data];
-                    await loadChats();
-                }
-            } catch(e) { /* non-critical */ }
+            // First visit: create chat + open style picker
+            await newChat();
+        } else {
+            // Returning user: restore last active session
+            await loadChat(chats[0].id);
         }
         updateWelcomeScreen();
     });
@@ -4705,10 +4694,10 @@
             trendContext = { name, designPrompt: `${name} t-shirt design${kws ? ' — ' + kws : ''}` };
         }
 
-        // Show the badge with the niche name
+        // Show the badge with the niche name (inline in bottom bar)
         document.getElementById('trend-context-label').textContent = name;
         const badge = document.getElementById('trend-context-badge');
-        badge.classList.remove('hidden'); badge.classList.add('flex');
+        badge.classList.remove('hidden'); badge.classList.add('inline-flex');
 
         // Clear textarea and update placeholder
         promptInput.value = '';
