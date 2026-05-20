@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\CreditPackController;
+use App\Http\Controllers\TrendController;
 use App\Models\User;
 
 
@@ -102,6 +103,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/csrf-refresh', function () {
         return response()->json(['token' => csrf_token()]);
     })->name('api.csrf-refresh');
+
+    // Trend intelligence API
+    Route::prefix('api/trends')->name('api.trends.')->controller(TrendController::class)->group(function () {
+        Route::get('/',          'index')->name('index');
+        Route::get('/{id}',      'show')->name('show')->whereNumber('id');
+        Route::post('/refresh',  'refresh')->name('refresh');
+    });
 
     // Printify
     Route::post('/printify/connect',         [PrintifyController::class, 'connect'])->name('printify.connect');

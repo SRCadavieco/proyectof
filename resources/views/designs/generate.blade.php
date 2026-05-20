@@ -192,6 +192,21 @@
             <div id="chat-list" class="space-y-0.5 px-2"></div>
         </div>
 
+        <!-- Trending Niches button -->
+        <div class="px-4 pb-3">
+            <button onclick="openTrendsModal()"
+                    class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors"
+                    style="background:rgba(124,60,160,0.1);border:1px solid rgba(124,60,160,0.22)"
+                    onmouseover="this.style.background='rgba(124,60,160,0.2)'" onmouseout="this.style.background='rgba(124,60,160,0.1)'">
+                <span class="text-base leading-none">🔥</span>
+                <div class="flex-1 min-w-0">
+                    <span class="text-xs font-semibold text-purple-300 block leading-tight">Trending Niches</span>
+                    <span class="text-[9px] text-white/30 tracking-wide uppercase">Market intelligence</span>
+                </div>
+                <i class="fas fa-chevron-right text-purple-400/50 shrink-0" style="font-size:9px"></i>
+            </button>
+        </div>
+
         <!-- Footer -->
         <div class="px-4 pt-4 pb-6 space-y-3" style="border-top:1px solid rgba(255,255,255,0.07)">
 
@@ -518,6 +533,112 @@
         </div>
     </div>
 </div>
+
+<!-- ═══════════ TRENDING NICHES MODAL ═══════════ -->
+<div id="trends-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="shadow-2xl w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col" style="max-height:90dvh;background:#111;border:1px solid rgba(255,255,255,0.09)">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+            <div class="flex items-center gap-3">
+                <span class="text-xl leading-none">🔥</span>
+                <div>
+                    <h2 class="text-base font-semibold text-white">Trending Niches</h2>
+                    <p class="text-xs text-white/40 mt-0.5">Live market intelligence from Etsy · sorted by trend score</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="refreshTrends()" id="trends-refresh-btn"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                        style="background:rgba(124,60,160,0.15);border:1px solid rgba(124,60,160,0.3);color:#c084fc"
+                        onmouseover="this.style.background='rgba(124,60,160,0.28)'" onmouseout="this.style.background='rgba(124,60,160,0.15)'">
+                    <i class="fas fa-sync-alt" id="trends-refresh-icon" style="font-size:10px"></i>
+                    Refresh
+                </button>
+                <button onclick="closeTrendsModal()" class="icon-btn">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto p-6">
+
+            <!-- Loading -->
+            <div id="trends-loading" class="flex flex-col items-center justify-center py-20 text-center">
+                <i class="fas fa-spinner fa-spin text-purple-400 text-2xl mb-3"></i>
+                <p class="text-sm text-white/40">Loading trend data…</p>
+            </div>
+
+            <!-- Empty -->
+            <div id="trends-empty" class="hidden flex-col items-center justify-center py-20 text-center">
+                <span class="text-4xl mb-4">📊</span>
+                <p class="text-sm font-medium text-white/60 mb-1">No trend data yet</p>
+                <p class="text-xs text-white/30 mb-5">Run the pipeline to analyse Etsy listings.</p>
+                <button onclick="refreshTrends()"
+                        class="px-5 py-2 rounded-xl text-sm font-medium transition-colors"
+                        style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc"
+                        onmouseover="this.style.background='rgba(124,60,160,0.35)'" onmouseout="this.style.background='rgba(124,60,160,0.2)'">
+                    Run Pipeline Now
+                </button>
+            </div>
+
+            <!-- Grid -->
+            <div id="trends-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Trend cluster card template -->
+<template id="trend-card-tpl">
+    <div class="rounded-xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-0.5"
+         style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 24px -8px rgba(0,0,0,0.4)">
+
+        <!-- Card header -->
+        <div class="px-4 pt-4 pb-3" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <h3 class="trend-name text-sm font-semibold text-white leading-tight flex-1"></h3>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <span class="trend-growth text-xs font-semibold px-2 py-0.5 rounded-full"></span>
+                </div>
+            </div>
+            <!-- Score bar -->
+            <div class="flex items-center gap-2">
+                <div class="flex-1 h-1.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,0.08)">
+                    <div class="trend-score-bar h-full rounded-full transition-all duration-700" style="background:linear-gradient(90deg,#7c3ca0,#c084fc);width:0%"></div>
+                </div>
+                <span class="trend-score text-xs font-bold text-purple-300 tabular-nums w-8 text-right"></span>
+            </div>
+            <div class="flex gap-3 mt-2">
+                <span class="text-[10px] text-white/30 flex items-center gap-1">
+                    <i class="fas fa-users" style="font-size:8px"></i>
+                    <span class="trend-competition"></span> competition
+                </span>
+                <span class="text-[10px] text-white/30 flex items-center gap-1">
+                    <i class="fas fa-list" style="font-size:8px"></i>
+                    <span class="trend-count"></span> listings
+                </span>
+            </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="trend-keywords px-4 py-2.5 flex flex-wrap gap-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)"></div>
+
+        <!-- Sample listings -->
+        <div class="trend-listings px-4 py-3 grid grid-cols-3 gap-2" style="border-bottom:1px solid rgba(255,255,255,0.06)"></div>
+
+        <!-- CTA -->
+        <div class="px-4 py-3">
+            <button class="trend-cta w-full py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
+                    style="background:rgba(124,60,160,0.2);border:1px solid rgba(124,60,160,0.35);color:#c084fc"
+                    onmouseover="this.style.background='rgba(124,60,160,0.35)';this.style.transform='scale(1.01)'"
+                    onmouseout="this.style.background='rgba(124,60,160,0.2)';this.style.transform='scale(1)'">
+                ✦ Generate Collection →
+            </button>
+        </div>
+    </div>
+</template>
 
 <!-- ═══════════ DELETE ALL MODAL ═══════════ -->
 <div id="delete-all-modal"
@@ -4347,6 +4468,197 @@
             setTimeout(() => t.remove(), 300);
         }, 2200);
     }
+</script>
+
+<!-- ═══════════ TRENDS MODAL JS ═══════════ -->
+<script>
+(function () {
+    const modal     = () => document.getElementById('trends-modal');
+    const grid      = () => document.getElementById('trends-grid');
+    const loading   = () => document.getElementById('trends-loading');
+    const empty     = () => document.getElementById('trends-empty');
+    const refreshBtn= () => document.getElementById('trends-refresh-btn');
+    const refreshIcon = () => document.getElementById('trends-refresh-icon');
+
+    window.openTrendsModal = function () {
+        const m = modal();
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+        if (!grid().dataset.loaded) loadTrends();
+    };
+
+    window.closeTrendsModal = function () {
+        modal().classList.add('hidden');
+        modal().classList.remove('flex');
+    };
+
+    // Close on backdrop click
+    modal().addEventListener('click', function (e) {
+        if (e.target === this) closeTrendsModal();
+    });
+
+    function setView(view) {
+        loading().classList.toggle('hidden',  view !== 'loading');
+        loading().classList.toggle('flex',    view === 'loading');
+        empty().classList.toggle('hidden',    view !== 'empty');
+        empty().classList.toggle('flex',      view === 'empty');
+        grid().classList.toggle('hidden',     view !== 'grid');
+        grid().classList.toggle('grid',       view === 'grid');
+    }
+
+    async function loadTrends() {
+        setView('loading');
+        try {
+            const res  = await fetch('/api/trends', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+            const clusters = json.data ?? [];
+            if (clusters.length === 0) { setView('empty'); return; }
+            renderClusters(clusters);
+            grid().dataset.loaded = '1';
+            setView('grid');
+        } catch (e) {
+            console.error('[trends]', e);
+            setView('empty');
+        }
+    }
+
+    window.refreshTrends = async function () {
+        const btn  = refreshBtn();
+        const icon = refreshIcon();
+        btn.disabled = true;
+        icon.classList.add('fa-spin');
+        grid().dataset.loaded = '';
+
+        // Kick off pipeline
+        try {
+            await fetch('/api/trends/refresh', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            showToast('Pipeline queued — data updates in a few minutes', 'info');
+        } catch (e) { /* ignore */ }
+
+        // Re-load current data
+        await loadTrends();
+        btn.disabled = false;
+        icon.classList.remove('fa-spin');
+    };
+
+    function growthBadge(rate) {
+        if (rate >= 0.6) return { label: '🔥 Hot',    bg: 'rgba(239,68,68,0.18)',  color: '#f87171' };
+        if (rate >= 0.3) return { label: '📈 Rising',  bg: 'rgba(234,179,8,0.15)', color: '#fcd34d' };
+        return                   { label: '📊 Stable', bg: 'rgba(255,255,255,0.08)', color: '#9ca3af' };
+    }
+
+    function competitionLabel(score) {
+        if (score >= 0.7) return 'High';
+        if (score >= 0.35) return 'Med';
+        return 'Low';
+    }
+
+    function renderClusters(clusters) {
+        const container = grid();
+        container.innerHTML = '';
+        const tpl = document.getElementById('trend-card-tpl');
+
+        clusters.forEach(c => {
+            const clone = tpl.content.cloneNode(true);
+            const card  = clone.querySelector('div');
+
+            card.querySelector('.trend-name').textContent = c.name ?? 'Unnamed Niche';
+
+            const badge = growthBadge(c.growth_rate ?? 0);
+            const growthEl = card.querySelector('.trend-growth');
+            growthEl.textContent = badge.label;
+            growthEl.style.background = badge.bg;
+            growthEl.style.color      = badge.color;
+
+            const scoreVal = Math.round((c.score ?? 0) * 100) / 100;
+            card.querySelector('.trend-score').textContent = scoreVal.toFixed(2);
+            // Normalise score bar width: cap at score 2.0 → 100%
+            const pct = Math.min(100, (scoreVal / 2) * 100);
+            requestAnimationFrame(() => {
+                card.querySelector('.trend-score-bar').style.width = pct + '%';
+            });
+
+            card.querySelector('.trend-competition').textContent = competitionLabel(c.competition_score ?? 0);
+            card.querySelector('.trend-count').textContent       = c.listing_count ?? 0;
+
+            // Keywords
+            const kwContainer = card.querySelector('.trend-keywords');
+            const kws = (c.top_keywords ?? []).slice(0, 6);
+            if (kws.length) {
+                kws.forEach(kw => {
+                    if (typeof kw !== 'string') return;
+                    const pill = document.createElement('span');
+                    pill.className = 'text-[10px] px-2 py-0.5 rounded-full font-medium';
+                    pill.style.background = 'rgba(124,60,160,0.15)';
+                    pill.style.border     = '1px solid rgba(124,60,160,0.25)';
+                    pill.style.color      = 'rgba(192,132,252,0.8)';
+                    pill.textContent      = kw;
+                    kwContainer.appendChild(pill);
+                });
+            } else {
+                kwContainer.classList.add('hidden');
+            }
+
+            // Sample listings
+            const listingsContainer = card.querySelector('.trend-listings');
+            const listings = (c.sample_listings ?? []).slice(0, 3);
+            if (listings.length) {
+                listings.forEach(l => {
+                    const a = document.createElement('a');
+                    a.href   = l.url ?? '#';
+                    a.target = '_blank';
+                    a.rel    = 'noopener';
+                    a.className = 'block rounded-lg overflow-hidden transition-opacity hover:opacity-80';
+                    a.style.aspectRatio = '1';
+                    a.style.background  = 'rgba(255,255,255,0.05)';
+
+                    if (l.image) {
+                        const img = document.createElement('img');
+                        img.src     = l.image;
+                        img.alt     = l.title ?? '';
+                        img.className = 'w-full h-full object-cover';
+                        img.onerror = () => { img.style.display = 'none'; };
+                        a.appendChild(img);
+                    } else {
+                        a.innerHTML = '<div class="w-full h-full flex items-center justify-center text-white/10 text-xl">🖼</div>';
+                    }
+                    listingsContainer.appendChild(a);
+                });
+            } else {
+                listingsContainer.classList.add('hidden');
+            }
+
+            // CTA
+            card.querySelector('.trend-cta').addEventListener('click', () => {
+                generateFromCluster(c.name ?? '', c.top_keywords ?? []);
+            });
+
+            container.appendChild(clone);
+        });
+    }
+
+    function generateFromCluster(name, keywords) {
+        closeTrendsModal();
+        const kws    = keywords.filter(k => typeof k === 'string').slice(0, 5).join(', ');
+        const prompt = `${name} t-shirt design${kws ? ' — ' + kws : ''}`;
+
+        // Pre-fill the chat input
+        const input = document.getElementById('prompt') ?? document.querySelector('textarea[name="prompt"], input[name="prompt"]');
+        if (input) {
+            input.value = prompt;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.focus();
+        }
+    }
+})();
 </script>
 
 <!-- ═══════════ STYLE PICKER MODAL ═══════════ -->

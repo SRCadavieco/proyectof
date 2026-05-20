@@ -98,4 +98,9 @@ return [
         'portal_configuration' => env('STRIPE_PORTAL_CONFIGURATION'),
     ],
 
+    'scraper' => [
+        'url'    => env('SCRAPER_SERVICE_URL', 'http://localhost:3100'),
+        'secret' => env('SCRAPER_SERVICE_SECRET', ''),
+    ],
+
 ];
