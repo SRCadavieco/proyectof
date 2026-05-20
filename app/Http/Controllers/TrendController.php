@@ -123,28 +123,37 @@ class TrendController extends Controller
         $prompt  = mb_substr($prompt, 0, 350);
 
         $negativePrompt = 'text, letters, words, typography, writing, font, script, handwriting, calligraphy, watermark, caption, label, title, headline, tagline, slogan, inscription, readable text, legible text, comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame';
-        $result = $chutes->generateDesign($prompt, null, 'z_image_turbo', $negativePrompt);
+        try {
+            $result = $chutes->generateDesign($prompt, null, 'z_image_turbo', $negativePrompt);
 
-        if (!($result['success'] ?? false)) {
-            return response()->json(['error' => $result['error'] ?? 'Generation failed'], 500);
+            if (!($result['success'] ?? false)) {
+                $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
+                Cache::put($cacheKey, $fallback, now()->addHours(12));
+                return response()->json(['image' => $fallback]);
+            }
+
+            $image = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64']
+                   ?? $result['imageUrl']   ?? $result['image_url']    ?? $result['url']
+                   ?? null;
+
+            if (!$image) {
+                $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
+                Cache::put($cacheKey, $fallback, now()->addHours(12));
+                return response()->json(['image' => $fallback]);
+            }
+
+            $image = (string) $image;
+            if (!str_starts_with($image, 'data:') && !str_starts_with($image, 'http')) {
+                $image = 'data:image/jpeg;base64,' . $image;
+            }
+
+            Cache::put($cacheKey, $image, now()->addDays(30));
+            return response()->json(['image' => $image]);
+        } catch (\Throwable $e) {
+            $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
+            Cache::put($cacheKey, $fallback, now()->addHours(12));
+            return response()->json(['image' => $fallback]);
         }
-
-        $image = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64']
-               ?? $result['imageUrl']   ?? $result['image_url']    ?? $result['url']
-               ?? null;
-
-        if (!$image) {
-            return response()->json(['error' => 'No image returned'], 500);
-        }
-
-        $image = (string) $image;
-        if (!str_starts_with($image, 'data:') && !str_starts_with($image, 'http')) {
-            $image = 'data:image/jpeg;base64,' . $image;
-        }
-
-        Cache::put($cacheKey, $image, now()->addDays(30));
-
-        return response()->json(['image' => $image]);
     }
 
     private function formatCluster(TrendCluster $cluster, bool $detailed = false): array
@@ -230,6 +239,12 @@ class TrendController extends Controller
         // Only return the array when at least one slot is available.
         $valid = array_values(array_filter($images));
         return count($valid) > 0 ? $images : [];
+    }
+
+    private function buildFallbackPreviewUrl(string $nicheDesc, string $keyword): string
+    {
+        $prompt = trim($nicheDesc . ' ' . $keyword . ' t-shirt design, flat lay mockup, clean white background');
+        return 'https://image.pollinations.ai/prompt/' . rawurlencode($prompt) . '?width=768&height=768&nologo=true';
     }
 
 }
