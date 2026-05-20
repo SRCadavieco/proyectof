@@ -186,6 +186,36 @@
             animation: btn-glow 3s ease-in-out infinite;
         }
 
+        /* ── Hero product images responsive ── */
+        .hero-images { min-height: 220px; }
+        @media (min-width: 1024px) { .hero-images { min-height: 520px; } }
+        .hero-img-back  { width: 130px; height: 155px; }
+        .hero-img-front { width: 150px; height: 180px; }
+        @media (min-width: 1024px) {
+            .hero-img-back  { width: 220px; height: 260px; }
+            .hero-img-front { width: 250px; height: 300px; }
+        }
+
+        /* ── Design gallery scroll ── */
+        @keyframes scroll-left  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes scroll-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+        @keyframes gallery-shimmer { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+        .gallery-track-left  { animation: scroll-left  28s linear infinite; }
+        .gallery-track-right { animation: scroll-right 32s linear infinite; }
+        .gallery-track-left:hover,
+        .gallery-track-right:hover { animation-play-state: paused; }
+        /* Placeholder tile: gradient background, always visible */
+        .gallery-tile {
+            background: linear-gradient(135deg, rgba(124,60,160,0.12) 0%, rgba(26,26,26,0.7) 50%, rgba(90,34,117,0.1) 100%);
+            border: 1px solid rgba(124,60,160,0.15);
+        }
+        .gallery-tile::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(124,60,160,0.08), transparent 60%);
+            animation: gallery-shimmer 3s ease-in-out infinite;
+        }
+
         .factory-grid-light {
             background-image:
                 linear-gradient(rgba(26,26,26,0.05) 1px, transparent 1px),
@@ -233,55 +263,88 @@
         :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
         class="relative z-10 max-w-7xl mx-auto px-6 pt-36 pb-24 transition-all duration-1000 ease-out"
     >
-        <!-- Tag pill -->
-        <div class="mb-10">
-            <span class="tag-pill">
-                <span class="pulse-dot w-1.5 h-1.5 rounded-full inline-block bg-accent"></span>
-                AI Print-on-Demand
-            </span>
-        </div>
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-        <!-- Headline -->
-        <h1 class="font-serif leading-[0.87] mb-14 max-w-5xl"
-            style="font-size:clamp(3.5rem,10vw,9.5rem)">
-            <span style="color:rgba(255,255,255,0.82)">Ready to sell.</span><br>
-            <span class="italic gradient-text">Products</span><br>
-            <span style="color:rgba(255,255,255,0.82)">in seconds.</span>
-        </h1>
-
-        <!-- CTAs -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-10">
-            <a href="/design"
-               class="btn-shimmer inline-flex items-center gap-3 px-8 py-4 bg-accent text-white
-                      text-xs font-semibold tracking-[0.2em] uppercase
-                      hover:bg-accent-dark hover:-translate-y-0.5 transition-all duration-300">
-                Start generating <span>→</span>
-            </a>
-            <a href="#how-it-works"
-               class="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] uppercase
-                      text-white/40 hover:text-white transition-colors duration-300">
-                How it works <span class="opacity-50">↓</span>
-            </a>
-        </div>
-
-        <!-- Stats with scroll-triggered animation -->
-        <div
-            x-data="{ visible: false }"
-            x-intersect.once="visible = true"
-            class="mt-24 pt-8 border-t border-white/[0.07] grid grid-cols-3 gap-6 max-w-sm"
-        >
-            @php $stats = [
-                ['val' => '∞',    'label' => 'Designs',       'delay' => 'stat-d1'],
-                ['val' => '<15s', 'label' => 'Per design',    'delay' => 'stat-d2'],
-                ['val' => '1',    'label' => 'Prompt needed', 'delay' => 'stat-d3'],
-            ]; @endphp
-            @foreach($stats as $s)
+            <!-- Left: copy -->
             <div>
-                <p class="font-serif text-3xl text-white {{ $s['delay'] }}"
-                   :class="visible ? 'stat-num' : 'opacity-0'">{{ $s['val'] }}</p>
-                <p class="text-[10px] text-white/30 tracking-[0.2em] uppercase mt-1">{{ $s['label'] }}</p>
+               
+              
+
+                <!-- Headline -->
+                <h1 class="font-serif leading-[0.87] mb-14"
+                    style="font-size:clamp(3rem,8vw,8rem)">
+                    <span style="color:rgba(255,255,255,0.82)">Ready to sell.</span><br>
+                    <span class="italic gradient-text">Products</span><br>
+                    <span style="color:rgba(255,255,255,0.82)">in seconds.</span>
+                </h1>
+
+                <!-- CTAs -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-10">
+                    <a href="/design"
+                       class="btn-shimmer inline-flex items-center gap-3 px-8 py-4 bg-accent text-white
+                              text-xs font-semibold tracking-[0.2em] uppercase
+                              hover:bg-accent-dark hover:-translate-y-0.5 transition-all duration-300">
+                        Start Your Brand <span>→</span>
+                    </a>
+                    <a href="#how-it-works"
+                       class="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] uppercase
+                              text-white/40 hover:text-white transition-colors duration-300">
+                        How it works <span class="opacity-50">↓</span>
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div
+                    x-data="{ visible: false }"
+                    x-intersect.once="visible = true"
+                    class="mt-16 pt-8 border-t border-white/[0.07] grid grid-cols-3 gap-6 max-w-sm"
+                >
+                    @php $stats = [
+                        ['val' => '∞',    'label' => 'Designs',       'delay' => 'stat-d1'],
+                        ['val' => '<15s', 'label' => 'Per design',    'delay' => 'stat-d2'],
+                        ['val' => '1',    'label' => 'Prompt needed', 'delay' => 'stat-d3'],
+                    ]; @endphp
+                    @foreach($stats as $s)
+                    <div>
+                        <p class="font-serif text-3xl text-white {{ $s['delay'] }}"
+                           :class="visible ? 'stat-num' : 'opacity-0'">{{ $s['val'] }}</p>
+                        <p class="text-[10px] text-white/30 tracking-[0.2em] uppercase mt-1">{{ $s['label'] }}</p>
+                    </div>
+                    @endforeach
+                </div>
             </div>
-            @endforeach
+
+            <!-- Right: product showcase -->
+            <div class="flex items-center justify-center relative w-full mt-8 lg:mt-0 hero-images">
+                <!-- Purple glow behind images -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div style="width:380px;height:380px;background:radial-gradient(circle,rgba(124,60,160,0.22) 0%,transparent 70%);filter:blur(40px)"></div>
+                </div>
+                <!-- Image 1: back-right -->
+                <div class="absolute" style="right:0;top:10%;animation:float-b 11s ease-in-out infinite 1s">
+                    <div class="hero-img-back" style="background:rgba(255,255,255,0.03);border:1px solid rgba(124,60,160,0.2);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -15px rgba(0,0,0,0.7)">
+                        <img src="{{ asset('images/gallery/d2.png') }}"
+                             alt="AI designed product"
+                             class="w-full h-full object-contain p-3"
+                             onerror="this.parentElement.style.opacity='0'">
+                    </div>
+                </div>
+                <!-- Image 2: front-left, larger -->
+                <div class="absolute" style="left:0;top:5%;animation:float-a 9s ease-in-out infinite">
+                    <div class="hero-img-front" style="background:rgba(255,255,255,0.04);border:1px solid rgba(124,60,160,0.3);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px -15px rgba(0,0,0,0.8)">
+                        <img src="{{ asset('images/gallery/d1.png') }}"
+                             alt="AI designed product"
+                             class="w-full h-full object-contain p-3"
+                             onerror="this.parentElement.style.opacity='0'">
+                    </div>
+                    <!-- Label badge -->
+                    <div class="mt-3 flex items-center gap-2" style="padding-left:4px">
+                        <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block" style="animation:pulse-ring 2s ease-out infinite"></span>
+                        <span class="text-[10px] font-semibold tracking-[0.2em] uppercase" style="color:rgba(255,255,255,0.35)">Generated with AI</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>
@@ -298,6 +361,39 @@
             @endforeach
         </span>
         @endfor
+    </div>
+</section>
+
+<!-- ════════════════════ TRUSTED BY ════════════════════ -->
+<section class="py-10 md:py-14" style="background:#111;border-bottom:1px solid rgba(255,255,255,0.06)">
+    <div class="max-w-5xl mx-auto px-6">
+        <p class="text-center text-[10px] font-semibold tracking-[0.3em] uppercase mb-8" style="color:rgba(255,255,255,0.22)">Trusted by creators selling on</p>
+        <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
+                <i class="fab fa-shopify text-lg" style="color:#96bf48"></i>
+                <span class="text-sm font-semibold tracking-wide text-white">Shopify</span>
+            </div>
+            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
+                <i class="fab fa-etsy text-lg" style="color:#f56400"></i>
+                <span class="text-sm font-semibold tracking-wide text-white">Etsy</span>
+            </div>
+            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
+                <i class="fas fa-print text-base" style="color:#5b92e5"></i>
+                <span class="text-sm font-semibold tracking-wide text-white">Printify</span>
+            </div>
+            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
+                <i class="fab fa-amazon text-lg" style="color:#ff9900"></i>
+                <span class="text-sm font-semibold tracking-wide text-white">Amazon Merch</span>
+            </div>
+            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
+                <i class="fas fa-store text-base text-white/50"></i>
+                <span class="text-sm font-semibold tracking-wide text-white">WooCommerce</span>
+            </div>
+            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
+                <i class="fas fa-tshirt text-base text-white/50"></i>
+                <span class="text-sm font-semibold tracking-wide text-white">Printful</span>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -364,7 +460,54 @@
     </div>
 </section>
 
-<!-- ════════════════════ HOW IT WORKS ════════════════════ -->
+<!-- ════════════════════ HOW IT WORKS (gallery removed) ════════════════════ -->
+<section style="display:none"></section>
+<section class="py-16 md:py-24 overflow-hidden" style="display:none">
+    <div class="max-w-7xl mx-auto px-6 mb-10">
+        <div
+            x-data="{ show: false }"
+            x-intersect.once="show = true"
+            :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+            class="transition-all duration-700 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
+        >
+            <div>
+                <p class="text-[10px] font-medium tracking-[0.35em] uppercase text-accent mb-3">Generated with FabricAI</p>
+                <h2 class="font-serif text-3xl sm:text-4xl" style="color:rgba(255,255,255,0.82)">Real designs. <span class="italic gradient-text">Real products.</span></h2>
+            </div>
+            <a href="/design" class="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30 hover:text-accent transition-colors shrink-0">Create yours →</a>
+        </div>
+    </div>
+
+    {{-- Row 1: scrolls left --}}
+    <div class="gallery-track-left flex gap-4 mb-4" style="width:max-content">
+        @php $row1 = ['d1','d2','d3','d4','d5','d6','d7','d8']; @endphp
+        @foreach(array_merge($row1,$row1) as $img)
+        <div class="shrink-0 rounded-xl overflow-hidden relative gallery-tile" style="width:180px;height:180px;">
+            <img src="{{ asset('images/gallery/'.$img.'.png') }}"
+                 alt="AI clothing design example"
+                 class="w-full h-full object-cover relative z-10"
+                 loading="lazy"
+                 onerror="this.style.display='none'">
+        </div>
+        @endforeach
+    </div>
+
+    {{-- Row 2: scrolls right --}}
+    <div class="gallery-track-right flex gap-4" style="width:max-content">
+        @php $row2 = ['d5','d6','d7','d8','d1','d2','d3','d4']; @endphp
+        @foreach(array_merge($row2,$row2) as $img)
+        <div class="shrink-0 rounded-xl overflow-hidden relative gallery-tile" style="width:180px;height:180px;">
+            <img src="{{ asset('images/gallery/'.$img.'.png') }}"
+                 alt="AI clothing design example"
+                 class="w-full h-full object-cover relative z-10"
+                 loading="lazy"
+                 onerror="this.style.display='none'">
+        </div>
+        @endforeach
+    </div>
+</section>
+
+<!-- ════════════════════ HOW IT WORKS (after gallery removed) ════════════════════ -->
 <section id="how-it-works" class="bg-ink section-padding relative overflow-hidden">
     <div class="absolute inset-0 factory-grid"></div>
     <div class="orb orb-a absolute" style="width:500px;height:500px;top:-80px;left:-100px;opacity:0.7;animation:float-b 12s ease-in-out infinite;"></div>
