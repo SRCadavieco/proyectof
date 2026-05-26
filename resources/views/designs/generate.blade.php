@@ -4541,9 +4541,11 @@
                 const firstFailure = Array.isArray(payload?.failed) && payload.failed.length > 0
                     ? payload.failed[0]
                     : null;
-                const msg = payload?.message
-                    || firstFailure?.error
+                // Show the specific per-keyword error first so we can diagnose
+                const msg = firstFailure?.error
+                    || payload?.message
                     || `Pipeline refresh failed (${res.status})`;
+                console.error('[trends] refresh 422 payload:', JSON.stringify(payload, null, 2));
                 showToast(msg, 'error');
             } else if (Array.isArray(payload?.failed) && payload.failed.length > 0) {
                 showToast(`Pipeline queued with ${payload.failed.length} failed keyword(s)`, 'warning');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\ProcessTrendsJob;
 use App\Jobs\ScrapeEtsyJob;
 use App\Models\TrendCluster;
+use App\Services\EtsyScraperClient;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -118,6 +119,45 @@ class TrendController extends Controller
             displayName: $displayName,
             displayKeywords: $displayKeywords
         ));
+    }
+
+    /**
+     * GET /api/trends/debug
+     * Diagnostic: checks scraper URL, secret presence, and connectivity.
+     */
+    public function debug(): JsonResponse
+    {
+        $scraperUrl    = config('services.scraper.url', '');
+        $scraperSecret = config('services.scraper.secret', '');
+
+        $health = null;
+        $healthError = null;
+        try {
+            $client = app(EtsyScraperClient::class);
+            $health = $client->isHealthy();
+        } catch (\Throwable $e) {
+            $healthError = $e->getMessage();
+        }
+
+        // Try a live scrape with a single keyword to surface the real error
+        $scrapeError = null;
+        try {
+            $client = app(EtsyScraperClient::class);
+            $client->scrape('test shirt');
+            $scrapeError = null;
+        } catch (\Throwable $e) {
+            $scrapeError = $e->getMessage();
+        }
+
+        return response()->json([
+            'scraper_url'     => $scraperUrl ?: '(empty — using default localhost:3100)',
+            'secret_present'  => $scraperSecret !== '',
+            'health_ok'       => $health,
+            'health_error'    => $healthError,
+            'scrape_error'    => $scrapeError,
+            'cluster_count'   => \App\Models\TrendCluster::count(),
+            'recent_clusters' => \App\Models\TrendCluster::where('created_at', '>=', now()->subDays(7))->count(),
+        ]);
     }
 
     /**
