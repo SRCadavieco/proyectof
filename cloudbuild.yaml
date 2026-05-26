@@ -30,7 +30,7 @@ substitutions:
   _SCRAPER_IMAGE: gcr.io/gen-lang-client-0352261941/scraper-service
   _SCRAPER_SERVICE: scraper-service
   _SCRAPER_SECRET: ""
-  _ETSY_API_KEY: ""
+  _ETSY_API_KEY: ""   # override in trigger → tghnry0guj29pb9c3s0w2tjt
 
 steps:
   # ── 1. Construir assets frontend ──────────────────────────────────────────
