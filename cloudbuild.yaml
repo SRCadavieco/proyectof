@@ -29,6 +29,7 @@ substitutions:
   _SCRAPER_IMAGE: gcr.io/gen-lang-client-0352261941/scraper-service
   _SCRAPER_SERVICE: scraper-service
   _SCRAPER_SECRET: ""
+  _ETSY_API_KEY: ""
 
 steps:
   # ── 1. Construir assets frontend ──────────────────────────────────────────
@@ -66,7 +67,7 @@ steps:
           --image=$_SCRAPER_IMAGE \
           --region=$_REGION \
           --allow-unauthenticated \
-          --set-env-vars=SCRAPER_SECRET=$_SCRAPER_SECRET,HEADLESS=true,MAX_LISTINGS=60,SCROLL_DELAY_MS=1200 \
+          --set-env-vars=SCRAPER_SECRET=$_SCRAPER_SECRET,ETSY_API_KEY=$_ETSY_API_KEY,HEADLESS=true,MAX_LISTINGS=60,SCROLL_DELAY_MS=1200 \
           --timeout=120 \
           --concurrency=2 \
           --min-instances=0 \

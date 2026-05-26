@@ -37,13 +37,19 @@ class ScrapeEtsyJob implements ShouldQueue
                     continue;
                 }
 
+                $url = (string) $item['url'];
+                $existing = EtsyListing::where('url', $url)->first();
+
+                $incomingImage = isset($item['image']) ? trim((string) $item['image']) : '';
+                $finalImage = $incomingImage !== '' ? $incomingImage : ($existing?->image ?? null);
+
                 EtsyListing::updateOrCreate(
-                    ['url' => $item['url']],
+                    ['url' => $url],
                     [
                         'keyword'  => $this->keyword,
                         'title'    => $item['title'],
                         'price'    => $item['price'] ?? null,
-                        'image'    => $item['image'] ?? null,
+                        'image'    => $finalImage,
                         'tags'     => $item['tags'] ?? [],
                         'raw_json' => $item,
                     ]

@@ -8,10 +8,15 @@ use App\Models\TrendCluster;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class TrendController extends Controller
 {
+    private const GENERIC_NAME_WORDS = [
+        'trend','trending','trendy','etsy','niche','cluster','screen','apparel','clothing',
+        'shirt','shirts','tshirt','tshirts','tee','tees','hoodie','hoodies','sweatshirt','sweatshirts',
+        'popular','loading','now','pick','bestseller','favorites','favorite',
+    ];
+
     private const SCRAPE_KEYWORDS = [
         'tshirt funny',
         'retro shirt',
@@ -26,22 +31,69 @@ class TrendController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = TrendCluster::query()->orderByDesc('score');
+        $query = TrendCluster::query()
+            ->whereHas('listings', function ($q) {
+                $q->whereNotNull('image')
+                    ->where('image', '!=', '')
+                    ->where('image', 'not like', '%loremflickr%')
+                    ->where('image', 'not like', '%picsum%');
+            })
+            ->where('created_at', '>=', now()->subDays(7))
+            ->orderByDesc('score');
 
         if ($request->filled('keyword')) {
             $query->where('keyword', $request->string('keyword'));
         }
 
-        $clusters = $query
-            ->with(['listings' => fn ($q) => $q->orderByPivot('similarity_score', 'desc')->limit(6)])
-            ->paginate(20);
+        $allClusters = $query
+            // Load a wider candidate set so we can prioritize listings with real images.
+            ->with(['listings' => fn ($q) => $q->orderByPivot('similarity_score', 'desc')->limit(18)])
+            ->get();
+
+        // Build candidate cards with validated display names first.
+        $namedClusters = $allClusters
+            ->map(function (TrendCluster $c) {
+                $displayKeywords = $this->buildDisplayKeywords($c);
+                $display = $this->buildDisplayName($c, $displayKeywords);
+                return ['cluster' => $c, 'display' => $display, 'keywords' => $displayKeywords];
+            })
+            ->filter(fn ($row) => $this->isValidDisplayName((string) $row['display']))
+            ->values();
+
+        // Prefer strict visual-evidence rows, but never leave the UI empty.
+        $strictRows = $namedClusters
+            ->filter(fn ($row) => $this->hasVisualEvidence($row['cluster'], (string) $row['display'], (array) ($row['keywords'] ?? [])))
+            ->values();
+
+        $rowsForFeed = $strictRows->isNotEmpty() ? $strictRows : $namedClusters;
+
+        // Avoid duplicate cards with equivalent names across runs.
+        $uniqueRows = $rowsForFeed
+            ->unique(fn ($row) => mb_strtolower(trim((string) $row['display'])))
+            ->values();
+
+        $uniqueClusters = $uniqueRows->map(fn ($row) => [
+            'cluster' => $row['cluster'],
+            'display' => $row['display'],
+            'keywords' => $row['keywords'],
+        ])->values();
+
+        $perPage = 20;
+        $page = max(1, (int) $request->input('page', 1));
+        $offset = ($page - 1) * $perPage;
+        $pagedRows = $uniqueClusters->slice($offset, $perPage)->values();
 
         return response()->json([
-            'data' => $clusters->map(fn ($c) => $this->formatCluster($c)),
+            'data' => $pagedRows->map(fn ($row) => $this->formatCluster(
+                $row['cluster'],
+                detailed: false,
+                displayName: (string) $row['display'],
+                displayKeywords: (array) ($row['keywords'] ?? [])
+            )),
             'meta' => [
-                'current_page' => $clusters->currentPage(),
-                'last_page'    => $clusters->lastPage(),
-                'total'        => $clusters->total(),
+                'current_page' => $page,
+                'last_page'    => max(1, (int) ceil($uniqueClusters->count() / $perPage)),
+                'total'        => $uniqueClusters->count(),
             ],
         ]);
     }
@@ -53,10 +105,18 @@ class TrendController extends Controller
     public function show(int $id): JsonResponse
     {
         $cluster = TrendCluster::with([
-            'listings' => fn ($q) => $q->orderByPivot('similarity_score', 'desc')->limit(12),
+            'listings' => fn ($q) => $q->orderByPivot('similarity_score', 'desc')->limit(24),
         ])->findOrFail($id);
 
-        return response()->json($this->formatCluster($cluster, detailed: true));
+        $displayKeywords = $this->buildDisplayKeywords($cluster);
+        $displayName = $this->buildDisplayName($cluster, $displayKeywords);
+
+        return response()->json($this->formatCluster(
+            $cluster,
+            detailed: true,
+            displayName: $displayName,
+            displayKeywords: $displayKeywords
+        ));
     }
 
     /**
@@ -91,94 +151,55 @@ class TrendController extends Controller
 
     // ─── Formatting ──────────────────────────────────────────────────────────
 
-    /**
-     * POST /api/trends/niche-preview
-     * Generates a preview image for a trend niche using Together AI (FLUX.2).
-     * Results cached per cluster+slot for 30 days to avoid redundant generation.
-     */
-    public function nichePreview(Request $request, \App\Services\TogetherService $together): JsonResponse
+    private function formatCluster(
+        TrendCluster $cluster,
+        bool $detailed = false,
+        ?string $displayName = null,
+        ?array $displayKeywords = null
+    ): array
     {
-        $clusterId = (int) $request->input('cluster_id', 0);
-        $slot      = max(0, min(2, (int) $request->input('slot', 0)));
-        $nicheDesc = mb_substr((string) $request->input('niche_desc', 'graphic t-shirt design'), 0, 120);
-        $keyword   = mb_substr((string) $request->input('keyword', ''), 0, 40);
+        $displayKeywords = $displayKeywords ?? $this->buildDisplayKeywords($cluster);
+        $displayName = $displayName ?? $this->buildDisplayName($cluster, $displayKeywords);
 
-        // Key by niche description + keyword (not cluster_id) so the cache survives
-        // re-scraping runs that create new cluster records with different IDs.
-        $cacheKey = 'trend-preview:' . md5("{$nicheDesc}:{$keyword}");
-        $cached   = Cache::get($cacheKey);
-        // Do not trust legacy local-file URLs in shared production cache: they can
-        // point to files generated on another instance and return 404.
-        if (is_string($cached) && str_starts_with($cached, '/storage/trend-previews/')) {
-            Cache::forget($cacheKey);
-            $cached = null;
-        }
+        $sortedListings = $cluster->listings
+            ->sort(function ($a, $b) {
+                $aHasImage = $this->isRealImageUrl($a->image) ? 1 : 0;
+                $bHasImage = $this->isRealImageUrl($b->image) ? 1 : 0;
+                if ($aHasImage !== $bHasImage) {
+                    return $bHasImage <=> $aHasImage;
+                }
 
-        if ($cached) {
-            return response()->json(['image' => $cached]);
-        }
+                $aSim = (float) ($a->pivot->similarity_score ?? 0);
+                $bSim = (float) ($b->pivot->similarity_score ?? 0);
+                return $bSim <=> $aSim;
+            })
+            ->values();
 
-        $prompt  = trim("{$nicheDesc} {$keyword}");
-        $prompt .= ', graphic print design on white t-shirt, flat lay product mockup, design is the focal point, clearly visible print, clean white background, no model, professional product photo';
-        $prompt  = mb_substr($prompt, 0, 350);
+        $curatedImages = $this->buildCuratedImages($cluster, $sortedListings, $displayName, $displayKeywords);
 
-        $negativePrompt = 'text, letters, words, typography, writing, font, script, handwriting, calligraphy, watermark, caption, label, title, headline, tagline, slogan, inscription, readable text, legible text, comic panel border, panel frame, speech bubble, text box, manga panel, vignette border, white border frame, page layout, multiple panels, shield frame, badge frame, crest frame, hexagonal border, hexagon frame, diamond frame, shaped border, emblem frame, coat of arms frame, geometric frame, circular frame, oval frame, decorative border, ornamental frame, sigil frame, logo frame';
-        try {
-            $result = $together->generateDesign($prompt, null, 'flux_dev');
-
-            if (!($result['success'] ?? false)) {
-                $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
-                Cache::put($cacheKey, $fallback, now()->addHours(12));
-                return response()->json(['image' => $fallback]);
-            }
-
-            $image = $result['imageBase64'] ?? $result['image_base64'] ?? $result['base64']
-                   ?? $result['imageUrl']   ?? $result['image_url']    ?? $result['url']
-                   ?? null;
-
-            if (!$image) {
-                $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
-                Cache::put($cacheKey, $fallback, now()->addHours(12));
-                return response()->json(['image' => $fallback]);
-            }
-
-            $image = (string) $image;
-            if (!str_starts_with($image, 'data:') && !str_starts_with($image, 'http')) {
-                $image = 'data:image/jpeg;base64,' . $image;
-            }
-
-            Cache::put($cacheKey, $image, now()->addDays(30));
-            return response()->json(['image' => $image]);
-        } catch (\Throwable $e) {
-            $fallback = $this->buildFallbackPreviewUrl($nicheDesc, $keyword ?: 'graphic');
-            Cache::put($cacheKey, $fallback, now()->addHours(12));
-            return response()->json(['image' => $fallback]);
-        }
-    }
-
-    private function formatCluster(TrendCluster $cluster, bool $detailed = false): array
-    {
         $data = [
             'id'                => $cluster->id,
             'name'              => $cluster->name,
+            'display_name'      => $displayName,
             'summary'           => $cluster->summary,
             'design_prompt'     => $cluster->design_prompt,
-            'top_keywords'      => $cluster->top_keywords ?? [],
+            'top_keywords'      => $displayKeywords,
             'score'             => $cluster->score,
             'growth_rate'       => $cluster->growth_rate,
             'competition_score' => $cluster->competition_score,
             'listing_count'     => $cluster->listing_count,
             'keyword'           => $cluster->keyword,
             'created_at'        => $cluster->created_at?->toIso8601String(),
-            'sample_listings'   => $cluster->listings->map(fn ($l) => [
+            'curated_images'    => $curatedImages,
+            'sample_listings'   => $sortedListings->map(fn ($l) => [
                 'id'    => $l->id,
                 'title' => $l->title,
                 'price' => $l->price,
                 'url'   => $l->url,
                 'image' => $l->image,
                 'tags'  => $l->tags ?? [],
+                'similarity_score' => (float) ($l->pivot->similarity_score ?? 0),
             ]),
-            'preview_images'    => $this->resolvePreviewImages($cluster),
         ];
 
         if ($detailed) {
@@ -192,60 +213,246 @@ class TrendController extends Controller
         return $data;
     }
 
+    private function isRealImageUrl(?string $url): bool
+    {
+        if (!$url) {
+            return false;
+        }
+
+        $u = mb_strtolower(trim($url));
+        if ($u === '') {
+            return false;
+        }
+
+        if (str_contains($u, 'loremflickr') || str_contains($u, 'picsum')) {
+            return false;
+        }
+
+        return str_starts_with($u, 'http://') || str_starts_with($u, 'https://');
+    }
+
+    private function buildDisplayName(TrendCluster $cluster, array $displayKeywords = []): string
+    {
+        $topKeywords = array_values(array_filter(
+            array_map(fn ($k) => mb_strtolower(trim((string) $k)), $displayKeywords),
+            fn ($k) => $k !== '' && !in_array($k, self::GENERIC_NAME_WORDS, true)
+        ));
+
+        if (count($topKeywords) >= 2) {
+            $chosen = array_slice(array_unique($topKeywords), 0, 3);
+            $base = implode(' ', array_map(fn ($w) => mb_convert_case($w, MB_CASE_TITLE, 'UTF-8'), $chosen));
+            return trim($base . ' Designs');
+        }
+
+        $fallback = mb_strtolower(trim((string) $cluster->name));
+        $fallback = preg_replace('/^(?:trending|trend|trendy|etsy)\s+/i', '', $fallback);
+        $fallback = preg_replace('/\b(?:loading|popular|now|pick|bestseller|favorite|favorites|shirts?|tees?|t-?shirts?|hoodies?|sweatshirts?|apparel|clothing|niche|cluster)\b/i', '', (string) $fallback);
+        $fallback = preg_replace('/\s+/', ' ', (string) $fallback);
+        $fallback = trim((string) $fallback, ' -_,.;:|/');
+
+        if ($fallback === '' || preg_match('/^\d+$/', $fallback)) {
+            return '';
+        }
+
+        return mb_convert_case($fallback, MB_CASE_TITLE, 'UTF-8');
+    }
+
+    private function isValidDisplayName(string $name): bool
+    {
+        $n = trim($name);
+        if ($n === '') {
+            return false;
+        }
+
+        // Reject raw numeric labels like "7".
+        if (preg_match('/^\d+$/', $n)) {
+            return false;
+        }
+
+        // Require at least 2 alphabetic words to qualify as a niche label.
+        preg_match_all('/[a-zA-Z]{2,}/', $n, $m);
+        return count($m[0] ?? []) >= 2;
+    }
+
     /**
-     * Returns an array of up to 3 pre-cached Z Image URLs for clusters without
-     * real Etsy images, so the browser can render them without extra fetch calls.
-     * Returns an empty array when real scraper images are available (browser
-     * will use those directly from sample_listings).
+     * Pick up to 3 real listing images most aligned with the niche keywords.
+     *
+     * @param \Illuminate\Support\Collection<int, mixed> $sortedListings
+     * @return string[]
+     */
+    private function buildCuratedImages(TrendCluster $cluster, $sortedListings, string $displayName, array $displayKeywords = []): array
+    {
+        $keywordPool = array_values(array_unique(array_merge(
+            $this->tokenizeForMatch($displayName),
+            array_filter(array_map(fn ($k) => mb_strtolower(trim((string) $k)), $displayKeywords))
+        )));
+
+        $scored = $sortedListings
+            ->filter(fn ($l) => $this->isRealImageUrl($l->image))
+            ->map(function ($l) use ($keywordPool) {
+                $titleTokens = $this->tokenizeForMatch((string) ($l->title ?? ''));
+                $tagTokens = [];
+                foreach ((array) ($l->tags ?? []) as $tag) {
+                    $tagTokens = array_merge($tagTokens, $this->tokenizeForMatch((string) $tag));
+                }
+
+                $listingTokens = array_values(array_unique(array_merge($titleTokens, $tagTokens)));
+                $overlap = count(array_intersect($keywordPool, $listingTokens));
+                $similarity = (float) ($l->pivot->similarity_score ?? 0);
+
+                // Strongly prioritize semantic overlap; similarity is a tiebreaker.
+                $score = ($overlap * 100) + $similarity;
+
+                return [
+                    'image' => (string) $l->image,
+                    'score' => $score,
+                    'overlap' => $overlap,
+                    'similarity' => $similarity,
+                ];
+            })
+            ->sortByDesc('score')
+            ->values();
+
+        $picked = [];
+        $seen = [];
+
+        // First pass: keep only images with explicit keyword overlap.
+        foreach ($scored as $row) {
+            if (($row['overlap'] ?? 0) <= 0) {
+                continue;
+            }
+            $img = (string) ($row['image'] ?? '');
+            if ($img === '' || isset($seen[$img])) {
+                continue;
+            }
+            $seen[$img] = true;
+            $picked[] = $img;
+            if (count($picked) >= 3) {
+                break;
+            }
+        }
+
+        // Second pass: if overlap is too strict for this cluster, use high-similarity real images.
+        if (count($picked) < 3) {
+            foreach ($scored as $row) {
+                $img = (string) ($row['image'] ?? '');
+                if ($img === '' || isset($seen[$img])) {
+                    continue;
+                }
+
+                $similarity = (float) ($row['similarity'] ?? 0);
+                if ($similarity < 0.35) {
+                    continue;
+                }
+
+                $seen[$img] = true;
+                $picked[] = $img;
+                if (count($picked) >= 3) {
+                    break;
+                }
+            }
+        }
+
+        return $picked;
+    }
+
+    /**
+     * Tokenizer for niche-image matching.
+     * Keeps only meaningful alphabetic terms and drops generic marketplace words.
      *
      * @return string[]
      */
-    private function resolvePreviewImages(TrendCluster $cluster): array
+    private function tokenizeForMatch(string $text): array
     {
-        // If any listing has a real (non-mock) image, let the browser use those.
-        $hasRealImages = $cluster->listings->contains(fn ($l) =>
-            $l->image
-            && !str_contains((string) $l->image, 'loremflickr')
-            && !str_contains((string) $l->image, 'picsum')
-        );
+        $s = mb_strtolower($text);
+        $s = preg_replace('/[^a-z\s]/', ' ', $s);
+        $parts = preg_split('/\s+/', trim((string) $s)) ?: [];
 
-        if ($hasRealImages) {
+        return array_values(array_filter(
+            $parts,
+            fn ($w) => strlen($w) >= 3 && !in_array($w, self::GENERIC_NAME_WORDS, true)
+        ));
+    }
+
+    /**
+     * A cluster is publishable only if at least one real-image listing overlaps niche terms.
+     */
+    private function hasVisualEvidence(TrendCluster $cluster, string $displayName, array $displayKeywords = []): bool
+    {
+        $keywordPool = array_values(array_unique(array_merge(
+            $this->tokenizeForMatch($displayName),
+            array_filter(array_map(fn ($k) => mb_strtolower(trim((string) $k)), $displayKeywords))
+        )));
+
+        if (count($keywordPool) === 0) {
+            return false;
+        }
+
+        foreach ($cluster->listings as $l) {
+            if (!$this->isRealImageUrl($l->image)) {
+                continue;
+            }
+
+            $titleTokens = $this->tokenizeForMatch((string) ($l->title ?? ''));
+            $tagTokens = [];
+            foreach ((array) ($l->tags ?? []) as $tag) {
+                $tagTokens = array_merge($tagTokens, $this->tokenizeForMatch((string) $tag));
+            }
+
+            $listingTokens = array_values(array_unique(array_merge($titleTokens, $tagTokens)));
+            $overlap = count(array_intersect($keywordPool, $listingTokens));
+
+            if ($overlap > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build cleaner niche keywords from repeated real listing signals.
+     *
+     * @return string[]
+     */
+    private function buildDisplayKeywords(TrendCluster $cluster): array
+    {
+        $counts = [];
+
+        // 1) Start with model keywords (light weight).
+        foreach ((array) ($cluster->top_keywords ?? []) as $kw) {
+            $token = mb_strtolower(trim((string) $kw));
+            if ($token === '' || in_array($token, self::GENERIC_NAME_WORDS, true)) {
+                continue;
+            }
+            $counts[$token] = ($counts[$token] ?? 0) + 1;
+        }
+
+        // 2) Reinforce with repeated title/tag tokens across listings.
+        foreach ($cluster->listings as $l) {
+            $tokens = $this->tokenizeForMatch((string) ($l->title ?? ''));
+            foreach ((array) ($l->tags ?? []) as $tag) {
+                $tokens = array_merge($tokens, $this->tokenizeForMatch((string) $tag));
+            }
+
+            foreach (array_unique($tokens) as $t) {
+                if ($t === '' || in_array($t, self::GENERIC_NAME_WORDS, true)) {
+                    continue;
+                }
+                $counts[$t] = ($counts[$t] ?? 0) + 1;
+            }
+        }
+
+        if (empty($counts)) {
             return [];
         }
 
-        // Derive nicheDesc exactly as the frontend JS does.
-        $nicheDesc = mb_strtolower($cluster->name ?? 'graphic design');
-        $nicheDesc = (string) preg_replace('/\b(?:shirts?|tees?|t-shirts?|hoodies?|sweatshirts?|apparel)\b/i', '', $nicheDesc);
-        $nicheDesc = trim((string) preg_replace('/\s+/', ' ', $nicheDesc));
+        arsort($counts);
 
-        $variants = ['', 'vintage style', 'colorful bold'];
-        $images   = [];
+        // Keep terms seen at least twice where possible to avoid one-off noisy words.
+        $stable = array_keys(array_filter($counts, fn ($c) => $c >= 2));
+        $pool = count($stable) >= 2 ? $stable : array_keys($counts);
 
-        foreach ($variants as $zKw) {
-            $cacheKey = 'trend-preview:' . md5("{$nicheDesc}:{$zKw}");
-            $cached   = Cache::get($cacheKey);
-            // Skip legacy base64 blobs still in cache (they'd bloat the JSON response).
-            // These will be replaced by file URLs when the command next runs.
-            if ($cached !== null && strlen((string) $cached) > 500) {
-                $cached = null;
-            }
-            // Local file URLs are not portable across Cloud Run instances.
-            if (is_string($cached) && str_starts_with($cached, '/storage/trend-previews/')) {
-                $cached = null;
-            }
-            $images[] = $cached;   // null = not yet generated
-        }
-
-        // Only return the array when at least one slot is available.
-        $valid = array_values(array_filter($images));
-        return count($valid) > 0 ? $images : [];
+        return array_slice(array_values($pool), 0, 8);
     }
-
-    private function buildFallbackPreviewUrl(string $nicheDesc, string $keyword): string
-    {
-        // Fallback: use a simple placeholder from Unsplash when Together fails
-        $seed = md5($nicheDesc . ':' . $keyword);
-        return 'https://picsum.photos/800/800?random=' . substr($seed, 0, 10);
-    }
-
 }

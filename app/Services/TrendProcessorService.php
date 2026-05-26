@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Models\EtsyListing;
-use App\Models\TrendCluster;use App\Models\TrendItem;
+use App\Models\TrendCluster;
+use App\Models\TrendItem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -24,6 +25,13 @@ use Illuminate\Support\Facades\Log;
 class TrendProcessorService
 {
 
+    // Words that are too generic for niche naming (garment/marketplace boilerplate)
+    private const GENERIC_NAME_WORDS = [
+        'trend','trending','trendy','etsy','niche','cluster','screen','apparel','clothing',
+        'shirt','shirts','tshirt','tshirts','tee','tees','hoodie','hoodies','sweatshirt','sweatshirts',
+        'popular','loading','now','pick','bestseller','favorites','favorite',
+    ];
+
     // Stop words to strip from titles before vectorising
     private const STOP_WORDS = [
         'a','an','the','and','or','for','in','on','of','to','with','is','it',
@@ -32,9 +40,12 @@ class TrendProcessorService
         'will','can','not','no','if','so','up','out','but','about','into',
         'than','then','there','when','who','all','more','also','just','over',
         'back','after','use','two','new','old','great','good','best','cute',
-        'cool','nice','love','funny','vintage','retro','custom','personalized',
+        'cool','nice','love','custom','personalized',
         'gift','gifts','tshirt','shirt','tee','t-shirt','unisex','women','men',
         'kids','adult','plus','size','xs','sm','md','lg','xl','2xl','3xl',
+        // Noisy marketplace/meta words that should not define niche names.
+        'trending','trend','trendy','etsy','loading','popular','now','pick','bestseller',
+        'favorite','favorites','screen',
     ];
 
     private const NUM_CLUSTERS    = 8;
@@ -44,6 +55,8 @@ class TrendProcessorService
 
     /** @var array<string, int> Vocabulary built during TF-IDF (term → index) */
     private array $vocab = [];
+    /** @var array<string, bool> Tracks names used in the current run to avoid duplicates */
+    private array $usedClusterNames = [];
 
     public function __construct() {}
 
@@ -53,8 +66,14 @@ class TrendProcessorService
      */
     public function run(?string $keyword = null): int
     {
+        $this->usedClusterNames = [];
+
         $query = EtsyListing::query()
-            ->where('created_at', '>=', Carbon::now()->subDays(self::RECENCY_DAYS));
+            ->where('created_at', '>=', Carbon::now()->subDays(self::RECENCY_DAYS))
+            ->whereNotNull('image')
+            ->where('image', '!=', '')
+            ->where('image', 'not like', '%loremflickr%')
+            ->where('image', 'not like', '%picsum%');
 
         if ($keyword) {
             $query->where('keyword', $keyword);
@@ -96,6 +115,7 @@ class TrendProcessorService
 
             // LLM naming (non-blocking — fall back on keyword list if LLM fails)
             [$name, $summary, $designPrompt] = $this->nameClusters($topKeywords, $clusterListings->take(5));
+            $name = $this->finalizeClusterName($name, $topKeywords);
 
             $cluster = TrendCluster::create([
                 'name'              => $name,
@@ -400,6 +420,8 @@ class TrendProcessorService
         And extracted keywords: [{$kwList}]
 
         1. Give a concise niche cluster name (max 5 words, e.g. "Funny Cat Lover Shirts").
+              - Do NOT start the name with "Trending", "Trend", or "Etsy".
+              - Avoid generic marketplace words like "popular", "loading", "pick", "bestseller".
         2. Write a 1-sentence market insight for this cluster.
         3. Write a style_context: a short style descriptor (max 20 words) for t-shirt artwork in this niche.
            Rules for style_context:
@@ -446,5 +468,108 @@ class TrendProcessorService
         // Fallback
         $fallbackName = implode(' ', array_map('ucfirst', array_slice((array) $topKeywords, 0, 3)));
         return [$fallbackName ?: 'Unnamed Cluster', '', ''];
+    }
+
+    private function finalizeClusterName(string $name, array $topKeywords): string
+    {
+        $clean = $this->sanitizeClusterName($name);
+
+        if ($clean === '' || $this->isGenericClusterName($clean)) {
+            $clean = $this->buildKeywordDrivenName($topKeywords);
+        }
+
+        if ($clean === '') {
+            $clean = 'Niche Cluster';
+        }
+
+        return $this->ensureUniqueClusterName($clean);
+    }
+
+    private function sanitizeClusterName(string $name): string
+    {
+        $s = trim($name);
+        if ($s === '') {
+            return '';
+        }
+
+        // Strip wrapping quotes and extra punctuation noise.
+        $s = trim($s, " \t\n\r\0\x0B\"'`“”‘’");
+
+        // Remove repeated marketplace prefixes like "Trending ..." or "Etsy ...".
+        $s = preg_replace('/^(?:trending|trend|trendy|etsy)\s+/i', '', $s);
+        $s = preg_replace('/^(?:trending|trend|trendy|etsy)\s+/i', '', (string) $s);
+
+        // Drop noisy standalone words that can slip into short names.
+        $s = preg_replace('/\b(?:loading|popular|now|pick|bestseller|favorite|favorites)\b/i', '', (string) $s);
+
+        // Keep names short and readable for cards.
+        $s = preg_replace('/\s+/', ' ', (string) $s);
+        $s = trim((string) $s, ' -_,.;:|/');
+
+        // Title case for stable visual style.
+        $s = mb_convert_case((string) $s, MB_CASE_TITLE, 'UTF-8');
+
+        // Max 5 words to match UX constraints.
+        $words = preg_split('/\s+/', $s) ?: [];
+        if (count($words) > 5) {
+            $s = implode(' ', array_slice($words, 0, 5));
+        }
+
+        return trim($s);
+    }
+
+    private function isGenericClusterName(string $name): bool
+    {
+        $words = preg_split('/\s+/', mb_strtolower(trim($name))) ?: [];
+        $words = array_values(array_filter($words, fn ($w) => $w !== ''));
+
+        if (count($words) <= 1) {
+            return true;
+        }
+
+        $informative = array_values(array_filter(
+            $words,
+            fn ($w) => !in_array($w, self::GENERIC_NAME_WORDS, true)
+        ));
+
+        return count($informative) < 2;
+    }
+
+    private function buildKeywordDrivenName(array $topKeywords): string
+    {
+        $filtered = array_values(array_filter(
+            array_map(fn ($k) => mb_strtolower(trim((string) $k)), $topKeywords),
+            fn ($k) => $k !== '' && !in_array($k, self::GENERIC_NAME_WORDS, true)
+        ));
+
+        if (count($filtered) === 0) {
+            return '';
+        }
+
+        $chosen = array_slice(array_unique($filtered), 0, 3);
+        $base = implode(' ', array_map(fn ($w) => mb_convert_case($w, MB_CASE_TITLE, 'UTF-8'), $chosen));
+
+        // Make it explicit that this is a design-style niche, not a product category.
+        return trim($base . ' Designs');
+    }
+
+    private function ensureUniqueClusterName(string $baseName): string
+    {
+        $key = mb_strtolower($baseName);
+        if (!isset($this->usedClusterNames[$key])) {
+            $this->usedClusterNames[$key] = true;
+            return $baseName;
+        }
+
+        $i = 2;
+        while (true) {
+            $candidate = "{$baseName} {$i}";
+            $candidateKey = mb_strtolower($candidate);
+            if (!isset($this->usedClusterNames[$candidateKey])) {
+                $this->usedClusterNames[$candidateKey] = true;
+                return $candidate;
+            }
+            $i++;
+        }
     }
 }

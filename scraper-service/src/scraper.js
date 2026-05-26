@@ -3,7 +3,6 @@
 const { chromium } = require('playwright');
 const { randomUserAgent } = require('./agents');
 const { searchListings, hasApiKey } = require('./etsy-client');
-const { generateMockListings }     = require('./mock-listings');
 
 const HEADLESS = process.env.HEADLESS !== 'false';
 const MAX_LISTINGS = parseInt(process.env.MAX_LISTINGS ?? '60', 10);
@@ -122,6 +121,218 @@ async function extractFromLinks(page, max) {
 }
 
 /**
+ * Extract listings from JSON-LD structured data on Etsy search pages.
+ * Etsy often includes image URLs here even when lazy-loaded img tags are missing.
+ */
+async function extractFromStructuredData(page, max) {
+  return await page.evaluate((max) => {
+    const results = [];
+    const seen = new Set();
+
+    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+    for (const script of scripts) {
+      if (results.length >= max) break;
+
+      let parsed;
+      try {
+        parsed = JSON.parse(script.textContent || '{}');
+      } catch {
+        continue;
+      }
+
+      const nodes = Array.isArray(parsed) ? parsed : [parsed];
+      for (const node of nodes) {
+        if (!node || results.length >= max) continue;
+        const itemList = Array.isArray(node.itemListElement) ? node.itemListElement : [];
+        for (const el of itemList) {
+          if (results.length >= max) break;
+          const item = el?.item ?? el;
+          if (!item) continue;
+
+          const rawUrl = item.url ?? item['@id'] ?? null;
+          if (!rawUrl || typeof rawUrl !== 'string') continue;
+
+          let cleanUrl = rawUrl;
+          try {
+            const u = new URL(rawUrl);
+            cleanUrl = `${u.origin}${u.pathname}`;
+          } catch { /* keep raw */ }
+
+          if (!cleanUrl.includes('/listing/')) continue;
+          if (seen.has(cleanUrl)) continue;
+          seen.add(cleanUrl);
+
+          const title = typeof item.name === 'string' ? item.name.trim() : '';
+          if (!title) continue;
+
+          let image = null;
+          const imageField = item.image;
+          if (typeof imageField === 'string') {
+            image = imageField;
+          } else if (Array.isArray(imageField)) {
+            image = imageField.find(v => typeof v === 'string') ?? null;
+          } else if (imageField && typeof imageField === 'object') {
+            image = imageField.url ?? imageField.contentUrl ?? null;
+          }
+
+          let price = null;
+          const offer = item.offers;
+          if (offer && typeof offer === 'object') {
+            const p = offer.price;
+            const c = offer.priceCurrency;
+            if (p != null) {
+              price = c ? `${p} ${c}` : String(p);
+            }
+          }
+
+          results.push({ title, url: cleanUrl, image, price, tags: [] });
+        }
+      }
+    }
+
+    return results;
+  }, max);
+}
+
+function normalizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('//')) return `https:${trimmed}`;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return null;
+}
+
+function unique(arr) {
+  return Array.from(new Set(arr));
+}
+
+/**
+ * Lightweight HTML fallback for Etsy search pages.
+ * This avoids full browser rendering when Playwright is blocked.
+ */
+async function scrapeEtsyHtml(keyword) {
+  const url = buildSearchUrl(keyword);
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': randomUserAgent(),
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTML fallback HTTP ${res.status}`);
+  }
+
+  const html = await res.text();
+
+  // Etsy listing links in page HTML.
+  const urlMatches = html.match(/https:\/\/www\.etsy\.com\/listing\/\d+\/[^"'\s<]+/gi) ?? [];
+  const listingUrls = unique(urlMatches).slice(0, MAX_LISTINGS * 2);
+
+  // Etsy CDN image URLs in page HTML.
+  const imageMatches = html.match(/https:\/\/i\.etsystatic\.com\/[^"'\s<]+/gi) ?? [];
+  const imageUrls = unique(imageMatches)
+    .map(normalizeImageUrl)
+    .filter(Boolean);
+
+  const listings = listingUrls.slice(0, MAX_LISTINGS).map((u, idx) => {
+    let cleanUrl = u;
+    try {
+      const parsed = new URL(u);
+      cleanUrl = `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      // keep raw URL when parsing fails
+    }
+
+    const slug = cleanUrl.split('/').pop() || keyword;
+    const title = decodeURIComponent(slug.replace(/-/g, ' '));
+    return {
+      title: title.length >= 5 ? title : `${keyword} listing`,
+      url: cleanUrl,
+      image: imageUrls[idx] ?? null,
+      price: null,
+      tags: [],
+    };
+  });
+
+  if (listings.length === 0) {
+    throw new Error('HTML fallback found no listing URLs');
+  }
+
+  return listings;
+}
+
+/**
+ * For listings without image, open the detail page and extract og:image/twitter:image.
+ */
+async function enrichMissingImagesFromListingPages(context, listings, maxChecks = 12) {
+  const missingIdx = [];
+  for (let i = 0; i < listings.length; i++) {
+    if (!normalizeImageUrl(listings[i].image) && listings[i].url) missingIdx.push(i);
+  }
+
+  if (missingIdx.length === 0) return listings;
+
+  const page = await context.newPage();
+  try {
+    let checks = 0;
+    for (const idx of missingIdx) {
+      if (checks >= maxChecks) break;
+      checks++;
+
+      const listing = listings[idx];
+      try {
+        await page.goto(listing.url, { waitUntil: 'domcontentloaded', timeout: 25_000 });
+        const candidate = await page.evaluate(() => {
+          const og = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+          if (og) return og;
+
+          const tw = document.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+          if (tw) return tw;
+
+          const ld = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+          for (const s of ld) {
+            try {
+              const parsed = JSON.parse(s.textContent || '{}');
+              const nodes = Array.isArray(parsed) ? parsed : [parsed];
+              for (const node of nodes) {
+                const image = node?.image;
+                if (typeof image === 'string') return image;
+                if (Array.isArray(image)) {
+                  const first = image.find(v => typeof v === 'string');
+                  if (first) return first;
+                }
+                if (image && typeof image === 'object') {
+                  if (typeof image.url === 'string') return image.url;
+                  if (typeof image.contentUrl === 'string') return image.contentUrl;
+                }
+              }
+            } catch {
+              // ignore malformed JSON-LD blocks
+            }
+          }
+
+          return null;
+        });
+
+        const normalized = normalizeImageUrl(candidate);
+        if (normalized) {
+          listing.image = normalized;
+        }
+      } catch {
+        // Ignore individual listing failures; keep trying others.
+      }
+    }
+  } finally {
+    await page.close();
+  }
+
+  return listings;
+}
+
+/**
  * Scroll the page incrementally to load more listings AND trigger lazy image loading.
  */
 async function infiniteScroll(page, targetCount) {
@@ -178,7 +389,7 @@ async function scrapeEtsy(keyword) {
       console.log('[scraper] Using Etsy Open API v3');
       listings = await searchListings(keyword, MAX_LISTINGS);
     } catch (err) {
-      console.warn(`[scraper] Etsy API failed (${err.message}) — falling back to mock data`);
+      console.warn(`[scraper] Etsy API failed (${err.message}) — falling back to Playwright`);
       listings = null;
     }
   }
@@ -188,20 +399,64 @@ async function scrapeEtsy(keyword) {
       console.log('[scraper] Trying Playwright browser scrape');
       listings = await scrapeEtsyBrowser(keyword);
     } catch (err) {
-      console.warn(`[scraper] Playwright failed (${err.message}) — using mock data`);
+      console.warn(`[scraper] Playwright failed (${err.message})`);
       listings = null;
     }
   }
 
   if (!listings) {
-    console.log('[scraper] Using mock listings for:', keyword);
-    listings = generateMockListings(keyword, MAX_LISTINGS);
+    try {
+      console.log('[scraper] Trying HTML fallback scrape');
+      listings = await scrapeEtsyHtml(keyword);
+    } catch (err) {
+      console.warn(`[scraper] HTML fallback failed (${err.message})`);
+      listings = null;
+    }
+  }
+
+  if (!listings) {
+    throw new Error('Unable to scrape real Etsy listings from API and Playwright');
+  }
+
+  listings = listings.map(item => ({
+    ...item,
+    image: normalizeImageUrl(item.image),
+  }));
+
+  // Recover missing images from listing detail pages when needed.
+  const missingImages = listings.filter(l => !l.image).length;
+  if (missingImages > 0) {
+    console.log(`[scraper] Missing images before enrichment: ${missingImages}/${listings.length}`);
   }
 
   // Keep only apparel results; fall back to full set if filter removes everything
   const clothingOnly = listings.filter(isClothing);
-  const result = clothingOnly.length >= 3 ? clothingOnly : listings;
+  let result = clothingOnly.length >= 3 ? clothingOnly : listings;
+
+  // Enrich after clothing filter so we only fetch detail pages for likely-final rows.
+  // Create an ephemeral context only when we need page-level recovery.
+  const stillMissing = result.filter(l => !l.image).length;
+  if (stillMissing > 0) {
+    const browser = await chromium.launch({
+      headless: HEADLESS,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    const ctx = await browser.newContext({
+      userAgent: randomUserAgent(),
+      viewport: { width: 1280, height: 720 },
+      locale: 'en-US',
+    });
+    try {
+      result = await enrichMissingImagesFromListingPages(ctx, result, 12);
+    } finally {
+      await ctx.close();
+      await browser.close();
+    }
+  }
+
   console.log(`[scraper] Clothing filter: ${listings.length} → ${result.length} listings`);
+  const withImages = result.filter(l => !!l.image).length;
+  console.log(`[scraper] Final image coverage: ${withImages}/${result.length}`);
   return result;
 }
 
@@ -261,8 +516,28 @@ async function scrapeEtsyBrowser(keyword) {
     // Scroll to load more
     await infiniteScroll(page, MAX_LISTINGS);
 
-    const results = await extractFromLinks(page, MAX_LISTINGS);
-    return results.slice(0, MAX_LISTINGS);
+    const linkResults = await extractFromLinks(page, MAX_LISTINGS);
+    const ldResults = await extractFromStructuredData(page, MAX_LISTINGS);
+
+    // Merge structured data + DOM extraction, preferring entries with image/price.
+    const merged = new Map();
+    [...ldResults, ...linkResults].forEach(item => {
+      if (!item?.url) return;
+      const existing = merged.get(item.url);
+      if (!existing) {
+        merged.set(item.url, {
+          ...item,
+          image: normalizeImageUrl(item.image),
+        });
+        return;
+      }
+
+      if (!existing.image && item.image) existing.image = normalizeImageUrl(item.image);
+      if (!existing.price && item.price) existing.price = item.price;
+      if ((!existing.title || existing.title.length < 6) && item.title) existing.title = item.title;
+    });
+
+    return Array.from(merged.values()).slice(0, MAX_LISTINGS);
   } finally {
     await browser.close();
   }

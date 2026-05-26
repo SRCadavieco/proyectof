@@ -4326,24 +4326,25 @@
         list.innerHTML = '';
         designs.forEach(d => {
             const item = document.createElement('div');
+            const clone = tpl.content.cloneNode(true);
             item.className = 'saved-design-item group relative rounded-lg overflow-hidden cursor-pointer ' +
                 'border-2 border-transparent hover:border-[#7c3ca0] transition-all flex-shrink-0 w-16 sm:w-auto';
-            item.dataset.id = d.id;
+            card.querySelector('.trend-name').textContent = displayName;
             const img = document.createElement('img');
             img.src = d.image_data; img.alt = d.title || 'Design';
             img.className = 'w-full h-16 sm:h-20 object-contain block' + ' bg-white/[0.05]';
             const del = document.createElement('button');
             del.type = 'button'; del.title = 'Remove';
-            del.className = 'absolute top-0.5 right-0.5 w-5 h-5 bg-red-500/90 text-white rounded-full ' +
+            const nicheDesc = (displayName || 'graphic design')
                 'hidden group-hover:flex items-center justify-center text-xs leading-none';
             del.innerHTML = '×';
             del.onclick = async (e) => { e.stopPropagation(); await deleteSavedDesign(d.id); };
             item.appendChild(img); item.appendChild(del);
-            item.addEventListener('click', () => {
+            console.log(`[TRENDS:${displayName}] realImages=${realImages.length}`);
                 document.querySelectorAll('.saved-design-item').forEach(el => {
                     el.classList.remove('border-[#7c3ca0]');
                     el.classList.add('border-transparent');
-                });
+                generateFromCluster(displayName, c.top_keywords ?? [], c.design_prompt ?? '');
                 item.classList.add('border-[#7c3ca0]');
                 item.classList.remove('border-transparent');
                 _selectedSavedDesign = { id: d.id, src: d.image_data };
@@ -4561,8 +4562,9 @@
         clusters.forEach(c => {
             const clone = tpl.content.cloneNode(true);
             const card  = clone.querySelector('div');
+            const displayName = c.display_name ?? c.name ?? 'Unnamed Niche';
 
-            card.querySelector('.trend-name').textContent = c.name ?? 'Unnamed Niche';
+            card.querySelector('.trend-name').textContent = displayName;
 
             const badge = growthBadge(c.growth_rate ?? 0);
             const growthEl = card.querySelector('.trend-growth');
@@ -4607,33 +4609,29 @@
                 'tank','crewneck','apparel','clothing','wear','unisex','custom']);
             const themeKws = (c.top_keywords ?? [])
                 .filter(k => typeof k === 'string' && !stopKws.has(k.toLowerCase()));
-            const nameWords = (c.name ?? '').split(/\s+/).filter(w => w.length > 3 && !stopKws.has(w.toLowerCase()));
+            const nameWords = displayName.split(/\s+/).filter(w => w.length > 3 && !stopKws.has(w.toLowerCase()));
             const pool = [...new Set([...themeKws, ...nameWords])];
 
             // Build a niche description from the cluster name, stripping only product-type words
-            const nicheDesc = (c.name ?? 'graphic design')
+            const nicheDesc = (displayName || 'graphic design')
                 .toLowerCase()
                 .replace(/\b(shirts?|tees?|t-shirts?|hoodies?|sweatshirts?|apparel)\b/gi, '')
                 .replace(/\s+/g, ' ').trim();
 
             const scraperListings = c.sample_listings ?? [];
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-
-            // Collect only confirmed real images (not mock placeholders)
-            const realImages = scraperListings
+            const curatedImages = Array.isArray(c.curated_images) ? c.curated_images.filter(Boolean) : [];
+            const sampleRealImages = scraperListings
                 .map(l => l?.image)
                 .filter(img => img && !img.includes('loremflickr') && !img.includes('picsum'));
 
-            // Pre-cached Z Image URLs sent inline by the API (avoids extra fetch calls on repeat loads)
-            const previewImages = Array.isArray(c.preview_images) ? c.preview_images : [];
+            // Collect only confirmed real images (not mock placeholders)
+            const realImages = curatedImages.length > 0 ? curatedImages : sampleRealImages;
 
-            console.log(`[TRENDS:${c.name}] realImages=${realImages.length} previewImages=${previewImages.filter(Boolean).length}`);
+            console.log(`[TRENDS:${displayName}] realImages=${realImages.length}`);
 
             const getSlotImage = (idx) => {
-                // 1. Real Etsy scraper image
+                // Show only real Etsy scraper images.
                 if (realImages.length > 0) return realImages[idx % realImages.length] ?? null;
-                // 2. Pre-cached Z Image (no fetch needed)
-                if (previewImages[idx]) return previewImages[idx];
                 return null;
             };
 
@@ -4668,32 +4666,13 @@
                     img.src = src;
                 };
 
-                const generateWithZImage = () => {
-                    const slotVariants = ['', 'vintage style', 'colorful bold'];
-                    const zKw = slotVariants[idx] ?? '';
-                    fetch('/api/trends/niche-preview', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-                        body: JSON.stringify({ cluster_id: c.id ?? 0, slot: idx, niche_desc: nicheDesc, keyword: zKw }),
-                    })
-                    .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-                    .then(data => {
-                        if (data.image) showImg(data.image); else { shimmer.remove(); showFallback(); }
-                    })
-                    .catch(() => { shimmer.remove(); showFallback(); });
-                };
-
                 if (slotImg) {
                     img.onload  = () => { img.style.opacity = '1'; shimmer.remove(); };
-                    img.onerror = () => {
-                        img.onload = null; img.onerror = null;
-                        img.remove();
-                        // scraper image failed → try Z Image (will likely be cached)
-                        generateWithZImage();
-                    };
+                    img.onerror = () => { shimmer.remove(); showFallback(); };
                     img.src = slotImg;
                 } else {
-                    generateWithZImage();
+                    shimmer.remove();
+                    showFallback();
                 }
 
                 box.appendChild(img);
@@ -4702,7 +4681,7 @@
 
             // CTA
             card.querySelector('.trend-cta').addEventListener('click', () => {
-                generateFromCluster(c.name ?? '', c.top_keywords ?? [], c.design_prompt ?? '');
+                generateFromCluster(displayName, c.top_keywords ?? [], c.design_prompt ?? '');
             });
 
             container.appendChild(clone);
@@ -4732,7 +4711,7 @@
             return;
         }
         const filtered = allClusters.filter(c => {
-            const name = (c.name ?? '').toLowerCase();
+            const name = (c.display_name ?? c.name ?? '').toLowerCase();
             const kws  = (c.top_keywords ?? []).join(' ').toLowerCase();
             return name.includes(q) || kws.includes(q);
         });
