@@ -8,6 +8,7 @@ use App\Models\TrendCluster;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TrendController extends Controller
 {
@@ -133,20 +134,44 @@ class TrendController extends Controller
         }
 
         $keywords = array_map('strval', array_slice($keywords, 0, 20));
+        $queued = [];
+        $failed = [];
 
         foreach ($keywords as $keyword) {
             $kw = trim($keyword);
             if ($kw === '') continue;
-            // Chain: scrape → process trends for that keyword
-            ScrapeEtsyJob::dispatch($kw)->chain([
-                new ProcessTrendsJob($kw),
-            ]);
+
+            try {
+                // Chain: scrape → process trends for that keyword.
+                // In production with queue=sync, dispatch can throw immediately if scraper fails.
+                ScrapeEtsyJob::dispatch($kw)->chain([
+                    new ProcessTrendsJob($kw),
+                ]);
+                $queued[] = $kw;
+            } catch (\Throwable $e) {
+                $failed[] = [
+                    'keyword' => $kw,
+                    'error' => $e->getMessage(),
+                ];
+
+                Log::error('[TrendController] refresh dispatch failed', [
+                    'keyword' => $kw,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
+        $status = count($queued) > 0 ? 'queued' : 'failed';
+
         return response()->json([
-            'status'   => 'queued',
+            'status'   => $status,
             'keywords' => $keywords,
-        ]);
+            'queued'   => $queued,
+            'failed'   => $failed,
+            'message'  => count($queued) > 0
+                ? 'Pipeline queued; some keywords may have failed.'
+                : 'No keywords could be queued. Check scraper logs and credentials.',
+        ], count($queued) > 0 ? 200 : 422);
     }
 
     // ─── Formatting ──────────────────────────────────────────────────────────

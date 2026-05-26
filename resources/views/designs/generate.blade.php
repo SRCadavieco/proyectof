@@ -4525,7 +4525,7 @@
 
         // Kick off pipeline
         try {
-            await fetch('/api/trends/refresh', {
+            const res = await fetch('/api/trends/refresh', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -4533,8 +4533,26 @@
                     'X-Requested-With': 'XMLHttpRequest',
                 },
             });
-            showToast('Pipeline queued — data updates in a few minutes', 'info');
-        } catch (e) { /* ignore */ }
+
+            let payload = null;
+            try { payload = await res.json(); } catch (_) { payload = null; }
+
+            if (!res.ok) {
+                const firstFailure = Array.isArray(payload?.failed) && payload.failed.length > 0
+                    ? payload.failed[0]
+                    : null;
+                const msg = payload?.message
+                    || firstFailure?.error
+                    || `Pipeline refresh failed (${res.status})`;
+                showToast(msg, 'error');
+            } else if (Array.isArray(payload?.failed) && payload.failed.length > 0) {
+                showToast(`Pipeline queued with ${payload.failed.length} failed keyword(s)`, 'warning');
+            } else {
+                showToast('Pipeline queued — data updates in a few minutes', 'info');
+            }
+        } catch (e) {
+            showToast('Could not start trend pipeline. Check server logs.', 'error');
+        }
 
         // Re-load current data
         await loadTrends();
