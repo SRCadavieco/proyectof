@@ -41,13 +41,15 @@ class EtsyScraperClient
             ->get("{$this->baseUrl}/scrape", ['q' => $keyword]);
 
         if ($response->failed()) {
-            $msg = $response->json('error') ?? $response->body();
+            // The scraper returns { error: "Scrape failed", message: "<real cause>" }.
+            // Prefer the detailed `message` so the root cause surfaces in logs/UI.
+            $detail = $response->json('message') ?? $response->json('error') ?? $response->body();
             Log::error('[EtsyScraperClient] Scrape request failed', [
                 'keyword' => $keyword,
                 'status'  => $response->status(),
-                'error'   => $msg,
+                'error'   => $detail,
             ]);
-            throw new \RuntimeException("Scraper returned HTTP {$response->status()}: {$msg}");
+            throw new \RuntimeException("Scraper returned HTTP {$response->status()}: {$detail}");
         }
 
         return $response->json();

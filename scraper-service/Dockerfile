@@ -1,19 +1,17 @@
 FROM node:20-slim
 
-# Install only Chromium (skip Firefox and WebKit bundled in playwright base)
-RUN apt-get update && apt-get install -y \
-    chromium \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
-
-# Tell Playwright to skip downloading browsers and use the system Chromium
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
-
 WORKDIR /app
 
 COPY package.json ./
 RUN npm install --omit=dev
+
+# Install Playwright's own Chromium and all required system dependencies.
+# Using --with-deps ensures the exact browser version Playwright expects is
+# present together with every native library it needs (NSS, GBM, ATK, etc.).
+# This is the recommended approach for containerised Playwright deployments
+# and avoids the version-mismatch / missing-lib issues that occur when using
+# the system chromium from apt with --no-install-recommends.
+RUN npx playwright install --with-deps chromium
 
 COPY src/ ./src/
 
