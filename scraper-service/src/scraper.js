@@ -439,6 +439,7 @@ async function scrapeEtsy(keyword) {
   if (stillMissing > 0) {
     const browser = await chromium.launch({
       headless: HEADLESS,
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
     const ctx = await browser.newContext({
@@ -466,6 +467,7 @@ async function scrapeEtsy(keyword) {
 async function scrapeEtsyBrowser(keyword) {
   const browser = await chromium.launch({
     headless: HEADLESS,
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',

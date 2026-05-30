@@ -191,9 +191,13 @@
         @media (min-width: 1024px) { .hero-images { min-height: 520px; } }
         .hero-img-back  { width: 130px; height: 155px; }
         .hero-img-front { width: 150px; height: 180px; }
+        .hero-img-sm    { width: 105px; height: 125px; }
+        .hero-img-xs    { width:  90px; height: 110px; }
         @media (min-width: 1024px) {
             .hero-img-back  { width: 220px; height: 260px; }
             .hero-img-front { width: 250px; height: 300px; }
+            .hero-img-sm    { width: 175px; height: 210px; }
+            .hero-img-xs    { width: 150px; height: 180px; }
         }
 
         /* ── Design gallery scroll ── */
@@ -299,10 +303,13 @@
                     x-intersect.once="visible = true"
                     class="mt-16 pt-8 border-t border-white/[0.07] grid grid-cols-3 gap-6 max-w-sm"
                 >
-                    @php $stats = [
-                        ['val' => '∞',    'label' => 'Designs',       'delay' => 'stat-d1'],
-                        ['val' => '<15s', 'label' => 'Per design',    'delay' => 'stat-d2'],
-                        ['val' => '1',    'label' => 'Prompt needed', 'delay' => 'stat-d3'],
+                    @php
+                    $count = $totalDesigns ?? 0;
+                    $countFormatted = $count >= 1000 ? number_format($count / 1000, 1) . 'K+' : ($count > 0 ? number_format($count) . '+' : '0');
+                    $stats = [
+                        ['val' => $countFormatted, 'label' => 'Designs generated',    'delay' => 'stat-d1'],
+                        ['val' => '✓',             'label' => 'Auto-upload to store', 'delay' => 'stat-d2'],
+                        ['val' => '20+',           'label' => 'Garments available',   'delay' => 'stat-d3'],
                     ]; @endphp
                     @foreach($stats as $s)
                     <div>
@@ -320,16 +327,7 @@
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div style="width:380px;height:380px;background:radial-gradient(circle,rgba(124,60,160,0.22) 0%,transparent 70%);filter:blur(40px)"></div>
                 </div>
-                <!-- Image 1: back-right -->
-                <div class="absolute" style="right:0;top:10%;animation:float-b 11s ease-in-out infinite 1s">
-                    <div class="hero-img-back" style="background:rgba(255,255,255,0.03);border:1px solid rgba(124,60,160,0.2);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -15px rgba(0,0,0,0.7)">
-                        <img src="{{ asset('images/gallery/d2.png') }}"
-                             alt="AI designed product"
-                             class="w-full h-full object-contain p-3"
-                             onerror="this.parentElement.style.opacity='0'">
-                    </div>
-                </div>
-                <!-- Image 2: front-left, larger -->
+                <!-- Image 1: front-left, largest -->
                 <div class="absolute" style="left:0;top:5%;animation:float-a 9s ease-in-out infinite">
                     <div class="hero-img-front" style="background:rgba(255,255,255,0.04);border:1px solid rgba(124,60,160,0.3);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px -15px rgba(0,0,0,0.8)">
                         <img src="{{ asset('images/gallery/d1.png') }}"
@@ -337,14 +335,63 @@
                              class="w-full h-full object-contain p-3"
                              onerror="this.parentElement.style.opacity='0'">
                     </div>
-                    <!-- Label badge -->
-                    <div class="mt-3 flex items-center gap-2" style="padding-left:4px">
-                        <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block" style="animation:pulse-ring 2s ease-out infinite"></span>
-                        <span class="text-[10px] font-semibold tracking-[0.2em] uppercase" style="color:rgba(255,255,255,0.35)">Generated with AI</span>
+                </div>
+                <!-- Image 2: back-right, medium -->
+                <div class="absolute" style="right:0;top:8%;animation:float-b 11s ease-in-out infinite 1s">
+                    <div class="hero-img-back" style="background:rgba(255,255,255,0.03);border:1px solid rgba(124,60,160,0.2);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -15px rgba(0,0,0,0.7)">
+                        <img src="{{ asset('images/gallery/d2.png') }}"
+                             alt="AI designed product"
+                             class="w-full h-full object-contain p-3"
+                             onerror="this.parentElement.style.opacity='0'">
+                    </div>
+                </div>
+                <!-- Image 3: lower-left, smaller -->
+                <div class="absolute" style="left:8%;bottom:4%;animation:float-b 13s ease-in-out infinite 0.5s">
+                    <div class="hero-img-sm" style="background:rgba(255,255,255,0.03);border:1px solid rgba(124,60,160,0.18);border-radius:14px;overflow:hidden;box-shadow:0 20px 50px -10px rgba(0,0,0,0.6)">
+                        <img src="{{ asset('images/gallery/d3.png') }}"
+                             alt="AI designed product"
+                             class="w-full h-full object-contain p-2"
+                             onerror="this.parentElement.style.opacity='0'">
+                    </div>
+                </div>
+                <!-- Image 4: lower-right, smallest -->
+                <div class="absolute" style="right:4%;bottom:2%;animation:float-a 10s ease-in-out infinite 2s">
+                    <div class="hero-img-xs" style="background:rgba(255,255,255,0.03);border:1px solid rgba(124,60,160,0.15);border-radius:12px;overflow:hidden;box-shadow:0 16px 40px -8px rgba(0,0,0,0.6)">
+                        <img src="{{ asset('images/gallery/d4.png') }}"
+                             alt="AI designed product"
+                             class="w-full h-full object-contain p-2"
+                             onerror="this.parentElement.style.opacity='0'">
                     </div>
                 </div>
             </div>
 
+        </div>
+
+        <!-- Trusted by strip — visible in first screen -->
+        <div class="mt-12 pt-8 border-t border-white/[0.07]">
+            <p class="text-center text-[9px] font-semibold tracking-[0.3em] uppercase mb-7" style="color:rgba(255,255,255,0.22)">Trusted by creators selling on</p>
+            <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+                <div class="flex items-center gap-3 opacity-45 hover:opacity-90 transition-opacity duration-300">
+                    <i class="fab fa-shopify text-2xl" style="color:#96bf48"></i>
+                    <span class="text-base font-semibold tracking-wide text-white">Shopify</span>
+                </div>
+                <div class="flex items-center gap-3 opacity-45 hover:opacity-90 transition-opacity duration-300">
+                    <i class="fab fa-etsy text-2xl" style="color:#f56400"></i>
+                    <span class="text-base font-semibold tracking-wide text-white">Etsy</span>
+                </div>
+                <div class="flex items-center gap-3 opacity-45 hover:opacity-90 transition-opacity duration-300">
+                    <i class="fab fa-ebay text-2xl" style="color:#e53238"></i>
+                    <span class="text-base font-semibold tracking-wide text-white">eBay</span>
+                </div>
+                <div class="flex items-center gap-3 opacity-45 hover:opacity-90 transition-opacity duration-300">
+                    <i class="fab fa-amazon text-2xl" style="color:#ff9900"></i>
+                    <span class="text-base font-semibold tracking-wide text-white">Amazon Merch</span>
+                </div>
+                <div class="flex items-center gap-3 opacity-45 hover:opacity-90 transition-opacity duration-300">
+                    <i class="fas fa-store text-xl text-white/60"></i>
+                    <span class="text-base font-semibold tracking-wide text-white">WooCommerce</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -361,39 +408,6 @@
             @endforeach
         </span>
         @endfor
-    </div>
-</section>
-
-<!-- ════════════════════ TRUSTED BY ════════════════════ -->
-<section class="py-10 md:py-14" style="background:#111;border-bottom:1px solid rgba(255,255,255,0.06)">
-    <div class="max-w-5xl mx-auto px-6">
-        <p class="text-center text-[10px] font-semibold tracking-[0.3em] uppercase mb-8" style="color:rgba(255,255,255,0.22)">Trusted by creators selling on</p>
-        <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
-                <i class="fab fa-shopify text-lg" style="color:#96bf48"></i>
-                <span class="text-sm font-semibold tracking-wide text-white">Shopify</span>
-            </div>
-            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
-                <i class="fab fa-etsy text-lg" style="color:#f56400"></i>
-                <span class="text-sm font-semibold tracking-wide text-white">Etsy</span>
-            </div>
-            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
-                <i class="fas fa-print text-base" style="color:#5b92e5"></i>
-                <span class="text-sm font-semibold tracking-wide text-white">Printify</span>
-            </div>
-            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
-                <i class="fab fa-amazon text-lg" style="color:#ff9900"></i>
-                <span class="text-sm font-semibold tracking-wide text-white">Amazon Merch</span>
-            </div>
-            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
-                <i class="fas fa-store text-base text-white/50"></i>
-                <span class="text-sm font-semibold tracking-wide text-white">WooCommerce</span>
-            </div>
-            <div class="flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity duration-300">
-                <i class="fas fa-tshirt text-base text-white/50"></i>
-                <span class="text-sm font-semibold tracking-wide text-white">Printful</span>
-            </div>
-        </div>
     </div>
 </section>
 

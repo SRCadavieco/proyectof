@@ -35,7 +35,8 @@ Route::get('/pricing', function () {
 });
 // Home apunta siempre a la vista welcome
 Route::get('/', function () {
-    return view('welcome');
+    $totalDesigns = \App\Models\SavedDesign::count();
+    return view('welcome', compact('totalDesigns'));
 })->name('home');
 
 // Public sitemap
