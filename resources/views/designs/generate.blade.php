@@ -297,7 +297,7 @@
 
         <!-- Chat area -->
         <div id="chat-container" class="flex-1 overflow-y-auto">
-            <div class="max-w-2xl mx-auto px-4 pb-8 pt-2">
+            <div class="max-w-2xl mx-auto px-3 sm:px-4 pb-8 pt-2">
 
                 <!-- Welcome screen (hidden once messages exist) -->
                 <div id="welcome-screen" class="flex flex-col items-center py-10 text-center">
@@ -417,74 +417,6 @@
         </div>
 
     </div><!-- /.chat-column -->
-
-    <!-- ═══════════════════════ LIVE PREVIEW PANEL ═══════════════════════ -->
-    <div id="live-preview-panel"
-         class="hidden lg:flex flex-col flex-shrink-0"
-         style="width:300px;border-left:1px solid rgba(255,255,255,0.07);background:#111">
-
-        <!-- Panel header: title + controls -->
-        <div class="px-4 py-3 flex items-center gap-2 flex-shrink-0"
-             style="border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(17,17,17,0.9)">
-            <i class="fas fa-tshirt text-purple-400 flex-shrink-0" style="font-size:11px"></i>
-            <span class="text-[10px] font-semibold text-white/50 uppercase tracking-[0.18em] flex-1">Live Preview</span>
-            <select id="live-garment-select"
-                    onchange="updateLivePreview()"
-                    class="text-[10px] rounded-lg px-2 py-1 text-white focus:outline-none cursor-pointer"
-                    style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)">
-                <option value="tshirt">T-Shirt</option>
-                <option value="hoodie">Hoodie</option>
-                <option value="tanktop">Tank Top</option>
-                <option value="longsleeve">Long Sleeve</option>
-                <option value="sweatshirt">Sweatshirt</option>
-            </select>
-            <input type="color" id="live-garment-color" value="#ffffff"
-                   oninput="updateLivePreview()" title="Garment color"
-                   class="w-7 h-7 rounded-lg cursor-pointer flex-shrink-0"
-                   style="border:1px solid rgba(255,255,255,0.12)">
-        </div>
-
-        <!-- Canvas area -->
-        <div class="flex-1 flex flex-col items-center justify-center p-3 overflow-hidden"
-             style="background:#0a0a0a">
-            <!-- Empty placeholder -->
-            <div id="live-preview-placeholder" class="flex flex-col items-center gap-3 text-center">
-                <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                     style="background:rgba(124,60,160,0.1);border:1px solid rgba(124,60,160,0.18)">
-                    <i class="fas fa-tshirt text-purple-400/40 text-2xl"></i>
-                </div>
-                <p class="text-[11px] text-white/20 leading-relaxed max-w-[160px]">
-                    Generate a design to preview it on a garment
-                </p>
-            </div>
-            <!-- Canvas (shown after first generation) -->
-            <canvas id="live-garment-canvas" class="hidden rounded-xl block"
-                    style="max-width:100%;max-height:clamp(200px,42dvh,400px)"></canvas>
-        </div>
-
-        <!-- Footer actions (shown after first generation) -->
-        <div id="live-preview-actions"
-             class="hidden px-3 py-3 space-y-2 flex-shrink-0"
-             style="border-top:1px solid rgba(255,255,255,0.07);background:rgba(17,17,17,0.95)">
-            <button onclick="openPreviewModal(livePrevState.currentImage)"
-                    class="w-full py-2 text-white text-xs font-medium rounded-xl
-                           flex items-center justify-center gap-1.5 transition-colors"
-                    style="background:#7c3ca0;border:1px solid rgba(192,132,252,0.2)"
-                    onmouseover="this.style.background='#5a2275'"
-                    onmouseout="this.style.background='#7c3ca0'">
-                <i class="fas fa-expand-alt text-[10px]"></i> Full Editor
-            </button>
-            <button onclick="openGarmentListModal(livePrevState.currentImage)"
-                    class="w-full py-2 text-white/60 hover:text-white text-xs font-medium rounded-xl
-                           flex items-center justify-center gap-1.5 transition-colors"
-                    style="border:1px solid rgba(255,255,255,0.12)"
-                    onmouseover="this.style.background='rgba(255,255,255,0.06)'"
-                    onmouseout="this.style.background='transparent'">
-                <i class="fas fa-cloud-upload-alt text-[10px]"></i> Upload to Printify
-            </button>
-        </div>
-
-    </div><!-- /.live-preview-panel -->
 
     </main>
 </div>
@@ -1543,7 +1475,7 @@
         const div = document.createElement('div');
         div.className = 'flex flex-row-reverse items-start gap-2.5 msg-enter';
         div.innerHTML = `${avatarHtml}
-            <div class="bg-ink text-white px-4 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed max-w-xs md:max-w-md">
+            <div class="bg-ink text-white px-4 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed max-w-[85%] md:max-w-md">
                 ${escapeHtml(text)}
             </div>`;
         messagesContainer.appendChild(div);
@@ -1553,7 +1485,7 @@
 
     function addBotResponse(imageUrl) {
         const div      = document.createElement('div');
-        div.className  = 'flex items-start gap-3 msg-enter';
+        div.className  = 'flex items-start gap-2 msg-enter';
         const uniqueId = 'bg-' + Date.now();
         const idx      = previewImageStore.length;
         previewImageStore.push(imageUrl);
@@ -1563,33 +1495,46 @@
                         flex items-center justify-center flex-shrink-0 overflow-hidden p-1 mt-0.5" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1)">
                 <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" class="w-full h-full object-contain">
             </div>
-            <div class="rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-sm" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.09)">
-                <div id="${uniqueId}" class="relative" style="background:#ffffff">
-                    <img src="${imageUrl}" alt="Generated design" class="w-full block cursor-zoom-in chat-lightbox-img" crossorigin="anonymous">
+            <div class="rounded-2xl rounded-tl-sm shadow-sm overflow-hidden flex-1 min-w-0" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.09);max-width:300px">
+                <!-- Garment canvas -->
+                <div id="${uniqueId}" class="relative cursor-pointer group"
+                     onclick="openPreviewModal('${imageUrl}')" title="Click to open full editor">
+                    <canvas id="gc-${uniqueId}" class="w-full block" style="display:block"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                         style="background:rgba(0,0,0,0.25)">
+                        <span class="text-white text-[10px] font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                              style="background:rgba(124,60,160,0.85)">
+                            <i class="fas fa-expand-alt text-[9px]"></i> Full Editor
+                        </span>
+                    </div>
                     <button type="button" title="Save design"
                             class="save-design-btn absolute top-2 right-2 w-7 h-7 rounded-full
                                    backdrop-blur-sm shadow-sm
                                    flex items-center justify-center transition-all hover:scale-110"
                             style="background:rgba(0,0,0,0.45);border:1px solid rgba(0,0,0,0.15)"
+                            onclick="event.stopPropagation()"
                             data-image-src="${imageUrl}">
                         <i class="fas fa-bookmark text-xs text-white"></i>
                     </button>
                 </div>
-                <div class="px-3 py-2 flex items-center gap-1.5 flex-wrap" style="border-top:1px solid rgba(255,255,255,0.07)">
-                    <span class="text-[9px] text-white/30 uppercase tracking-wider mr-1">BG</span>
-                    <button type="button" onclick="changeBg('${uniqueId}','#faf8f4')"
-                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#faf8f4;border:1px solid rgba(255,255,255,0.15)" title="Cream"></button>
-                    <button type="button" onclick="changeBg('${uniqueId}','#18181b')"
-                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#18181b;border:1px solid rgba(255,255,255,0.15)" title="Dark"></button>
-                    <button type="button" onclick="changeBg('${uniqueId}','#ffffff')"
-                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#ffffff;border:1px solid rgba(255,255,255,0.15)" title="White"></button>
-                    <button type="button" onclick="changeBg('${uniqueId}','#000000')"
-                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#000000;border:1px solid rgba(255,255,255,0.15)" title="Black"></button>
-                    <button type="button" onclick="changeBg('${uniqueId}','#7c3ca0')"
-                            class="w-4 h-4 rounded hover:opacity-80 transition-opacity" style="background:#7c3ca0;border:1px solid rgba(255,255,255,0.15)" title="Purple"></button>
-                    <input type="color" onchange="changeBg('${uniqueId}',this.value)"
-                           class="w-4 h-4 rounded cursor-pointer" style="border:1px solid rgba(255,255,255,0.15)" title="Custom colour">
+                <!-- Garment selector row -->
+                <div class="px-3 py-2 flex items-center gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
+                    <select id="gs-${uniqueId}"
+                            onchange="renderMsgCanvas('${uniqueId}','${imageUrl}')"
+                            class="flex-1 text-[10px] rounded-lg px-2 py-1.5 text-white focus:outline-none cursor-pointer"
+                            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);appearance:none;-webkit-appearance:none">
+                        <option value="tshirt">T-Shirt</option>
+                        <option value="hoodie">Hoodie</option>
+                        <option value="tanktop">Tank Top</option>
+                        <option value="longsleeve">Long Sleeve</option>
+                        <option value="sweatshirt">Sweatshirt</option>
+                    </select>
+                    <input type="color" id="gcol-${uniqueId}" value="#ffffff"
+                           oninput="renderMsgCanvas('${uniqueId}','${imageUrl}')"
+                           class="w-7 h-7 rounded-lg cursor-pointer flex-shrink-0"
+                           style="border:1px solid rgba(255,255,255,0.12)" title="Garment colour">
                 </div>
+                <!-- Actions -->
                 <div class="px-3 py-2.5 flex items-center gap-2" style="border-top:1px solid rgba(255,255,255,0.07)">
                     <button type="button" title="Retouch this design with AI"
                             class="icon-btn accent edit-btn flex-col gap-0.5 shrink-0"
@@ -1609,7 +1554,7 @@
 
         messagesContainer.appendChild(div);
 
-        setLivePreviewImage(imageUrl);
+        renderMsgCanvas(uniqueId, imageUrl);
         updateWelcomeScreen();
         scrollToBottom();
     }
@@ -1618,7 +1563,7 @@
         const id  = 'ph-' + Date.now();
         const div = document.createElement('div');
         div.id        = id;
-        div.className = 'flex items-start gap-3 msg-enter';
+        div.className = 'flex items-start gap-2 msg-enter';
         div.innerHTML = `
             <div style="width:32px;height:32px;border-radius:50%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);
                         display:flex;align-items:center;
@@ -1626,9 +1571,9 @@
                 <img src="{{ asset('images/logo.png') }}?v={{ filemtime(public_path('images/logo.png')) }}" alt="FabricAI" style="width:100%;height:100%;object-fit:contain;">
             </div>
             <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.09);border-radius:0 16px 16px 16px;
-                        box-shadow:0 4px 16px rgba(0,0,0,0.3);overflow:hidden;width:260px;">
+                        box-shadow:0 4px 16px rgba(0,0,0,0.3);overflow:hidden;flex:1;min-width:0;max-width:260px;">
                 <!-- Animated image area -->
-                <div style="position:relative;width:260px;height:260px;background:#111;
+                <div style="position:relative;width:100%;padding-top:100%;background:#111;
                             border-radius:0 12px 0 0;overflow:hidden;">
                     <!-- Grid overlay -->
                     <div style="position:absolute;inset:0;
@@ -4581,6 +4526,61 @@
                 ctx.drawImage(img, pax + paw/2 - dw/2, pay + pah/2 - dh/2, dw, dh);
             } catch(e) { /* skip on CORS/load error */ }
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  PER-MESSAGE GARMENT CANVAS
+    // ═══════════════════════════════════════════════════════════════
+    async function renderMsgCanvas(uid, designSrc) {
+        const canvas  = document.getElementById('gc-' + uid);
+        const gSelect = document.getElementById('gs-' + uid);
+        const gColor  = document.getElementById('gcol-' + uid);
+        if (!canvas) return;
+
+        const garmentKey = gSelect ? gSelect.value : 'tshirt';
+        const color      = gColor  ? gColor.value  : '#ffffff';
+        const garment    = GARMENTS[garmentKey];
+        if (!garment) return;
+
+        const CW = 300, CH = 330;
+        canvas.width = CW; canvas.height = CH;
+        const ctx    = canvas.getContext('2d');
+        const scaleX = CW / 500, scaleY = CH / 550;
+
+        // Checkered background
+        const sz = 12;
+        for (let y = 0; y < CH; y += sz)
+            for (let x = 0; x < CW; x += sz) {
+                ctx.fillStyle = ((x/sz + y/sz) % 2 === 0) ? '#1e1e2e' : '#252538';
+                ctx.fillRect(x, y, sz, sz);
+            }
+
+        // Draw garment (SVG from cache, or vector fallback while SVG loads)
+        const cKey = garmentKey + '|front|' + color;
+        if (_garmentImgCache.has(cKey)) {
+            const img = _garmentImgCache.get(cKey);
+            const gSz = Math.min(CW, CH);
+            ctx.drawImage(img, Math.round((CW - gSz) / 2), Math.round((CH - gSz) / 2), gSz, gSz);
+        } else {
+            ctx.save(); ctx.scale(scaleX, scaleY);
+            garment.draw(ctx, color);
+            ctx.restore();
+            _getColoredGarmentImg(garmentKey, color, 'front').then(img => {
+                if (img) renderMsgCanvas(uid, designSrc);
+            });
+        }
+
+        // Draw design on print area
+        const pa   = garment.printArea || { x: 120, y: 110, w: 260, h: 330 };
+        const pax  = pa.x * scaleX, pay = pa.y * scaleY;
+        const paw  = pa.w * scaleX, pah = pa.h * scaleY;
+        try {
+            const img = await _getOrLoadImage(designSrc);
+            const ir  = img.width / img.height, pr = paw / pah;
+            let dw, dh;
+            if (ir > pr) { dw = paw; dh = paw / ir; } else { dh = pah; dw = pah * ir; }
+            ctx.drawImage(img, pax + paw / 2 - dw / 2, pay + pah / 2 - dh / 2, dw, dh);
+        } catch (e) { /* skip on CORS / load error */ }
     }
 
     function setLivePreviewImage(src) {

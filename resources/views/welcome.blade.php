@@ -187,12 +187,12 @@
         }
 
         /* ── Hero product images responsive ── */
-        .hero-images { min-height: 220px; }
+        .hero-images { min-height: 240px; }
         @media (min-width: 1024px) { .hero-images { min-height: 520px; } }
-        .hero-img-back  { width: 130px; height: 155px; }
-        .hero-img-front { width: 150px; height: 180px; }
-        .hero-img-sm    { width: 105px; height: 125px; }
-        .hero-img-xs    { width:  90px; height: 110px; }
+        .hero-img-back  { width: 110px; height: 130px; }
+        .hero-img-front { width: 125px; height: 150px; }
+        .hero-img-sm    { width:  90px; height: 108px; }
+        .hero-img-xs    { width:  76px; height:  92px; }
         @media (min-width: 1024px) {
             .hero-img-back  { width: 220px; height: 260px; }
             .hero-img-front { width: 250px; height: 300px; }
@@ -265,9 +265,9 @@
         x-data="{ show: false }"
         x-init="setTimeout(() => show = true, 80)"
         :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
-        class="relative z-10 max-w-7xl mx-auto px-6 pt-36 pb-24 transition-all duration-1000 ease-out"
+        class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-8 sm:pt-36 sm:pb-24 transition-all duration-1000 ease-out"
     >
-        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div class="grid lg:grid-cols-2 gap-6 lg:gap-20 items-center">
 
             <!-- Left: copy -->
             <div>
@@ -275,7 +275,7 @@
               
 
                 <!-- Headline -->
-                <h1 class="font-serif leading-[0.87] mb-14"
+                <h1 class="font-serif leading-[0.87] mb-6 sm:mb-14"
                     style="font-size:clamp(3rem,8vw,8rem)">
                     <span style="color:rgba(255,255,255,0.82)">Ready to sell.</span><br>
                     <span class="italic gradient-text">Products</span><br>
@@ -301,7 +301,7 @@
                 <div
                     x-data="{ visible: false }"
                     x-intersect.once="visible = true"
-                    class="mt-16 pt-8 border-t border-white/[0.07] grid grid-cols-3 gap-6 max-w-sm"
+                    class="mt-8 pt-5 sm:mt-16 sm:pt-8 border-t border-white/[0.07] grid grid-cols-3 gap-4 sm:gap-6 max-w-sm"
                 >
                     @php
                     $count = $totalDesigns ?? 0;
@@ -368,9 +368,9 @@
         </div>
 
         <!-- Trusted by strip — visible in first screen -->
-        <div class="mt-12 pt-8 border-t border-white/[0.07]">
+        <div class="mt-6 pt-5 sm:mt-12 sm:pt-8 border-t border-white/[0.07]">
             <p class="text-center text-[9px] font-semibold tracking-[0.3em] uppercase mb-7" style="color:rgba(255,255,255,0.22)">Trusted by creators selling on</p>
-            <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 sm:gap-x-10 sm:gap-y-5">
                 <div class="flex items-center gap-3 opacity-45 hover:opacity-90 transition-opacity duration-300">
                     <i class="fab fa-shopify text-2xl" style="color:#96bf48"></i>
                     <span class="text-base font-semibold tracking-wide text-white">Shopify</span>
@@ -415,7 +415,7 @@
 <section class="bg-ink factory-grid py-24 md:py-40 overflow-hidden">
     <div class="max-w-7xl mx-auto px-6">
 
-        <div class="grid lg:grid-cols-[1fr_360px] gap-16 items-end mb-20">
+        <div class="grid lg:grid-cols-[1fr_360px] gap-8 lg:gap-16 items-end mb-10 lg:mb-20">
             <div
                 x-data="{ show: false }"
                 x-intersect.once="show = true"
@@ -528,7 +528,7 @@
     <div class="scan-line" style="animation-delay:4s"></div>
 
     <div class="relative max-w-7xl mx-auto px-6">
-        <div class="mb-20 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
+        <div class="mb-10 sm:mb-20 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 sm:gap-8">
             <div
                 x-data="{ show: false }"
                 x-intersect.once="show = true"
