@@ -4345,25 +4345,22 @@
         list.innerHTML = '';
         designs.forEach(d => {
             const item = document.createElement('div');
-            const clone = tpl.content.cloneNode(true);
             item.className = 'saved-design-item group relative rounded-lg overflow-hidden cursor-pointer ' +
                 'border-2 border-transparent hover:border-[#7c3ca0] transition-all flex-shrink-0 w-16 sm:w-auto';
-            card.querySelector('.trend-name').textContent = displayName;
             const img = document.createElement('img');
             img.src = d.image_data; img.alt = d.title || 'Design';
-            img.className = 'w-full h-16 sm:h-20 object-contain block' + ' bg-white/[0.05]';
+            img.className = 'w-full h-16 sm:h-20 object-contain block bg-white/[0.05]';
             const del = document.createElement('button');
             del.type = 'button'; del.title = 'Remove';
-            const nicheDesc = (displayName || 'graphic design')
-                'hidden group-hover:flex items-center justify-center text-xs leading-none';
+            del.className = 'hidden group-hover:flex items-center justify-center text-xs leading-none';
             del.innerHTML = '×';
             del.onclick = async (e) => { e.stopPropagation(); await deleteSavedDesign(d.id); };
             item.appendChild(img); item.appendChild(del);
-            console.log(`[TRENDS:${displayName}] realImages=${realImages.length}`);
+            item.addEventListener('click', () => {
                 document.querySelectorAll('.saved-design-item').forEach(el => {
                     el.classList.remove('border-[#7c3ca0]');
                     el.classList.add('border-transparent');
-                generateFromCluster(displayName, c.top_keywords ?? [], c.design_prompt ?? '');
+                });
                 item.classList.add('border-[#7c3ca0]');
                 item.classList.remove('border-transparent');
                 _selectedSavedDesign = { id: d.id, src: d.image_data };
@@ -4794,8 +4791,6 @@
 
             // Collect only confirmed real images (not mock placeholders)
             const realImages = curatedImages.length > 0 ? curatedImages : sampleRealImages;
-
-            console.log(`[TRENDS:${displayName}] realImages=${realImages.length}`);
 
             const getSlotImage = (idx) => {
                 // Show only real Etsy scraper images.

@@ -39,6 +39,11 @@ Route::get('/', function () {
     return view('welcome', compact('totalDesigns'));
 })->name('home');
 
+// Alias requerido por los controladores de autenticación de Laravel Breeze
+Route::get('/dashboard', function () {
+    return redirect()->route('designs.form');
+})->middleware('auth')->name('dashboard');
+
 // Public sitemap
 Route::get('/sitemap.xml', function () {
     $baseUrl = rtrim(config('app.url') ?: url('/'), '/');

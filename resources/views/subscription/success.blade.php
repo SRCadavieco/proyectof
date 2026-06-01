@@ -50,11 +50,3 @@
 
 </body>
 </html>
-        </div>
-    </div>
-</section>
-
-@include('layouts.footer')
-
-</body>
-</html>
